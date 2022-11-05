@@ -1,0 +1,100 @@
+import React, { useState, useEffect } from 'react';
+import { RefreshControl } from 'react-native';
+
+import api from '../../services/api';
+
+import CardCategoryDp from '../../components/CardCategoryDp';
+import { listIconDp } from '../../utils/listIconDp';
+
+import { 
+    Container, 
+    ListCategory,
+} from './styles';
+
+
+const CategoryDebit = ({ navigation, ...rest }) => {
+
+
+   const [ category, setCategory ] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(()=>{
+        const unsubscribe = navigation.addListener('focus', () => {
+            exploreRefresh();
+        });
+        return unsubscribe;
+    }, [navigation]);
+
+    useEffect(() => {
+        getCategory();
+    }, []);
+
+    const exploreRefresh = () => {
+
+        setIsLoading(true);
+
+        getCategory();
+
+        setTimeout(()=>{
+            setIsLoading(false);
+        }, 1000);
+    }
+
+    const getCategory = async () => {
+
+        try {
+            const response = await api.get('dpcategory');
+         
+            const category = response.data.map((item) => {
+                
+                const list = listIconDp.filter(i => i.id === item.id_icon);
+
+                return {
+                    id: item.id,
+                    name: item.name,
+                    icon_info: list[0],
+                    color_hex: item.color_hex,
+                }
+            });
+
+            setCategory(category);
+
+        } catch (error) {
+            console.log(error);
+        }   
+
+    }
+
+    const handlerEdit = async (id) => {
+
+        const category = await api.get(`dpcategory/${id}`);
+
+        navigation.navigate('categoryDebitEdit', { category: category.data });
+    }
+
+    return (
+        <Container>
+            
+            <ListCategory 
+                refreshControl={
+                    <RefreshControl 
+                        refreshing={isLoading}
+                        onRefresh={exploreRefresh}
+                        progressBackgroundColor="#fff"
+                        colors={['#5636D3']} 
+                    />
+                }  
+                data={category}
+                keyExtractor={item => item.id}
+                renderItem={({item}) => <CardCategoryDp
+                    data={item} 
+                    onEdit={(id) => handlerEdit(id)}
+                />}
+
+            /> 
+
+        </Container>
+    )
+}
+
+export default CategoryDebit;
