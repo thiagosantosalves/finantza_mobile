@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from 'react-native';
 
+import { listIconDp } from '../../utils/listIconDp';
+
 import CardMetaSelectValue from '../../components/CardMetaSelectValue';
+import ButtonPatternAdd from '../../components/ButtonPatternAdd';
+
 import formatNumber from '../../utils/formatNumber';
 
 import { 
@@ -15,8 +19,6 @@ import {
     AreaBody,
     List,
     AreaButon,
-    ButtonFinsh,
-    ButtonFinshText,
     AreaModal,
     BodyModal,
     AreaTitleModal,
@@ -25,6 +27,7 @@ import {
     InputModal,
     AreaCategoryModal,
     AreaIconModal,
+    Icon,
     TextCategoryModal,
     AreaButtonModal,
     ButtonModalCancel,
@@ -40,6 +43,9 @@ const MetaCreate = ({ route, navigation }) => {
     const [value, setValue] = useState(0);
     const [limit, setLimit] = useState(0);
     const [limitFormat, setLimitFormat] = useState('R$ 0,00');
+    const [colorCategory, setColorCategory] = useState('');
+    const [iconCategory, setIconCategory] = useState('');
+    const [nameCategory, setNameCategory] = useState('');
     const [modal, setModal] = useState(false);
 
     useEffect(() => {
@@ -49,6 +55,14 @@ const MetaCreate = ({ route, navigation }) => {
 
     const handlerId = (info) => {
         setId(info);
+
+        let category = data.filter(e => e.id === info)
+        let icon = listIconDp.filter(e => e.id === category[0].id_icon)
+
+        setIconCategory(icon[0].url);
+        setColorCategory(category[0].color_hex);
+        setNameCategory(category[0].name);
+
         setModal(true);
     }
 
@@ -75,7 +89,7 @@ const MetaCreate = ({ route, navigation }) => {
         transformNumber(value);
     }
 
-    const handlerMeta = () => {
+    const handlerValueCategory = () => {
 
         let val = limit;
         let total = 0;
@@ -113,8 +127,14 @@ const MetaCreate = ({ route, navigation }) => {
         setValue(sum);
 
         setData(res);
-        setLimitFormat('R$ 0,00')
+        setLimitFormat('R$ 0,00');
         setModal(false);
+    }
+
+    const handlerMeta = () => {
+
+        alert("teste");
+
     }
 
     return (
@@ -144,9 +164,7 @@ const MetaCreate = ({ route, navigation }) => {
           
                 <AreaButon>
 
-                    <ButtonFinsh activeOpacity={0.8} onPress={() => handlerMeta()}>
-                        <ButtonFinshText>SALVAR METAS</ButtonFinshText>
-                    </ButtonFinsh>
+                    <ButtonPatternAdd title="Concluir"  onPress={() => handlerMeta()}/>
 
                 </AreaButon>
 
@@ -168,11 +186,11 @@ const MetaCreate = ({ route, navigation }) => {
 
                         <AreaCategoryModal>
 
-                            <AreaIconModal>
-                                {/*  <Icon source={''} /> */}
+                            <AreaIconModal style={{ backgroundColor: colorCategory }}>
+                                <Icon source={iconCategory} />
                             </AreaIconModal>
 
-                            <TextCategoryModal>Alimentação</TextCategoryModal>
+                            <TextCategoryModal>{nameCategory}</TextCategoryModal>
 
                         </AreaCategoryModal>
 
@@ -193,7 +211,7 @@ const MetaCreate = ({ route, navigation }) => {
                                 <ButtonModalCancelText>CANCELAR</ButtonModalCancelText>
                             </ButtonModalCancel>
                             
-                            <ButttonModalFinish activeOpacity={0.8} onPress={() => handlerMeta()}>
+                            <ButttonModalFinish activeOpacity={0.8} onPress={() => handlerValueCategory()}>
                                 <ButttonModalFinishText>CONCLUIR</ButttonModalFinishText>
                             </ButttonModalFinish>
 

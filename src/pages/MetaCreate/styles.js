@@ -60,21 +60,6 @@ export const AreaButon = styled.View`
     height: 80px;
 `;
 
-export const ButtonFinsh = styled.TouchableOpacity`
-    justify-content: center;
-    align-items: center;
-    width: 150px;
-    height: 30px;
-    border-radius: 5px;
-    background-color: #CE510B;
-`;
-
-export const ButtonFinshText = styled.Text`
-    font-family: 'Poppins-Medium';
-    font-size: 12px;
-    color: #FFF;
-`;
-
 // modal 
 
 export const AreaModal = styled.View`
@@ -87,7 +72,7 @@ export const AreaModal = styled.View`
 export const BodyModal = styled.View`
     justify-content: space-between;
     width: 85%;
-    height: 250px;
+    height: 280px;
     border-radius: 4px;
     background-color: #FFF;
 `;
@@ -110,9 +95,9 @@ export const AreaModalInput = styled.View`
 `;
 
 export const InputModal = styled.TextInput`
-    width: 80%;
+    width: 90%;
     height: 50px;
-    background-color: #EAEAEA;
+    background-color: #F3F3F3;
     border-radius: 5px;
     padding-left: 15px;
     color: #2F323D;
@@ -124,12 +109,18 @@ export const AreaCategoryModal = styled.View`
 `;
 
 export const AreaIconModal = styled.View`
+    justify-content: center;
+    align-items: center;
     width: 40px;
     height: 40px;
     border-radius: 20px;
-    background-color: beige;
     margin-left: 10px;
     margin-right: 10px;
+`;
+
+export const Icon = styled.Image`
+    width: 25px;
+    height: 25px;
 `;
 
 export const TextCategoryModal = styled.Text`
@@ -142,7 +133,7 @@ export const AreaButtonModal = styled.View`
     flex-direction: row;
     justify-content: center;
     align-items: center;
-    height: 50px;
+    height: 65px;
 `;
 
 export const ButtonModalCancel = styled.TouchableOpacity`
@@ -163,9 +154,9 @@ export const ButttonModalFinish = styled.TouchableOpacity`
     justify-content: center;
     align-items: center;
     width: 120px;
-    height: 30px;
+    height: 34px;
     border-radius: 4px;
-    background-color: #CE510B;
+    background-color: #FF872C;
     margin-left: 15px;
 `;
 
