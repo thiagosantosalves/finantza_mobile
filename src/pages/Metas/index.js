@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { RefreshControl, Modal  } from 'react-native';
 import { format } from 'date-fns';
+import { WToast } from 'react-native-smart-tip';
 
 import formatNumber from '../../utils/formatNumber';
 import MonthScroll from '../../components/MonthScroll';
@@ -76,7 +78,7 @@ const Metas = ({ navigation }) => {
             exploreRefresh();
         });
         return unsubscribe;
-    }, [navigation]);
+    }, [selectedMonth]);
 
     useEffect(() => { 
         getMeta();
@@ -98,7 +100,6 @@ const Metas = ({ navigation }) => {
     const exploreRefresh = () => {
 
         setIsLoading(true);
-
         getMeta();
 
         setTimeout(()=>{
@@ -106,55 +107,36 @@ const Metas = ({ navigation }) => {
         }, 1000);
     }
 
-    const getMeta = async () => {
+    const toatsError = (text) => {
+        const toastOpts = {
+          data: text,
+          textColor: '#ffffff',
+          backgroundColor: '#36393F',
+          duration: WToast.duration.SHORT, 
+          position: WToast.position.CENTER,
+        }
+        WToast.show(toastOpts)
+    }
 
+    const getMeta = async () => {
         try {
 
-            //const response = await api.get('cardcredit');
+            const res = await api.get('meta');
+
+            let sumCategory = res.data.reduce((a, b) => a + b.value, 0);
+            let sumUsedCategory = res.data.reduce((a, b) => a + b.usedValue, 0);
+    
+            let valueUsed = sumCategory - sumUsedCategory;
+            setValueTotal(sumCategory);
+            setValueUsed(valueUsed);
+    
+            let newData = res.data.filter(e => e.year === selectedYear && e.month === selectedMonth + 1);
+            setMeta(newData); 
 
         } catch (error) {
             console.log(error);
-        }   
- 
-        let data = [
-            {
-                id: 1,
-                name: 'Alimentação',
-                month: 10,
-                year: 2022,
-                id_category: 161, 
-                id_icon: 1,
-                color_hex: '#D65A3F',
-                value: 500,
-                usedValue: 50,
-                porcent: 10,
-                status: false
-            },
-            {
-                id: 2,
-                name: 'Casa',
-                month: 10,
-                year: 2022,
-                id_category: 161, 
-                id_icon: 1,
-                color_hex: '#D63F75',
-                value: 500,
-                usedValue: 500,
-                porcent: 100,
-                status: true
-            },
-        ];
-        let sumCategory = data.reduce((a, b) => a + b.value, 0);
-        let sumUsedCategory = data.reduce((a, b) => a + b.usedValue, 0);
-
-        let valueUsed = sumCategory - sumUsedCategory;
-        setValueTotal(sumCategory);
-        setValueUsed(valueUsed);
-
-        let res = data.filter(e => e.year === selectedYear && e.month === selectedMonth + 1);
-
-
-        setMeta(res); 
+            toatsError('Erro, não foi possível se conectar ao servidor');
+        } 
 
     }
 
@@ -191,8 +173,6 @@ const Metas = ({ navigation }) => {
                 </AreaBodyOps> 
             ) : (
                 <>
-                    
-
                     <AreaTitleValue>
                         <TitleValueMeta>Meta total</TitleValueMeta>
                     </AreaTitleValue>

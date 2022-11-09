@@ -29,8 +29,6 @@ const CardMeta = ({ data }) => {
 
   const { width } = Dimensions.get('window');
 
-  const navigation = useNavigation();
-
   let valueUsed = data.valueremain;
   let valueLimite = data.valueTotal;
 

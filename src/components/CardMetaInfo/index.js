@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dimensions } from 'react-native'
+import { listIconDp } from '../../utils/listIconDp';
 
 import formatNumber from '../../utils/formatNumber';
 
@@ -21,7 +22,15 @@ import {
 const CardMetaInfo = (props) => {
 
     let { width } = Dimensions.get('screen');
+    const [url, setUrl] = useState(null);
 
+    useEffect(() => {
+        let icon_url = listIconDp.filter(i => i.id === props.data.category.id_icon);
+
+        console.log(icon_url)
+        setUrl(icon_url[0].url);
+    },[]);
+    
     return (
         <Container
             style={{
@@ -43,12 +52,12 @@ const CardMetaInfo = (props) => {
             )}
             
             <BoxInfo>
-                <AreaIcon>
-                    <Icon />
+                <AreaIcon style={{ backgroundColor: props.data.category.color_hex }} >
+                    <Icon source={url} />
                 </AreaIcon>
 
                 <AreaInfoCategory>
-                    <CategoryName>{props.data.name}</CategoryName>
+                    <CategoryName>{props.data.category.name}</CategoryName>
                     <AreaValue>
                         <TextValueUsed>R$ {formatNumber(props.data.usedValue)}</TextValueUsed>
                         <TextValueTotal> /R$ {formatNumber(props.data.value)}</TextValueTotal>

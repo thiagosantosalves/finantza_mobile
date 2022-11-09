@@ -26,12 +26,12 @@ export const AreaIcon = styled.View`
     width: 40px;
     height: 40px;
     border-radius: 25px;
-    background-color: red;
     margin-right: 15px;
 `;
 
 export const Icon = styled.Image`
-   
+    width: 25px;
+    height: 25px;
 `;
 
 export const AreaInfoCategory = styled.View``;

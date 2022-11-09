@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from 'react-native';
+import { WToast } from 'react-native-smart-tip';
 
 import { listIconDp } from '../../utils/listIconDp';
+import formatNumber from '../../utils/formatNumber';
 
 import CardMetaSelectValue from '../../components/CardMetaSelectValue';
 import ButtonPatternAdd from '../../components/ButtonPatternAdd';
 
-import formatNumber from '../../utils/formatNumber';
+import api from '../../services/api';
 
 import { 
     Container,
@@ -52,6 +54,17 @@ const MetaCreate = ({ route, navigation }) => {
         let data = route.params.data;
         setData(data);
     }, []);
+
+    const toatsError = (text) => {
+        const toastOpts = {
+          data: text,
+          textColor: '#ffffff',
+          backgroundColor: '#36393F',
+          duration: WToast.duration.SHORT, 
+          position: WToast.position.CENTER,
+        }
+        WToast.show(toastOpts)
+    }
 
     const handlerId = (info) => {
         setId(info);
@@ -131,15 +144,49 @@ const MetaCreate = ({ route, navigation }) => {
         setModal(false);
     }
 
-    const handlerMeta = () => {
+    const handlerMeta = async () => {
 
-        alert("teste");
+        let date = new Date();
+        let month = date.getMonth() + 1; 
+        let year = date.getFullYear();
 
+        let newData = data.map(e => {
+
+            let info = {
+                month,
+                year,
+                id_category: e.id,
+                value: e.value,
+                used_value: 0,
+                porcent: 0,
+                status: false
+            }
+
+            return info
+        });
+
+        let isValue = data.filter(e => e.value === 0);
+
+        if(isValue.length > 0) {
+            toatsError("Valor da categoria selecionada não foi informado, elae e obrigatória!")
+            return false;
+        }
+
+        try {
+            
+            await api.post('meta', newData);
+
+            navigation.navigate("TabRoutes", {
+                screen: "Metas"
+            });
+
+        } catch (error) {
+            toatsError("Error ao se conectar ao servidor !");
+        }
     }
 
     return (
         <Container>
-
             <AreaTextInfo>
                 <Title>Meta</Title>
                 <Description>Está na hora de definir suas metas. Atribua o valor que</Description>
@@ -163,9 +210,7 @@ const MetaCreate = ({ route, navigation }) => {
                 />    
           
                 <AreaButon>
-
                     <ButtonPatternAdd title="Concluir"  onPress={() => handlerMeta()}/>
-
                 </AreaButon>
 
             </AreaBody>
@@ -221,8 +266,6 @@ const MetaCreate = ({ route, navigation }) => {
 
                 </AreaModal>
             </Modal>
-
-            
         </Container>
     )
 }
