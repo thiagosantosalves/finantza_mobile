@@ -21,7 +21,7 @@ const CardMetaSelect = (props) => {
         let icon_url = listIconDp.filter(i => i.id === props.data.id_icon);
         setUrl(icon_url[0].url);
     },[]);
-
+    
     return (
         <Container style={{
             shadowColor: "#000",

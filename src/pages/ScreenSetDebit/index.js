@@ -2,29 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Switch } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-
+import { WToast } from 'react-native-smart-tip';
 import {Picker} from '@react-native-picker/picker';
-import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-
-import formatNumber from '../../utils/formatNumber';
-import transformNumber from '../../utils/transformNumber';
-import PatternInput from '../../components/PatternInput';
-import { institution } from '../../utils/institution';
-
-import formatDateMonth from '../../utils/formatDateMonth';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 import ListBankFull from '../../components/ListBankFull';
 import ListCategoryDpFull from '../../components/ListCategoryDpFull';
 import ListTagsFull from '../../components/ListTagsFull';
 import ListCardCreditFull from '../../components/ListCardCreditFull';
 
+import formatNumber from '../../utils/formatNumber';
+import transformNumber from '../../utils/transformNumber';
+import PatternInput from '../../components/PatternInput';
+import { institution } from '../../utils/institution';
+import formatDateMonth from '../../utils/formatDateMonth';
 import { listIconDp } from '../../utils/listIconDp';
 import { listIconAccount } from '../../utils/listIconAccount';
 
 import api from '../../services/api';
-
-import { WToast } from 'react-native-smart-tip';
 
 import { 
   Container,
@@ -78,28 +74,22 @@ import {
 
 const ScreenSetDebit = ({ route, navigation }) => {
 
+  const [meta, setMeta] = useState([]);
   const [description, setDescription] = useState('');
-
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-
   const [category, setCategory] = useState(null);
   const [categorySelect, setCategorySelect] = useState('');
   const [idIconCategory, setIconCategory] = useState(null);
-
   const [isSwitch, setIsSwitch] = useState(false);
-
   const [bankFull, setBankFull] = useState({});
   const [bank, setBank] = useState('');
   const [idIconBank, setIdIconBank] = useState(null);
-
   const [cardCreditFull, setCardCreditFull] = useState({})
   const [cardCreditSelect, setCardCreditSelect] = useState();
   const [cardCreditIcon, setCardCreditIcon] = useState({});
-  
   const [ativeButtonDateToday, setAtiveButtonDateToday] = useState(true);
   const [ativeButtonDateYesterday, setAtiveButtonDateYesterday] = useState(false);
   const [ativeButtonDateOther, setAtiveButtonDateOther] = useState(false);
-  
   const [fixed, setFixed] = useState(false);
   const [installments, setInstallments] = useState(false);
   const [modaInstallments, setModalInstallments] = useState(false);
@@ -115,17 +105,13 @@ const ScreenSetDebit = ({ route, navigation }) => {
   const [qd10, setQd10] = useState('');
   const [qd11, setQd11] = useState('');
   const [qd12, setQd12] = useState('');
-
   const [dateFinal, setDateFinal] = useState(null);
-
   const [anexoPhoto, setAnexoPhoto] = useState(null);
   const [typePhoto, setTypePhoto] = useState(null);
   const [colorButtonAdd, setColorButtonAdd] = useState(false);
- 
   const [tagsFull, setTagsFull] = useState(null);
   const [tag, setTag] = useState(null);
   const [colorButtonTags, setColorButtonTags] = useState(false);
-
   const [modalCategory, setModalCategory] = useState(false);
   const [modalBank, setModalBank] = useState(false);
   const [modalCard, setModalCard] = useState(false);
@@ -153,7 +139,6 @@ const ScreenSetDebit = ({ route, navigation }) => {
   }
 
   const getBank = async () => {
-
     try {
       const res = await api.get('account');
       
@@ -168,7 +153,6 @@ const ScreenSetDebit = ({ route, navigation }) => {
     } catch (error) {
       console.log(error)
     }
-
   }
 
   const getCard = async () => {
@@ -184,25 +168,31 @@ const ScreenSetDebit = ({ route, navigation }) => {
   }
 
   const getTags = async () => {
-
     try {
       const tags = await api.get('tags');
       setTagsFull(tags.data);
     } catch (error) {
       console.log(error);
     }
-
   }
 
   useEffect(() => {
-
     getDbCategory();
     getBank();
     getCard();
     getTags();
     actionDayIntial();
-   
+    handlerMeta();
   }, []);
+
+  const handlerMeta = async () => {
+    try {
+      const meta = await api.get('meta');
+      setMeta(meta.data);
+    } catch (error) {
+      console.log(error);
+    }    
+  }
 
   const handleCategoryId = async (id) => {
     
@@ -609,6 +599,39 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
       try {
 
+        let isMeta = meta.filter(e => e.year === Number(year) 
+        && e.month === Number(month ) && e.category.id === categorySelect.id);
+
+        if(isMeta.length > 0) {
+
+          let newValue = qdInstallments ? valueP : value;
+
+          let usedValue = Number(newValue) + Number(isMeta[0].used_value);
+          usedValue = usedValue.toFixed(2);
+
+          let newPorcent = usedValue * 100;
+          newPorcent =  Number(newPorcent) / Number(isMeta[0].value);  
+          
+          let status = false;
+
+          if(newPorcent >= 100 ) {
+            newPorcent = 100;
+            status = true;
+          }
+
+          try {
+            
+            await api.put(`meta/${isMeta[0].id}`, {
+              used_value: usedValue,
+              porcent: newPorcent.toFixed(2),
+              status: status
+            });
+
+          } catch (error) {
+            console.log(error);
+          }
+        }
+         
         if(bankId && !isSwitch) { 
 
           let sum = qdInstallments ? valueP : value
@@ -704,7 +727,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
           } else {
             toatsCardLimit();
           }
-        }
+        }  
       } catch (error) {
         console.log(error);
       }

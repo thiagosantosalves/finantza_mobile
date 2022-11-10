@@ -30,9 +30,16 @@ const CardMetaInfo = (props) => {
         console.log(icon_url)
         setUrl(icon_url[0].url);
     },[]);
+
+    useEffect(() => {
+        console.log(props.data)
+    }, []);
+
     
     return (
         <Container
+            activeOpacity={0.8}
+            onPress={() => props.onPress(props.data.id)}
             style={{
                 width: width - 40,
                 shadowColor: "#000",
@@ -59,7 +66,7 @@ const CardMetaInfo = (props) => {
                 <AreaInfoCategory>
                     <CategoryName>{props.data.category.name}</CategoryName>
                     <AreaValue>
-                        <TextValueUsed>R$ {formatNumber(props.data.usedValue)}</TextValueUsed>
+                        <TextValueUsed>R$ {formatNumber(props.data.used_value)}</TextValueUsed>
                         <TextValueTotal> /R$ {formatNumber(props.data.value)}</TextValueTotal>
                     </AreaValue>
                 </AreaInfoCategory>

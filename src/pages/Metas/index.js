@@ -48,12 +48,14 @@ const Metas = ({ navigation }) => {
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
     const [date, setDate] = useState(new Date());
-    const [modal, setModal] = useState(false);
+    const [titleStatus, setTitleStatus] = useState('restam');
     const [meta, setMeta] = useState({});
     const [isLoading, setIsLoading] = useState(false);
     const [valueTotal, setValueTotal] = useState(0);
     const [valueUsed, setValueUsed] = useState(0);
     const [modalYear, setModalYear] = useState(false);
+    const [modalEdit, setModalEdit] = useState(false);
+
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -70,7 +72,7 @@ const Metas = ({ navigation }) => {
                 />
             )
         });
-    }, [navigation, modal]);
+    }, [navigation]);
 
     useEffect(()=>{
         const unsubscribe = navigation.addListener('focus', () => {
@@ -120,24 +122,50 @@ const Metas = ({ navigation }) => {
 
     const getMeta = async () => {
         try {
-
             const res = await api.get('meta');
 
-            let sumCategory = res.data.reduce((a, b) => a + b.value, 0);
-            let sumUsedCategory = res.data.reduce((a, b) => a + b.usedValue, 0);
-    
-            let valueUsed = sumCategory - sumUsedCategory;
-            setValueTotal(sumCategory);
-            setValueUsed(valueUsed);
-    
+            const sumMetaTotal = res.data.reduce((a, b) => a + b.value, 0);
+            const isMeta = res.data.filter(e => e.status === false);
+            const sumTotalAvailable = isMeta.reduce((a, b) => a + b.value, 0);
+            const useDValueTotalAvailable = isMeta.reduce((a, b) => a + b.used_value, 0);
+
+            let value = sumTotalAvailable - useDValueTotalAvailable;
+            setValueTotal(sumMetaTotal);
+
+            const excedidoFilter = res.data.filter(e => e.status === true);
+            const exceededValue = excedidoFilter.reduce((a, b) => a + b.value, 0);
+            const exceededUsedValue = excedidoFilter.reduce((a, b) => a + b.used_value, 0);
+            const subtraction = exceededUsedValue - exceededValue;
+
+            if(value <= 0) {
+
+                setValueUsed(subtraction);
+                setTitleStatus('exedeu');
+
+            } else {
+                setValueUsed(value);
+                setTitleStatus('restam');
+            }
+
             let newData = res.data.filter(e => e.year === selectedYear && e.month === selectedMonth + 1);
-            setMeta(newData); 
+
+            newData = newData.sort((x, y) => {
+                let a = new Date(x.createdAt);
+                let b = new Date(y.createdAt);
+        
+                return a - b;
+            });
+
+            setMeta(newData);  
 
         } catch (error) {
-            console.log(error);
             toatsError('Erro, não foi possível se conectar ao servidor');
         } 
+    }
 
+    const handlerModal = (id) => {
+
+        alert(id);
     }
 
     return(
@@ -181,7 +209,7 @@ const Metas = ({ navigation }) => {
 
                         <BoxPlanning>
                             <ValuePlanning>R$ {formatNumber(valueUsed)}</ValuePlanning>
-                            <ValueRemains>restam</ValueRemains>
+                            <ValueRemains>{titleStatus}</ValueRemains>
                         </BoxPlanning>
 
                         <BoxPlanning>
@@ -204,6 +232,7 @@ const Metas = ({ navigation }) => {
                         keyExtractor={item => item.id}
                         renderItem={({item}) => <CardMetaInfo
                             data={item} 
+                            onPress={(id) => handlerModal(id)}
                         />} 
                     />  
                 </>

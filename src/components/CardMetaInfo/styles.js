@@ -1,6 +1,6 @@
 import styled from 'styled-components/native';
 
-export const Container = styled.View`    
+export const Container = styled.TouchableOpacity`    
     background-color: #FFF;
     margin: 10px 0px 10px;
     height: 120px;
@@ -64,7 +64,7 @@ export const AreaPorcentTotal = styled.View`
     height: 8px;
     background-color: #C4C4C4;
     border-radius: 5px;
-    margin-top: 28px;
+    margin-top: 24px;
     margin-left: 10px;
     margin-right: 10px;
 `;
