@@ -105,6 +105,7 @@ const TabRouter = () => (
         <Tab.Screen 
             name="Metas" 
             component={Metas}
+           
             options={{
                 title: 'Metas', 
                 tabBarIcon: ({ color, size }) => (
@@ -118,7 +119,9 @@ const TabRouter = () => (
                     elevation: 0,
                     shadowOpacity: 0,
                     borderBottomWidth: 0,
-                }
+                },
+                tabBarHideOnKeyboard: true
+                
             }}
         />
     </Tab.Navigator>

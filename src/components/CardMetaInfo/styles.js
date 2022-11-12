@@ -1,9 +1,10 @@
 import styled from 'styled-components/native';
 
-export const Container = styled.TouchableOpacity`    
+export const Container = styled.View`  
+    justify-content: space-between;
     background-color: #FFF;
     margin: 10px 0px 10px;
-    height: 120px;
+    height: 160px;
     border-radius: 5px;
 `;
 
@@ -64,7 +65,7 @@ export const AreaPorcentTotal = styled.View`
     height: 8px;
     background-color: #C4C4C4;
     border-radius: 5px;
-    margin-top: 24px;
+    margin-top: 10px;
     margin-left: 10px;
     margin-right: 10px;
 `;
@@ -73,4 +74,24 @@ export const AreaPorcent = styled.View`
     height: 8px;
     background-color: #E83F5B;
     border-radius: 5px; 
+`;
+
+export const AreaButton = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 35px;
+`;
+
+export const Button = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 70px;
+    height: 25px;
+`;
+
+export const TitleButton = styled.Text`
+    font-family: 'Poppins-Regular';
+    font-size: 11px;
+    color: #626263;
 `;

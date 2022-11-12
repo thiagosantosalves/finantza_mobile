@@ -17,6 +17,9 @@ import {
     TextValueTotal,
     AreaPorcentTotal,
     AreaPorcent,
+    AreaButton,
+    Button,
+    TitleButton,
 } from './styles';
 
 const CardMetaInfo = (props) => {
@@ -26,20 +29,12 @@ const CardMetaInfo = (props) => {
 
     useEffect(() => {
         let icon_url = listIconDp.filter(i => i.id === props.data.category.id_icon);
-
-        console.log(icon_url)
         setUrl(icon_url[0].url);
     },[]);
 
-    useEffect(() => {
-        console.log(props.data)
-    }, []);
-
-    
     return (
         <Container
             activeOpacity={0.8}
-            onPress={() => props.onPress(props.data.id)}
             style={{
                 width: width - 40,
                 shadowColor: "#000",
@@ -75,6 +70,16 @@ const CardMetaInfo = (props) => {
             <AreaPorcentTotal>
                 <AreaPorcent style={{ width: `${props.data.porcent}%` }} />
             </AreaPorcentTotal>
+
+            <AreaButton>
+                <Button  onPress={() => props.onEdit(props.data)} style={{ marginRight: 15 }}>
+                    <TitleButton>Editar</TitleButton>
+                </Button>
+
+                <Button  onPress={() => props.onDelete(props.data.id)} style={{ marginLeft: 15 }}>
+                    <TitleButton>Excluir</TitleButton>
+                </Button>
+            </AreaButton>
 
         </Container>
     );
