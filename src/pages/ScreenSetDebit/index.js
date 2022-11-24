@@ -621,7 +621,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
           try {
             
-            await api.put(`meta/${isMeta[0].id}`, {
+            await api.put(`metareleases/${isMeta[0].id}`, {
               used_value: usedValue,
               porcent: newPorcent.toFixed(2),
               status: status
