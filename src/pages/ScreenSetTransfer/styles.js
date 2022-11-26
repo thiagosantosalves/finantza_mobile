@@ -62,6 +62,7 @@ export const IconUrl = styled.Image`
 
 export const AreaIconBank = styled.TouchableOpacity`
     flex-direction: row;
+    height: 60px;
     align-items: center;
     
 `;

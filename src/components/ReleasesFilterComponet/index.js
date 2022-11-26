@@ -574,8 +574,8 @@ const ReleasesFilterComponet = (props) => {
                 <TitleFilter>Tags</TitleFilter>
 
                 <AreaFilterButton>
-                    <ButtonTag onPress={
-                        () => tagsFull.length > 0 ? setModalTag(true) : toatsTags()}
+                    <ButtonTag onPress={() => {tagsFull.length > 0 ? setModalTag(true) : toatsTags()}}
+                        activeOpacity={0.8}
                         style={{backgroundColor: tag ? '#FF872C' : '#C4C4C4'
                     }}>
                         <ButtonTagText>Tags</ButtonTagText>
@@ -600,7 +600,7 @@ const ReleasesFilterComponet = (props) => {
 
             <AreaButtonFilter>
 
-                <ButtonFilter onPress={() => handlerFilter()}>
+                <ButtonFilter activeOpacity={0.8} onPress={() => handlerFilter()}>
                     <FontAwesome name="check" size={25} color="#FFF" />
                 </ButtonFilter>
             
@@ -710,7 +710,6 @@ const ReleasesFilterComponet = (props) => {
                             data={tagsFull}
                             renderItem={({item}) => 
                             <ListTagsFull
-                               
                                 data={item} 
                                 onAction={(id) => getTagsId(id)}                       
                             />} 

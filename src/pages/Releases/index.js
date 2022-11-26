@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { RefreshControl, Modal, PermissionsAndroid, Platform } from 'react-native';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { Modal, PermissionsAndroid, Platform } from 'react-native';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Feather from 'react-native-vector-icons/Feather';
 import  RNFetchBlob  from 'rn-fetch-blob';
@@ -9,12 +9,12 @@ import MonthScroll from '../../components/MonthScroll';
 import CardReleases from '../../components/CardReleases';
 import PatternInput from '../../components/PatternInput';
 import ReleasesFilterComponet from '../../components/ReleasesFilterComponet';
+import ButtonHeaderComponents from '../../components/ButtonHeaderComponents';
 
 import formatNumber from '../../utils/formatNumber';
 import { listIconAccount } from '../../utils/listIconAccount';
 import { institution } from '../../utils/institution';
 
-import { useAuth } from '../../hooks/auth';
 import api from '../../services/api';
 
 import {
@@ -77,7 +77,6 @@ import {
     ButtonOk,
 } from './styles';
 
-
 const Releases = ({ navigation }) => {
     
     let today = new Date();
@@ -88,24 +87,33 @@ const Releases = ({ navigation }) => {
     const [revenue, setRevenue] = useState({});
     const [debt, setDebt] = useState(0);
     const [total, setTotal] = useState(0);
-
     const [iconAccount, setIconAccount] = useState();
     const [iconCard, setIconCard] = useState();
     const [isCard, setIsCard] = useState(false);
-
     const [searchText, setSearchText] = useState('');
-
     const [modalSearch, setModalSearch] = useState(false);
     const [modalFilter, setModalFilter] = useState(false);
-
     const [modalExport, setModalExport] = useState(false);
-
     const [modalRealeses, setModalRealeses] = useState(false);
-
     const [account, setAccount] = useState({});
-
     const [selectAccountOrigen, setSelectAccountOrigen] = useState({});
     const [selectAccountDestiny, setSelectAccountDestiny] = useState({});
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <ButtonHeaderComponents 
+                    onPress={ async (e) => {
+                        if(e === 1) setModalSearch(true);
+                        if(e === 2) setModalFilter(true);
+                        if(e === 3) setModalExport(true);
+                           
+                    }}
+                />
+            )
+        });
+    }, [navigation]);
+
 
     const [realese, setRealese] = useState({
         account:{
@@ -122,68 +130,17 @@ const Releases = ({ navigation }) => {
         }
     });
 
-    const { 
-        openModalReleases, 
-        handlerModalReleases,
-        openModalFilterReleases,
-        handlerModalFilterReleases,
-        openModalMenuReleases,
-        handlerModalMenuReleases,
-    } = useAuth();
-
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => { 
             getReleases();
-
+            setSearchText('');
         });
         return unsubscribe;
     }, [realese, selectedMonth]);
 
-    useEffect(()=>{
-        const unsubscribe = navigation.addListener('focus', () => {
-            
-            setSearchText('');
-            exploreRefresh();
-        });
-        return unsubscribe;
-    }, [navigation]);
-
     useEffect(() => { 
         getReleases();
     }, [selectedMonth]);
-
-    const exploreRefresh = () => {
-        setIsLoading(true);
-
-        setTimeout(()=>{
-            setIsLoading(false);
-        }, 1000);
-    }
-
-    useEffect(() => {
-
-        if(openModalReleases) {
-            setModalSearch(true);
-        } 
-
-    }, [openModalReleases]);
-
-    useEffect(() => {
-
-        if(openModalFilterReleases) {
-            setModalFilter(true);
-        } 
-
-    }, [openModalFilterReleases]);
-
-    useEffect(() => {
-
-        if(openModalMenuReleases) {
-            setModalExport(true)
-        } 
-
-    }, [openModalMenuReleases]);
-
 
     const handlerCalc = (data) => {
 
@@ -210,7 +167,7 @@ const Releases = ({ navigation }) => {
 
     useEffect(() => {
         getReleases();
-        getReleasesFilter()
+        getReleasesFilter();
     }, [selectedYear]);
 
     const getReleasesFilter = (data) => {
@@ -469,8 +426,8 @@ const Releases = ({ navigation }) => {
           data: res,
           textColor: '#ffffff',
           backgroundColor: '#36393F',
-          duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-          position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+          duration: WToast.duration.SHORT, 
+          position: WToast.position.CENTER,
         }
         WToast.show(toastOpts);
     }
@@ -500,14 +457,6 @@ const Releases = ({ navigation }) => {
                 <AreaRelease>
 
                     <ListReleases 
-                        refreshControl={
-                            <RefreshControl 
-                                refreshing={isLoading}
-                                onRefresh={exploreRefresh}
-                                progressBackgroundColor="#fff"
-                                colors={['#5636D3']} 
-                            />
-                        }  
                         data={data}
                         renderItem={({item}) => <CardReleases data={item} 
                             onAction={(id) => openModalRelease(id)}
@@ -542,14 +491,10 @@ const Releases = ({ navigation }) => {
                 transparent={true}
                 visible={modalSearch}
                 onRequestClose={()=> {
-                    handlerModalReleases();
                     setModalSearch(false)
                 }}
             >
-                <AreaModal onPress={() => {
-                        handlerModalReleases();
-                        setModalSearch(false)}
-                    }>
+                <AreaModal>
                     
                     <BodyModalSearch>
                         <AreaTitleSearch>
@@ -572,7 +517,6 @@ const Releases = ({ navigation }) => {
                             <ButtonSearch 
                                 activeOpacity={0.8}
                                 onPress={() => {
-                                    handlerModalReleases();
                                     setModalSearch(false);
                                 }}
                             >
@@ -592,20 +536,17 @@ const Releases = ({ navigation }) => {
                 transparent={true}
                 visible={modalFilter}
                 onRequestClose={()=>{
-                    handlerModalFilterReleases();
                     setModalFilter(false)
                 }}
             >
                
                 <AreaModalFilter onPress={() => {
-                        handlerModalFilterReleases();
                         setModalFilter(false)}
                     }>
                     <BodyModalFilter>
 
                         <ReleasesFilterComponet 
                             onChangeModal={() => {
-                                handlerModalFilterReleases();
                                 setModalFilter(false);
                             }}
                             onChangeYear={(data) => getReleases(data)}
@@ -623,12 +564,10 @@ const Releases = ({ navigation }) => {
                 transparent={true}
                 visible={modalExport}
                 onRequestClose={()=> {
-                    handlerModalMenuReleases();
                     setModalExport(false);
                 }}
             >
                 <AreaModalExport activeOpacity={0.8} onPress={() => {
-                        handlerModalMenuReleases();
                         setModalExport(false);
                     }}> 
                                
@@ -643,7 +582,6 @@ const Releases = ({ navigation }) => {
                                 activeOpacity={0.8}
                                 onPress={() => {
                                     handlerExportExel();
-                                    handlerModalMenuReleases();
                                     setModalExport(false);
                                 }}
                             >
@@ -653,7 +591,6 @@ const Releases = ({ navigation }) => {
                             <ButtonExport
                                 activeOpacity={0.8}
                                 onPress={() => {
-                                    handlerModalMenuReleases()
                                     setModalExport(false);
                                     handlerExportPdf();
                                 }}

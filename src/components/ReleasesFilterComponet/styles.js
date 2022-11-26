@@ -81,7 +81,7 @@ export const ButtonFilter = styled.TouchableOpacity`
     width: 45px;
     height: 45px;
     border-radius: 25px;
-    background-color: #482EAE;
+    background-color: #2C3CD1;
 `;
 
 export const AreaModalBank = styled.View`

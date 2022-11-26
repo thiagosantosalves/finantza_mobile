@@ -55,6 +55,7 @@ export const TitleIconCategory = styled.Text`
 
 export const AreaIconBank = styled.TouchableOpacity`
     flex-direction: row;
+    height: 60px;
     align-items: center;
     
 `;

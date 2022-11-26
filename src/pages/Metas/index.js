@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { RefreshControl, Modal, Platform, KeyboardAvoidingView } from 'react-native';
+import { RefreshControl, Modal } from 'react-native';
 import { format } from 'date-fns';
 import { WToast } from 'react-native-smart-tip';
 

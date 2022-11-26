@@ -346,5 +346,5 @@ export const ButtonOk = styled.TouchableOpacity`
     width: 40px;
     height: 40px;
     border-radius: 20px;
-    background-color: #482EAE;
+    background-color: #2C3CD1;
 `;

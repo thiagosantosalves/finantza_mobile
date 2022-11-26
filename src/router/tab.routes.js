@@ -11,7 +11,6 @@ import Metas from '../pages/Metas';
 import EmptyScreen from '../pages/EmptyScreen';
 
 import FloatButton from '../components/FloatButton';
-import ButtonHeaderComponents from '../components/ButtonHeaderComponents';
 import ButtonHeaderReportComponents from '../components/ButtonHeaderReportComponents';
 
 const Tab = createBottomTabNavigator();
@@ -45,7 +44,6 @@ const TabRouter = () => (
             name="Releases" 
             component={Releases} 
             options={{
-                
                 tabBarIcon: ({ color, size }) => (
                     <Fontisto name="arrow-swap" color={color} size={size} />
                 ),
@@ -56,12 +54,11 @@ const TabRouter = () => (
                 headerStyle: { 
                     backgroundColor: colorPrimary,
                     shadowColor: "transparent",
-                    elevation: 0, // remove shadow on Android
-                    shadowOpacity: 0, // remove shadow on iOS
-                    borderBottomWidth: 0 // Just in case.
+                    elevation: 0,
+                    shadowOpacity: 0, 
+                    borderBottomWidth: 0
                     
                 },
-                headerRight: () => <ButtonHeaderComponents />
             }} 
         /> 
 
@@ -97,8 +94,7 @@ const TabRouter = () => (
                     elevation: 0,
                     shadowOpacity: 0,
                     borderBottomWidth: 0,
-                },
-                headerRight: () => <ButtonHeaderReportComponents />
+                }
             }}
         />
         

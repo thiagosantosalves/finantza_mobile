@@ -765,23 +765,23 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
           <TitleSection>Categoria</TitleSection>
 
-          <AreaIconCategory activeOpacity={0.8} onPress={() => setModalCategory(true)}>
-
             {categorySelect ? (
               <>
-                <IconCategory style={{backgroundColor: categorySelect.color_hex}}>
-                  <IconUrl source={idIconCategory} />
-                </IconCategory>
-                <TitleIconCategory>{categorySelect.name}</TitleIconCategory>
+                <AreaIconCategory activeOpacity={0.8} onPress={() => setModalCategory(true)}>
+                  <IconCategory style={{backgroundColor: categorySelect.color_hex}}>
+                    <IconUrl source={idIconCategory} />
+                  </IconCategory>
+                  <TitleIconCategory>{categorySelect.name}</TitleIconCategory>
+                </AreaIconCategory>
               </>
             ) : (
               <>
-                <IconPattern source={require('../../assets/card_img/icontrasejado.png')} />
-                <TitleIconCategory>Selecione uma categoria</TitleIconCategory>
+                <AreaIconCategory activeOpacity={0.8} onPress={() => setModalCategory(true)}>
+                  <IconPattern source={require('../../assets/card_img/icontrasejado.png')} />
+                  <TitleIconCategory>Selecione uma categoria</TitleIconCategory>
+                </AreaIconCategory>
               </>
             )}
-
-          </AreaIconCategory>
 
         </Section>
 

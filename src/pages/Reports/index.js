@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Modal, Dimensions, PermissionsAndroid, Platform } from 'react-native';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import  RNFetchBlob  from 'rn-fetch-blob';
-import { WToast } from 'react-native-smart-tip';
 import { VictoryPie, VictoryBar, VictoryChart, VictoryLine, VictoryTheme } from 'victory-native';
 import { format } from 'date-fns';
 
 import MonthScroll from '../../components/MonthScroll';
 import CardListReport from '../../components/CardListReport';
 import MonthPicker from '../../components/MonthPicker';
+import ButtonHeaderReportComponents from '../../components/ButtonHeaderReportComponents';
 
-import { useAuth } from '../../hooks/auth';
 import api from '../../services/api';
 import formatNumber from '../../utils/formatNumber';
 
@@ -32,8 +31,6 @@ import {
     AreaBodyOps,
     TitleOps,
     DescriptionOps,
-
-    //Modal - export
     AreaModalExport,
     BodyModalExport,
     AreaTitleExport,
@@ -41,8 +38,6 @@ import {
     AreaButtonExport,
     ButtonExport,
     TitleButtonExport,
-
-    //Modal - filterYear
     AreaModalFilter,
     BodyModalFilterYear,
     AreaFilterYear,
@@ -51,48 +46,44 @@ import {
     AreaTypeFilter,
     ButtonFilterYear,
     ButtonFilterYearTitle
-
 } from './styles';
 
 
 const Reports = ({ navigation }) => {
 
     let today = new Date();
-
     const [date, setDate] = useState(new Date());
     const { width, height } = Dimensions.get('window');
-
     const [data, setData] = useState([]);
-
     const [selected, setSelected] = useState();
     const [modalFilter, setModalFilter] = useState(false);
     const [modalExport, setModalExport] = useState(false);
-
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
-
     const [typeFilter, setTypeFilter] = useState(1);
-
     const [calcTotal, setCalcTotal] = useState(0);
-
     const [activeDebitFilter, setActiveDebitFilter] = useState(true);
     const [activeCreditFilter, setActiveCreditFilter] = useState(false);
-
     const [activeDebitAccountFilter, setActiveDebitAccountFilter] = useState(false);
     const [activeCreditAccountFilter, setActiveCreditAccountFilter] = useState(false);
-
     const [activeDebitCardFilter, setActiveDebitCardFilter] = useState(false);
-
     const [activePieGraphics, setActivePieGraphics] = useState(true);
     const [activeBarGraphics, setActiveBarGraphics] = useState(false);
     const [activeChartGraphics, setActiveChartGraphics] = useState(false);
 
-    const { 
-        openModalFilterReport,
-        handlerModalFilterReport,
-        openModalReport,
-        handlerModalReport,
-    } = useAuth();
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <ButtonHeaderReportComponents 
+                    onPress={ async (e) => {
+                        if(e === 1) setModalFilter(true);
+                        if(e === 2) setModalExport(true);
+                    }}
+                />
+            )
+        });
+    }, [navigation]);
+
 
     const resetActionButton = () => {
         setActiveCreditAccountFilter(false);
@@ -154,9 +145,7 @@ const Reports = ({ navigation }) => {
         let res = await api.get('releases');
         res = res.data.filter(item => item.year === selectedYear);
         res = res.filter(item => item.month === selectedMonth + 1);
-       
         res = res.filter(item => item.type === 1);
-
         let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
 
         setCalcTotal(valueSum);
@@ -206,7 +195,6 @@ const Reports = ({ navigation }) => {
         let res = await api.get('releases');
         res = res.data.filter(item => item.year === selectedYear);
         res = res.filter(item => item.month === selectedMonth + 1);
-
         res = res.filter(item => item.type === 2);
 
         let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
@@ -309,11 +297,8 @@ const Reports = ({ navigation }) => {
         let res = await api.get('releases');
         res = res.data.filter(item => item.year === selectedYear);
         res = res.filter(item => item.month === selectedMonth + 1);
-
         res = res.filter(item => item.type === 2);
         res = res.filter(item => item.account != null);
-
-
         let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
 
         setCalcTotal(valueSum);
@@ -361,7 +346,6 @@ const Reports = ({ navigation }) => {
         let res = await api.get('releases');
         res = res.data.filter(item => item.year === selectedYear);
         res = res.filter(item => item.month === selectedMonth + 1);
-
         res = res.filter(item => item.type === 2);
         res = res.filter(item => item.card_credit != null);
 
@@ -408,23 +392,9 @@ const Reports = ({ navigation }) => {
         setData(newRes); 
     }
 
-    useEffect(() => {
-        if(openModalFilterReport) {
-            setModalFilter(true);
-        } 
-    }, [openModalFilterReport]);
-
-    useEffect(() => {
-        if(openModalReport) {
-            setModalExport(true);
-        } 
-    }, [openModalReport]);
-
     const handlerFilterYear = () => {
-
         const year = format(date, 'yyyy');
         let yearNumber = Number(year);
-
         setSelectedYear(yearNumber);
         handlerModalFilterReport();
         setModalFilter(false);
@@ -507,9 +477,6 @@ const Reports = ({ navigation }) => {
 
             return r;
         });
-
-        
-
         let newData = {
             report: res,
             calc_total: formatNumber(calcTotal),
@@ -563,7 +530,6 @@ const Reports = ({ navigation }) => {
             console.log(error);
         }
     }
-
 
     return (
         <Container>
@@ -770,7 +736,6 @@ const Reports = ({ navigation }) => {
                 transparent={true}
                 visible={modalFilter}
                 onRequestClose={()=> { 
-                    handlerModalFilterReport();
                     setModalFilter(false) 
                 }}>
                     <AreaModalFilter activeOpacity={1}> 
@@ -838,7 +803,6 @@ const Reports = ({ navigation }) => {
                 transparent={true}
                 visible={modalExport}
                 onRequestClose={()=> {
-                    handlerModalReport();
                     setModalExport(false);}
                 }
             >
@@ -855,7 +819,6 @@ const Reports = ({ navigation }) => {
                                     activeOpacity={0.8}
                                     onPress={() => {
                                         handlerExportExel();
-                                        handlerModalReport();
                                         setModalExport(false);
                                     }}
                                 >
@@ -866,7 +829,6 @@ const Reports = ({ navigation }) => {
                                     activeOpacity={0.8}
                                     onPress={() => {
                                         handlerExportPdf();
-                                        handlerModalReport();
                                         setModalExport(false);
                                     }}
                                 >

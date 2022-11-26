@@ -3,8 +3,9 @@ import styled from "styled-components/native";
 export const Container  = styled.View`
     background-color: #FFF;
     height: 110px;
-    margin-top: 15px;
-    border-radius: 12px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
 `;
 
 export const Title = styled.Text`

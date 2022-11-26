@@ -5,10 +5,11 @@ export const  Container = styled.View`
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    height: 74px;
+    height: 60px;
     border-radius: 12px;
     background-color: #FFF;
-    margin-bottom: 25px;
+    margin-top: 5px;
+    margin-bottom: 5px;
 `;
 
 export const AreaTitle = styled.View`
@@ -33,7 +34,7 @@ export const IconImage = styled.Image`
 export const Title = styled.Text`
     font-family: 'SemiBold';
     color: #2F323D;
-    font-size: 16px;
+    font-size: 12px;
     margin-left: 15px;
 `;
 

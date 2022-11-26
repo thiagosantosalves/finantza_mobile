@@ -1,9 +1,6 @@
 import React from 'react';
-import Entypo  from 'react-native-vector-icons/Entypo';
 import MaterialCommunityIcons  from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons  from 'react-native-vector-icons/Ionicons';
-
-import { useAuth } from '../../hooks/auth';
 
 import { 
     Container,
@@ -11,21 +8,16 @@ import {
 
 } from './styles';
 
-const ButtonHeaderReportComponents = () => {
-
-    const { 
-        handlerModalFilterReport,
-        handlerModalReport
-    } = useAuth();
+const ButtonHeaderReportComponents = (props) => {
    
     return (
         <Container>
 
-            <AreButton activeOpacity={0.6} onPress={() => handlerModalFilterReport()}>
+            <AreButton activeOpacity={0.6} onPress={() => props.onPress(1)}>
                 <MaterialCommunityIcons name='filter-variant' size={25} color="#FFF" />
             </AreButton>
 
-            <AreButton activeOpacity={0.6} onPress={() => handlerModalReport()}>
+            <AreButton activeOpacity={0.6} onPress={() => props.onPress(2)}>
                 <Ionicons name='ellipsis-vertical-sharp' size={25} color="#FFF" />
             </AreButton>
 
