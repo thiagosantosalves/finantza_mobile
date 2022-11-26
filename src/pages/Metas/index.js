@@ -11,6 +11,7 @@ import ButtonHeaderComponentsMeta from '../../components/ButtonHeaderComponentsM
 import MonthPicker from '../../components/MonthPicker';
 
 import api from '../../services/api';
+import { useAuth } from '../../hooks/auth';
 
 import {
     Container,
@@ -64,6 +65,16 @@ import {
     ButttonModalFinish,
     ButttonModalFinishText,
     BodyModalDelete,
+    AreaTitleModalNotification,
+    TitleModalNotification,
+    AreaDescriptionModalNotification,
+    NameCategoryDel,
+    DescriptionModalNotification,
+    AreaButtonModalNotification,
+    ButtonModalNotification,
+    TextButtonModalNotification,
+
+
 } from './styles';
 
 const Metas = ({ navigation }) => {
@@ -88,16 +99,18 @@ const Metas = ({ navigation }) => {
     const [modalDelete, setModalDelete] = useState(false);
 
 
+    const { handlerMeta } = useAuth();
+
     useLayoutEffect(() => {
         navigation.setOptions({
             headerRight: () => (
                 <ButtonHeaderComponentsMeta 
-                    onPress={(e) => {
+                    onPress={ async (e) => {
                         if(e === 1) setModalYear(true);
                         if(e === 2) {
                             navigation.navigate('MetaRoutes', {
-                                screen: 'MetaInitial'
-                            });
+                                screen: 'MetaInitial',
+                            },);
                         }
                     }}
                 />
@@ -181,6 +194,12 @@ const Metas = ({ navigation }) => {
 
             let newData = res.data.filter(e => e.year === selectedYear && e.month === selectedMonth + 1);
 
+            let id = newData.map(e => {
+                return e.category.id
+            });
+            
+            handlerMeta(id);
+
             newData = newData.sort((x, y) => {
                 let a = new Date(x.createdAt);
                 let b = new Date(y.createdAt);
@@ -230,9 +249,6 @@ const Metas = ({ navigation }) => {
     }
 
     const handlerEdit = async () => {
-
-       
-
         if(limit > 0) {
             try {
 
@@ -252,17 +268,21 @@ const Metas = ({ navigation }) => {
     }   
 
     const handlerIdDelete = async (data) => {
-
-        setModalDelete(true)
+        setColorCategory(data.category.color_hex);
+        setNameCategory(data.category.name); 
+        setIdMeta(data.id);
+        setModalDelete(true);
     }   
 
     const handlerDelete = async () => {
-
-
-        //console.log(limit);
-
-        setModalDelete(false)
-
+        try {
+            await api.delete(`meta/${idMeta}`);
+            getMeta();
+            setModalDelete(false);
+        } catch (error) {
+            getMeta();
+            setModalDelete(false);
+        }
     }   
 
     return (
@@ -330,7 +350,7 @@ const Metas = ({ navigation }) => {
                         renderItem={({item}) => <CardMetaInfo
                             data={item} 
                             onEdit={(data) => handlerId(data)}
-                            onDelete={(id) => handlerIdDelete(id)}
+                            onDelete={(data) => handlerIdDelete(data)}
                         />} 
                     /> 
                 </>
@@ -346,14 +366,26 @@ const Metas = ({ navigation }) => {
                 
                     <BodyModalDelete>
 
-                        <InputModal 
-                            placeholderTextColor="#7E7E7E"
-                            maxLength={18}
-                            keyboardType="numeric"
-                            onChangeText={(number)=> setInputLimit(number)}
-                            defaultValue="R$ 0,00"
-                            value={limitFormat} 
-                        />
+                        <AreaTitleModalNotification>
+                            <TitleModalNotification>Editar Meta</TitleModalNotification>
+                        </AreaTitleModalNotification>
+
+                        <AreaDescriptionModalNotification>
+                            <DescriptionModalNotification>Deseja apagar a meta da categoria</DescriptionModalNotification>
+                            <NameCategoryDel style={{ color: colorCategory }}> {nameCategory}.</NameCategoryDel>
+                        </AreaDescriptionModalNotification>
+
+                        <AreaButtonModalNotification>
+                            
+                            <ButtonModalNotification activeOpacity={0.8} onPress={() => setModalDelete(false) }>
+                                <TextButtonModalNotification>CANCELAR</TextButtonModalNotification>
+                            </ButtonModalNotification>
+
+                            <ButtonModalNotification activeOpacity={0.8} onPress={() => handlerDelete() }>
+                                <TextButtonModalNotification>OK</TextButtonModalNotification>
+                            </ButtonModalNotification>
+                            
+                        </AreaButtonModalNotification>
                         
                     </BodyModalDelete>
 

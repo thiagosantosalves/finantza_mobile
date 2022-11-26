@@ -4,6 +4,7 @@ import { WToast } from 'react-native-smart-tip';
 
 import CardMetaSelect from '../../components/CardMetaSelect';
 import api from '../../services/api';
+import { useAuth } from '../../hooks/auth';
 
 import { 
     Container,
@@ -17,10 +18,11 @@ import {
 
 } from './styles';
 
-const MetaInitial = (props) => {
+const MetaInitial = ({ route, ...props}) => {
 
     const [data, setData] = useState({}); 
     const [idsCategory, setIdsCategory] = useState([]);
+    const { idsMeta } = useAuth();
 
     useEffect(() => {
         handlerCategory();
@@ -41,7 +43,13 @@ const MetaInitial = (props) => {
 
         try {
             let res = await api.get('dpcategory');
-            setData(res.data);
+
+            res = res.data.filter((item) => {
+                return !~idsMeta.indexOf(item.id)
+            })
+            
+            setData(res);
+
         } catch (error) {
             console.log(error);
         }

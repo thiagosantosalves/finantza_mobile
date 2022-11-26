@@ -76,7 +76,7 @@ const CardMetaInfo = (props) => {
                     <TitleButton>Editar</TitleButton>
                 </Button>
 
-                <Button  onPress={() => props.onDelete(props.data.id)} style={{ marginLeft: 15 }}>
+                <Button  onPress={() => props.onDelete(props.data)} style={{ marginLeft: 15 }}>
                     <TitleButton>Excluir</TitleButton>
                 </Button>
             </AreaButton>

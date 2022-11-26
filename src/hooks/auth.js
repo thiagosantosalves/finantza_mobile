@@ -9,6 +9,8 @@ const AuthProvider = ({ children }) => {
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
 
+    const [idsMeta, setIdsMeta] = useState({});
+
     const [openModalReleases, setOpenModalReleases] = useState(false);
     const [openModalFilterReleases, setOpenModalFilterReleases] = useState(false);
     const [openModalMenuReleases, setOpenModalMenuReleases] = useState(false);
@@ -62,6 +64,12 @@ const AuthProvider = ({ children }) => {
         
     }, []);
 
+    const handlerMeta = useCallback((data) => {
+        setIdsMeta(data);
+    }, []);
+
+
+    //------------------------------------------------
     const handlerModalReleases = () => {
         if(openModalReleases) {
             setOpenModalReleases(false)
@@ -109,6 +117,11 @@ const AuthProvider = ({ children }) => {
             user: data.user, 
             loading, 
             signOut, 
+            handlerMeta,
+            idsMeta: idsMeta,
+
+
+            //-------------------
             openModalReleases, 
             handlerModalReleases,
             openModalFilterReleases,
