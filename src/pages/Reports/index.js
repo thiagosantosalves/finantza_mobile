@@ -3,7 +3,7 @@ import { Modal, Dimensions, PermissionsAndroid, Platform } from 'react-native';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import  RNFetchBlob  from 'rn-fetch-blob';
 import { VictoryPie, VictoryBar, VictoryChart, VictoryLine, VictoryTheme } from 'victory-native';
-import { format } from 'date-fns';
+import { format, subMonths, addMonths } from 'date-fns';
 
 import MonthScroll from '../../components/MonthScroll';
 import CardListReport from '../../components/CardListReport';
@@ -55,6 +55,7 @@ const Reports = ({ navigation }) => {
     const [date, setDate] = useState(new Date());
     const { width, height } = Dimensions.get('window');
     const [data, setData] = useState([]);
+    const [dataLine, setDataLine] = useState([]);
     const [selected, setSelected] = useState();
     const [modalFilter, setModalFilter] = useState(false);
     const [modalExport, setModalExport] = useState(false);
@@ -141,13 +142,35 @@ const Reports = ({ navigation }) => {
     const handlerCredit = async () => {
         
         setTypeFilter(1);
-
         let res = await api.get('releases');
+        let resDataLine = res;
         res = res.data.filter(item => item.year === selectedYear);
         res = res.filter(item => item.month === selectedMonth + 1);
         res = res.filter(item => item.type === 1);
+ 
         let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
 
+        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
+        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
+        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
+
+        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 1);
+        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 1);
+        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        
+        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 1);
+        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let dataLine = [
+            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
+            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
+            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
+            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
+        ];
+
+        setDataLine(dataLine);
         setCalcTotal(valueSum);
        
         res = res.reduce((soma, cur) => {
@@ -190,15 +213,37 @@ const Reports = ({ navigation }) => {
     }
 
     const handlerDebit = async () => {
-        setTypeFilter(2);
 
+        setTypeFilter(2);
         let res = await api.get('releases');
+        let resDataLine = res;
         res = res.data.filter(item => item.year === selectedYear);
         res = res.filter(item => item.month === selectedMonth + 1);
         res = res.filter(item => item.type === 2);
 
         let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
 
+        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
+        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
+        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
+
+        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 2);
+        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 2);
+        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        
+        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 2);
+        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let dataLine = [
+            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
+            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
+            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
+            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
+        ];
+
+        setDataLine(dataLine);
         setCalcTotal(valueSum);
        
         res = res.reduce((soma, cur) => {
@@ -243,15 +288,35 @@ const Reports = ({ navigation }) => {
     const handlerAccountCredit = async () => {
 
         setTypeFilter(3);
-
         let res = await api.get('releases');
+        let resDataLine = res;
         res = res.data.filter(item => item.year === selectedYear);
         res = res.filter(item => item.month === selectedMonth + 1);
-
         res = res.filter(item => item.type === 1);
 
         let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
 
+        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
+        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
+        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
+
+        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 1);
+        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 1);
+        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        
+        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 1);
+        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let dataLine = [
+            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
+            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
+            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
+            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
+        ];
+
+        setDataLine(dataLine);
         setCalcTotal(valueSum);
 
         res = res.reduce((soma, cur) => {
@@ -293,14 +358,37 @@ const Reports = ({ navigation }) => {
     }
 
     const handlerAccountDebit = async () => {
+
         setTypeFilter(4);
         let res = await api.get('releases');
+        let resDataLine = res; 
         res = res.data.filter(item => item.year === selectedYear);
         res = res.filter(item => item.month === selectedMonth + 1);
         res = res.filter(item => item.type === 2);
         res = res.filter(item => item.account != null);
         let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
 
+        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
+        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
+        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
+
+        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 2 && item.account != null);
+        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 2 && item.account != null);
+        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        
+        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 2 && item.account != null);
+        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let dataLine = [
+            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
+            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
+            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
+            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
+        ];
+
+        setDataLine(dataLine);
         setCalcTotal(valueSum);
         
         res = res.reduce((soma, cur) => {
@@ -342,8 +430,10 @@ const Reports = ({ navigation }) => {
     }
 
     const handlerCardDebit = async () => {
+
         setTypeFilter(5);
         let res = await api.get('releases');
+        let resDataLine = res; 
         res = res.data.filter(item => item.year === selectedYear);
         res = res.filter(item => item.month === selectedMonth + 1);
         res = res.filter(item => item.type === 2);
@@ -351,6 +441,27 @@ const Reports = ({ navigation }) => {
 
         let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
 
+        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
+        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
+        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
+
+        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 2 && item.card_credit != null);
+        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 2 && item.card_credit != null);
+        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        
+        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 2 && item.card_credit != null);
+        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+
+        let dataLine = [
+            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
+            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
+            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
+            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
+        ];
+
+        setDataLine(dataLine);
         setCalcTotal(valueSum);
         
         res = res.reduce((soma, cur) => {
@@ -396,7 +507,6 @@ const Reports = ({ navigation }) => {
         const year = format(date, 'yyyy');
         let yearNumber = Number(year);
         setSelectedYear(yearNumber);
-        handlerModalFilterReport();
         setModalFilter(false);
     }
    
@@ -567,6 +677,7 @@ const Reports = ({ navigation }) => {
                                     if(activeChartGraphics) {
                                         setActiveChartGraphics(false)
                                     }
+                                    
                                     setActivePieGraphics(true)
                                 }}
                             >
@@ -681,25 +792,16 @@ const Reports = ({ navigation }) => {
                             <VictoryChart  
                                 theme={VictoryTheme.material}
                             >
+
                                 <VictoryLine
-                                    data={data}
-                                    x="label"
-                                    y="value"
-                                    animate={{
-                                        duration: 500,
-                                        easing: "bounce"
-                                    }}
                                     style={{
-                                        data: { 
-                                            stroke: "#c43a31"
-                                        },
-                                        parent: { border: "1px solid #ccc"},
-                                        labels: {
-                                            fill: 'none'
-                                        }
+                                        data: { stroke: "tomato" }
                                     }}
-                                    
+                                    data={dataLine}
+                                    x="key"
+                                    y="b"
                                 />
+
                             </VictoryChart>
                         }
                         
