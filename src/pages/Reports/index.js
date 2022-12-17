@@ -91,7 +91,7 @@ const Reports = ({ navigation }) => {
         setActiveDebitAccountFilter(false);
         setActiveCreditFilter(false);
         setActiveDebitCardFilter(false);
-        setActiveDebitFilter(true);
+        setActiveDebitFilter(false);
     }
 
     useEffect(() => {

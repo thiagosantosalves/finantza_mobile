@@ -70,6 +70,23 @@ import {
   ButtonLauchCameraTitle,
   ListTags,
   BodyModalTags,
+  ModalAreaMeta,
+  BodyModalNotification,
+  AreaTitleModalNotification,
+  TitleModalNotification,
+  AreaModalNotificationDesc,
+  DescModalNotification,
+  AreaModalNotificationCategory,
+  DescCategoryModalNotification,
+  AreaModalNotificationInfo,
+  AreaModalNotificationInfoRow,
+  AreaModalNotificationInfoText,
+  ButtonModalNotification,
+  AreaModalNotificationButton,
+  ButtonTextModalNotification,
+  ButtonCancelModalNotification,
+  ButtonCancelTextModalNotification,
+
 } from './styles';
 
 const ScreenSetDebit = ({ route, navigation }) => {
@@ -117,6 +134,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
   const [modalCard, setModalCard] = useState(false);
   const [modalAnexos, setModalAnexos] = useState(false);
   const [modalTags, setModalTags] = useState(false);
+  const [modalMetaNotification, setModalMetaNotification] = useState(false);
+  const [infoMetas, setInfoMetas] = useState({});
 
   const getDbCategory = async () => {
 
@@ -461,8 +480,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
       data: 'Preencha os dados, descrição e categoria são obrigatorios!',
       textColor: '#ffffff',
       backgroundColor: '#36393F',
-      duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-      position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+      duration: WToast.duration.SHORT,
+      position: WToast.position.CENTER,
     }
     WToast.show(toastOpts)
   }
@@ -472,8 +491,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
       data: e,
       textColor: '#ffffff',
       backgroundColor: '#36393F',
-      duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-      position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+      duration: WToast.duration.SHORT,
+      position: WToast.position.CENTER,
     }
     WToast.show(toastOpts);
   }
@@ -483,8 +502,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
       data: 'Nenhum cartão cadastrado!',
       textColor: '#ffffff',
       backgroundColor: '#36393F',
-      duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-      position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+      duration: WToast.duration.SHORT,
+      position: WToast.position.CENTER,
     }
     WToast.show(toastOpts)
   }
@@ -494,8 +513,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
       data: 'Nenhuma tag foi cadastrada!',
       textColor: '#ffffff',
       backgroundColor: '#36393F',
-      duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-      position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+      duration: WToast.duration.SHORT,
+      position: WToast.position.CENTER,
     }
     WToast.show(toastOpts)
   }
@@ -505,13 +524,13 @@ const ScreenSetDebit = ({ route, navigation }) => {
       data: 'Limite do cartão insuficiente!',
       textColor: '#ffffff',
       backgroundColor: '#36393F',
-      duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-      position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+      duration: WToast.duration.SHORT,
+      position: WToast.position.CENTER,
     }
     WToast.show(toastOpts)
   }
 
-  const createDb =  async () => {
+  const createDb =  async (number) => {
 
     const value = route.params.value; 
     
@@ -614,122 +633,156 @@ const ScreenSetDebit = ({ route, navigation }) => {
           
           let status = false;
 
+          let porcentInfo = newPorcent;
+
           if(newPorcent >= 100 ) {
             newPorcent = 100;
             status = true;
           }
 
-          try {
+          if(number != 1 && number !=2) {
+            if(usedValue > isMeta[0].value && isMeta[0].notification === true) {
+           
+              const infoMeta = {
+                name: isMeta[0].category.name,
+                color: isMeta[0].category.color_hex,
+                value: isMeta[0].value,
+                used_value: usedValue,
+                month: isMeta[0].month,
+                year: isMeta[0].year,
+                porcent: porcentInfo
+              }
+  
+              setInfoMetas(infoMeta);
+              setModalMetaNotification(true);
+
+              return false;
+            }
+          } 
+
+          if(number === 2) {
             
-            await api.put(`metareleases/${isMeta[0].id}`, {
-              used_value: usedValue,
-              porcent: newPorcent.toFixed(2),
-              status: status
-            });
-
-          } catch (error) {
-            console.log(error);
+            try {
+              await api.put(`metareleases/${isMeta[0].id}`, {
+                notification: false
+              });
+            } catch (error) {
+              console.log(error)
+            }
           }
-        }
+
+          try {
+              
+              await api.put(`metareleases/${isMeta[0].id}`, {
+                used_value: usedValue,
+                porcent: newPorcent.toFixed(2),
+                status: status
+              });
+
+            } catch (error) {
+              console.log(error);
+            }
+          }
          
-        if(bankId && !isSwitch) { 
+          if(bankId && !isSwitch) { 
 
-          let sum = qdInstallments ? valueP : value
-          const account = await api.get(`account/${bank.id}`);
-          sum =  Number(account.data.value) - Number(sum);
+            let sum = qdInstallments ? valueP : value
+            const account = await api.get(`account/${bank.id}`);
+            sum =  Number(account.data.value) - Number(sum);
 
-          await api.put(`account/${account.data.id}`, { value: sum });
-          await api.post('releases', releases);
-          navigation.navigate('TabRoutes', {
-            screen: 'Home'
-          });
-        } 
+            await api.put(`account/${account.data.id}`, { value: sum });
+            await api.post('releases', releases);
+            navigation.navigate('TabRoutes', {
+              screen: 'Home'
+            });
+          } 
 
-        if(cardCreditSelect && isSwitch === true) {
+          if(cardCreditSelect && isSwitch === true) {
 
-          const card = await api.get(`cardcredit/${cardCreditSelect.id}`);
-          let valueLimit = Number(card.data.limit_card) - Number(card.data.invoice_amount);
+            const card = await api.get(`cardcredit/${cardCreditSelect.id}`);
+            let valueLimit = Number(card.data.limit_card) - Number(card.data.invoice_amount);
 
-          if(Number(valueLimit) >= Number(value)) {
+            if(Number(valueLimit) >= Number(value)) {
 
-            let resCardRelease = await api.get('cardcreditreleases');
-            let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
-            let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
+              let resCardRelease = await api.get('cardcreditreleases');
+              let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
+              let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
 
-            if(cardStatus2.length > 0) {
-              toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data, troque a data do lançamento!`);
-              return false;
-            }
+              if(cardStatus2.length > 0) {
+                toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data, troque a data do lançamento!`);
+                return false;
+              }
 
-            if(cardStatus3.length > 0) {
-              toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data, troque a data do lançamento!`);
-              return false;
-            }
+              if(cardStatus3.length > 0) {
+                toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data, troque a data do lançamento!`);
+                return false;
+              }
 
-            let sum_limit = Number(card.data.invoice_amount) + Number(value);
+              let sum_limit = Number(card.data.invoice_amount) + Number(value);
 
-            resCardRelease = resCardRelease.data.filter(e => e.id_card_credit === Number(cardId) && e.month === Number(month) && e.year === Number(year));
-            let resCardReleasePay = resCardRelease.filter(e => e.statuscard === 4 && e.month === Number(month));
+              resCardRelease = resCardRelease.data.filter(e => e.id_card_credit === Number(cardId) && e.month === Number(month) && e.year === Number(year));
+              let resCardReleasePay = resCardRelease.filter(e => e.statuscard === 4 && e.month === Number(month));
 
-            if(resCardReleasePay.length > 0) {
-              toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta pago para essa data, troque a data do lançamento!`);
-              return false;
-            }
+              if(resCardReleasePay.length > 0) {
+                toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta pago para essa data, troque a data do lançamento!`);
+                return false;
+              }
 
-            if(resCardRelease.length > 0) {
+              if(resCardRelease.length > 0) {
 
-              let sumCardReleases = Number(resCardRelease[0].invoice_amount) + Number(value);
+                let sumCardReleases = Number(resCardRelease[0].invoice_amount) + Number(value);
+
+                try {
+                  await api.put(`cardcreditreleases/${resCardRelease[0].id}`, { invoice_amount: sumCardReleases });
+                } catch (error) {
+                  console.log(error)
+                }
+                
+              } else {
+
+                const cardInfoReleases = {
+                  statuscard: 1,
+                  month: month,
+                  year: year,
+                  pay: false,
+                  limit_card: cardCreditSelect.limit_card,
+                  invoice_amount: value,
+                  closes_day: cardCreditSelect.closes_day,
+                  wins_day: cardCreditSelect.wins_day,
+                  id_card_credit: cardCreditSelect.id,
+                  id_account: cardCreditSelect.account.id
+                }
+
+                try {
+                  await api.post('cardcreditreleases', cardInfoReleases);
+                } catch (error) {
+                  console.log(error)
+                }
+              }
 
               try {
-                await api.put(`cardcreditreleases/${resCardRelease[0].id}`, { invoice_amount: sumCardReleases });
+                await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
               } catch (error) {
                 console.log(error)
               }
               
-            } else {
-
-              const cardInfoReleases = {
-                statuscard: 1,
-                month: month,
-                year: year,
-                pay: false,
-                limit_card: cardCreditSelect.limit_card,
-                invoice_amount: value,
-                closes_day: cardCreditSelect.closes_day,
-                wins_day: cardCreditSelect.wins_day,
-                id_card_credit: cardCreditSelect.id,
-                id_account: cardCreditSelect.account.id
-              }
-
               try {
-                await api.post('cardcreditreleases', cardInfoReleases);
+                await api.post('releases', releases);
               } catch (error) {
                 console.log(error)
               }
-            }
-
-            try {
-              await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
-            } catch (error) {
-              console.log(error)
-            }
             
-            try {
-              await api.post('releases', releases);
-            } catch (error) {
-              console.log(error)
+              navigation.navigate('TabRoutes', {
+                screen: 'Home'
+              });  
+
+            } else {
+              toatsCardLimit();
             }
           
-            navigation.navigate('TabRoutes', {
-              screen: 'Home'
-            }); 
-
-          } else {
-            toatsCardLimit();
-          }
-        }  
-      } catch (error) {
-        console.log(error);
+          }  
+        } catch (error) {
+          console.log(error);
       }
     } else {
       toatsError();
@@ -1191,6 +1244,80 @@ const ScreenSetDebit = ({ route, navigation }) => {
               
             </BodyModalTags>
         </ModalArea>
+      </Modal>
+
+{/* //-------------------------------- */}
+
+
+
+      <Modal 
+        animationType="slide"
+        transparent={true}
+        visible={modalMetaNotification}
+        onRequestClose={() => setModalMetaNotification(false)}
+      >
+        <ModalAreaMeta>
+
+          <BodyModalNotification>
+
+            <AreaTitleModalNotification>
+                <TitleModalNotification>Notificação meta</TitleModalNotification>
+            </AreaTitleModalNotification>
+
+            <AreaModalNotificationDesc>
+                <DescModalNotification>Ops! Cuidado com sua meta para a</DescModalNotification>
+                <DescModalNotification style={{ marginTop: 7 }}>{infoMetas.name}!</DescModalNotification>
+            </AreaModalNotificationDesc>
+
+
+            <AreaModalNotificationCategory>
+                <DescCategoryModalNotification style={{ color: infoMetas.color_hex }}>{infoMetas.name}!</DescCategoryModalNotification>
+                <DescModalNotification style={{ marginRight: 40 }}>{formatNumber(infoMetas.porcent)}%</DescModalNotification>
+            </AreaModalNotificationCategory>
+
+            <AreaModalNotificationInfo>
+
+                <AreaModalNotificationInfoRow>
+                    <AreaModalNotificationInfoText>Período</AreaModalNotificationInfoText>
+                    <AreaModalNotificationInfoText>{infoMetas.month}/{infoMetas.year}</AreaModalNotificationInfoText>
+                </AreaModalNotificationInfoRow>
+
+                <AreaModalNotificationInfoRow>
+                    <AreaModalNotificationInfoText>Valor da meta</AreaModalNotificationInfoText>
+                    <AreaModalNotificationInfoText>R$ {formatNumber(infoMetas.value)}</AreaModalNotificationInfoText>
+                </AreaModalNotificationInfoRow>
+
+                <AreaModalNotificationInfoRow>
+                    <AreaModalNotificationInfoText>Valor gasto</AreaModalNotificationInfoText>
+                    <AreaModalNotificationInfoText>R$ {formatNumber(infoMetas.used_value)}</AreaModalNotificationInfoText>
+                </AreaModalNotificationInfoRow>
+
+                <AreaModalNotificationButton>
+
+                  <ButtonModalNotification activeOpacity={0.8} onPress={() => {
+                    createDb(1)
+                    setModalMetaNotification(false);
+                  }}>
+                      <ButtonTextModalNotification>Concluir</ButtonTextModalNotification>
+                  </ButtonModalNotification> 
+
+                </AreaModalNotificationButton>      
+
+                <AreaModalNotificationButton style={{ marginBottom: 20 }}>
+
+                    <ButtonCancelModalNotification activeOpacity={0.8} onPress={() => {
+                      createDb(2);
+                      setModalMetaNotification(false);
+                    }} >
+                        <ButtonCancelTextModalNotification>Cancelar alerta referente a essa meta</ButtonCancelTextModalNotification>
+                    </ButtonCancelModalNotification>
+
+                </AreaModalNotificationButton>
+
+            </AreaModalNotificationInfo>
+
+          </BodyModalNotification>
+        </ModalAreaMeta>
       </Modal>
 
     </Container>

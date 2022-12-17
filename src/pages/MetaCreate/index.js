@@ -159,7 +159,7 @@ const MetaCreate = ({ route, navigation }) => {
                 value: e.value,
                 used_value: 0,
                 porcent: 0,
-                status: false
+                status: false,
             }
 
             return info
