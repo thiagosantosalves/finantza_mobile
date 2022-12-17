@@ -86,7 +86,6 @@ import {
   ButtonTextModalNotification,
   ButtonCancelModalNotification,
   ButtonCancelTextModalNotification,
-
 } from './styles';
 
 const ScreenSetDebit = ({ route, navigation }) => {
@@ -544,7 +543,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
     let cardId = null;
     let payingName = '';
 
-    if(categorySelect && description) {
+    if(categorySelect && description) { 
       if(qdInstallments.length > 0) {
         valueP = qdInstallments.split(' ');
         qdP = valueP[0].split('x');
@@ -591,6 +590,17 @@ const ScreenSetDebit = ({ route, navigation }) => {
       let month = date[1];
       let year = date[2];
 
+      let isMeta = meta.filter(e => e.year === Number(year) 
+      && e.month === Number(month ) && e.category.id === categorySelect.id);
+
+      let meta_id = null;
+      let metaIsTrue = false; 
+
+     if(isMeta.length > 0) {
+        meta_id = isMeta[0].id;
+        metaIsTrue = true;
+      }
+
       const releases = {
         description,
         value: value,
@@ -613,17 +623,16 @@ const ScreenSetDebit = ({ route, navigation }) => {
         tag: tagIsTrue,
         type: "2",
         tag_id: tagId,
-        paying_account_name: payingName
+        paying_account_name: payingName,
+        meta_id: meta_id,
+        meta: metaIsTrue
       }
 
       try {
 
-        let isMeta = meta.filter(e => e.year === Number(year) 
-        && e.month === Number(month ) && e.category.id === categorySelect.id);
-
         if(isMeta.length > 0) {
 
-          let newValue = qdInstallments ? valueP : value;
+          let newValue = installments ? valueP : value;
 
           let usedValue = Number(newValue) + Number(isMeta[0].used_value);
           usedValue = usedValue.toFixed(2);
@@ -686,7 +695,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
          
           if(bankId && !isSwitch) { 
 
-            let sum = qdInstallments ? valueP : value
+            let sum = installments ? valueP : value;
             const account = await api.get(`account/${bank.id}`);
             sum =  Number(account.data.value) - Number(sum);
 
@@ -1245,11 +1254,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
             </BodyModalTags>
         </ModalArea>
       </Modal>
-
-{/* //-------------------------------- */}
-
-
-
+      
       <Modal 
         animationType="slide"
         transparent={true}
@@ -1271,7 +1276,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
 
             <AreaModalNotificationCategory>
-                <DescCategoryModalNotification style={{ color: infoMetas.color_hex }}>{infoMetas.name}!</DescCategoryModalNotification>
+                <DescCategoryModalNotification style={{ color: infoMetas.color }}>{infoMetas.name}!</DescCategoryModalNotification>
                 <DescModalNotification style={{ marginRight: 40 }}>{formatNumber(infoMetas.porcent)}%</DescModalNotification>
             </AreaModalNotificationCategory>
 

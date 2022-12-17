@@ -312,8 +312,6 @@ export const ButtonLauchCameraTitle = styled.Text`
     font-size: 14px;
 `;
 
-//--------------------------------------------
-
 export const ModalAreaMeta = styled.View`
     flex: 1;
     justify-content: center;

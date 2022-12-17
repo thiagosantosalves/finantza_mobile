@@ -74,32 +74,42 @@ import {
   ButtonLauchCameraTitle,
   ListTags,
   BodyModalTags,
+  ModalAreaMeta,
+  BodyModalNotification,
+  AreaTitleModalNotification,
+  TitleModalNotification,
+  AreaModalNotificationDesc,
+  DescModalNotification,
+  AreaModalNotificationCategory,
+  DescCategoryModalNotification,
+  AreaModalNotificationInfo,
+  AreaModalNotificationInfoRow,
+  AreaModalNotificationInfoText,
+  ButtonModalNotification,
+  AreaModalNotificationButton,
+  ButtonTextModalNotification,
+  ButtonCancelModalNotification,
+  ButtonCancelTextModalNotification,
 } from './styles';
 
 const ScreenSetDebit = ({ route, navigation }) => {
 
+    const [meta, setMeta] = useState([]);
     const [description, setDescription] = useState(route.params.data.description);
-
     const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-
     const [category, setCategory] = useState('bankFull');
     const [categorySelect, setCategorySelect] = useState(route.params.data.dp_category);
     const [idIconCategory, setIconCategory] = useState(null);
-
     const [isSwitch, setIsSwitch] = useState(false);
-
     const [bankFull, setBankFull] = useState({});
     const [bank, setBank] = useState(route.params.data.account);
     const [idIconBank, setIdIconBank] = useState(null);
-
     const [cardCreditFull, setCardCreditFull] = useState({})
     const [cardCreditSelect, setCardCreditSelect] = useState(route.params.data.card_credit);
     const [cardCreditIcon, setCardCreditIcon] = useState({});
-    
     const [ativeButtonDateToday, setAtiveButtonDateToday] = useState(true);
     const [ativeButtonDateYesterday, setAtiveButtonDateYesterday] = useState(false);
     const [ativeButtonDateOther, setAtiveButtonDateOther] = useState(false);
-    
     const [fixed, setFixed] = useState(route.params.data.fixo);
     const [installments, setInstallments] = useState(route.params.data.installments);
     const [modaInstallments, setModalInstallments] = useState(false);
@@ -115,26 +125,23 @@ const ScreenSetDebit = ({ route, navigation }) => {
     const [qd10, setQd10] = useState('');
     const [qd11, setQd11] = useState('');
     const [qd12, setQd12] = useState('');
-
     const [dateFinal, setDateFinal] = useState(null);
-
     const [anexoPhoto, setAnexoPhoto] = useState();
     const [typePhoto, setTypePhoto] = useState(null);
     const [colorButtonAdd, setColorButtonAdd] = useState(false);
-
     const [tagsFull, setTagsFull] = useState(null);
     const [tag, setTag] = useState(route.params.data.tags);
     const [colorButtonTags, setColorButtonTags] = useState(false);
-
     const [modalCategory, setModalCategory] = useState(false);
     const [modalBank, setModalBank] = useState(false);
     const [modalCard, setModalCard] = useState(false);
     const [modalAnexos, setModalAnexos] = useState(false);
     const [modalTags, setModalTags] = useState(false);
-
     const [response, setResponse] = useState(route.params.data);
     const [attachment, setAttachment] = useState(route.params.data.attachment_img);
     const [imgId, setImgId] = useState(route.params.data.attachment_img_id);
+    const [modalMetaNotification, setModalMetaNotification] = useState(false);
+    const [infoMetas, setInfoMetas] = useState({});
 
     useEffect(() => {
         if(cardCreditSelect) {
@@ -222,7 +229,17 @@ const ScreenSetDebit = ({ route, navigation }) => {
         getTags();
         actionDayIntial();
         getIcon();
+        handlerMeta();
     }, []);
+
+    const handlerMeta = async () => {
+        try {
+          const meta = await api.get('meta');
+          setMeta(meta.data);
+        } catch (error) {
+          console.log(error);
+        }    
+      }
 
     const handleCategoryId = async (id) => {
         
@@ -542,7 +559,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
         WToast.show(toastOpts)
       }
 
-    const createRc =  async () => {
+    const createDb =  async (number) => {
 
         const value = route.params.value; 
         
@@ -640,6 +657,17 @@ const ScreenSetDebit = ({ route, navigation }) => {
         } catch(error) {
             console.log('error');
         }
+
+        let isMeta = meta.filter(e => e.year === Number(year) 
+        && e.month === Number(month ) && e.category.id === categorySelect.id);
+
+        let meta_id = null;
+        let metaIsTrue = false; 
+  
+       if(isMeta.length > 0) {
+          meta_id = isMeta[0].id;
+          metaIsTrue = true;
+        }
         
         const newReleases = {
             description,
@@ -662,10 +690,81 @@ const ScreenSetDebit = ({ route, navigation }) => {
             attachment_img_id: imgId,
             tag: tagIsTrue,
             tag_id: tagId,
-            paying_account_name: payingName
+            paying_account_name: payingName,
+            meta_id: meta_id,
+            meta: metaIsTrue
         }
 
         try {
+
+                if(route.params.data.meta) {
+                    let isMetaEdit = meta.filter(e => e.id === route.params.data.meta_id);
+                    let sumMetaEdit = Number(isMetaEdit[0].used_value) - Number(route.params.data.value);
+
+                    await api.put(`meta/${isMetaEdit[0].id}`, {
+                        newValue: sumMetaEdit
+                    });
+                }
+
+                if(isMeta.length > 0) {
+
+                    let newValue = installments ? valueP : value;
+
+                    let usedValue = Number(newValue) + Number(isMeta[0].used_value);
+                    usedValue = usedValue.toFixed(2);
+
+                    let newPorcent = usedValue * 100;
+                    newPorcent =  Number(newPorcent) / Number(isMeta[0].value);  
+                    
+                    let status = false;
+
+                    let porcentInfo = newPorcent;
+
+                    if(newPorcent >= 100 ) {
+                        newPorcent = 100;
+                        status = true;
+                    }
+
+                    if(number != 1 && number !=2) {
+                        if(usedValue > isMeta[0].value && isMeta[0].notification === true) {
+                    
+                        const infoMeta = {
+                            name: isMeta[0].category.name,
+                            color: isMeta[0].category.color_hex,
+                            value: isMeta[0].value,
+                            used_value: usedValue,
+                            month: isMeta[0].month,
+                            year: isMeta[0].year,
+                            porcent: porcentInfo
+                        }
+
+                        console.log(infoMetas.color)
+            
+                        setInfoMetas(infoMeta);
+                        setModalMetaNotification(true);
+            
+                        return false;
+                        }
+                    } 
+            
+                    if(number === 2) {
+                        try {
+                        await api.put(`metareleases/${isMeta[0].id}`, {
+                            notification: false
+                        });
+                        } catch (error) {
+                        console.log(error)
+                        }
+                    }
+                
+                    await api.put(`metareleases/${isMeta[0].id}`, {
+                        used_value: usedValue,
+                        porcent: newPorcent.toFixed(2),
+                        status: status
+                    });
+                }
+
+           
                 if(bankId && isSwitch === false) { 
 
                     let previousAccount = await api.get(`account/${route.params.data.account.id}`);
@@ -677,7 +776,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         await api.put(`account/${route.params.data.account.id}`, { value: sumPreviousAccount }); 
                     }
 
-                    let sum = qdInstallments ? valueP : value;
+                    let sum = installments ? valueP : value;
                     const account = await api.get(`account/${bank.id}`);
                     sum =  Number(account.data.value) - Number(sum); 
 
@@ -687,8 +786,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
                     navigation.navigate('TabRoutes', {
                         screen: 'Releases'
                     });
-                }
-            
+                } 
+
                 if(cardCreditSelect && isSwitch === true) {
 
                     let resCardRelease = await api.get('cardcreditreleases');
@@ -696,13 +795,13 @@ const ScreenSetDebit = ({ route, navigation }) => {
                     let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
                 
                     if(cardStatus2.length > 0) {
-                      toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data!`);
-                      return false;
+                        toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data!`);
+                        return false;
                     }
         
                     if(cardStatus3.length > 0) {
-                      toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data!`);
-                      return false;
+                        toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data!`);
+                        return false;
                     }
 
                     let cardReleases = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 1);
@@ -715,19 +814,13 @@ const ScreenSetDebit = ({ route, navigation }) => {
                     let cardReleasesTotal =  Number(cardReleases[0].invoice_amount) - Number(route.params.data.value);
                     cardReleasesTotal = Number(cardReleasesTotal) + Number(value);
 
-                    console.log(route.params);
-
-
-                 /* 
                     try {
                         await api.put(`cardcreditreleases/${cardReleases[0].id}`, { invoice_amount: cardReleasesTotal });
-                      } catch (error) {
+                        } catch (error) {
                         console.log(error);
                     } 
 
-                     */
-
-                   /*  const card = await api.get(`cardcredit/${cardCreditSelect.id}`);
+                    const card = await api.get(`cardcredit/${cardCreditSelect.id}`);
 
                     let limit_full = card.data.invoice_amount;
 
@@ -754,8 +847,9 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         await api.put(`cardcredit/${newCard.data.id}`, {
                             invoice_amount: limit_full
                         }); 
-                    }    */
+                    }
                 }    
+
             } catch (error) {
                 console.log(error);
             } 
@@ -767,460 +861,529 @@ const ScreenSetDebit = ({ route, navigation }) => {
     return(
         <Container>
 
-        <Header>
-            <AreaValue>
-            <TextValue>R$</TextValue>
-            <TextValue>{formatNumber(route.params.value)}</TextValue>
-            </AreaValue>
-        </Header> 
+            <Header>
+                <AreaValue>
+                <TextValue>R$</TextValue>
+                <TextValue>{formatNumber(route.params.value)}</TextValue>
+                </AreaValue>
+            </Header> 
 
-        <AreaSection 
-            showsVerticalScrollIndicator={false}
-        >
+            <AreaSection 
+                showsVerticalScrollIndicator={false}
+            >
 
-            <Section>
-            <TitleSection>Descrição</TitleSection>
-            <PatternInput 
-                placeholder="Digite sua descrição" 
-                placeholderTextColor="#7E7E7E"
-                maxLength={35}
-                onChangeText={(item)=>setDescription(item)}
-                value={description} 
+                <Section>
+                <TitleSection>Descrição</TitleSection>
+                <PatternInput 
+                    placeholder="Digite sua descrição" 
+                    placeholderTextColor="#7E7E7E"
+                    maxLength={35}
+                    onChangeText={(item)=>setDescription(item)}
+                    value={description} 
+                />
+
+                </Section>
+
+                <Section>
+
+                <TitleSection>Categoria</TitleSection>
+
+                <AreaIconCategory activeOpacity={0.8} onPress={() => setModalCategory(true)}>
+
+                    {categorySelect ? (
+                    <>
+                        <IconCategory style={{backgroundColor: categorySelect.color_hex}}>
+                            <IconUrl source={idIconCategory} />
+                        </IconCategory>
+                        <TitleIconCategory>{categorySelect.name}</TitleIconCategory>
+                    </>
+                    ) : (
+                    <>
+                        <IconPattern source={require('../../assets/card_img/icontrasejado.png')} />
+                        <TitleIconCategory>Selecione uma categoria</TitleIconCategory>
+                    </>
+                    )}
+
+                </AreaIconCategory>
+
+                </Section>
+
+                {isSwitch ? (
+                <Section>
+                    <TitleSection>Cartão de credito</TitleSection>
+
+                    <AreaSwitch>
+                    {cardCreditSelect ? (
+                        <>
+                            <AreaIconBank activeOpacity={0.8} onPress={() =>  setModalCard(true)}>
+                                <IconPattern style={{width: 32, height: 32}} source={cardCreditIcon.url} />
+                                <TitleIconCategory>{cardCreditSelect.name}</TitleIconCategory>
+                            </AreaIconBank>
+                        </>
+                    ) : (
+                        <>
+                            <AreaIconBank activeOpacity={0.8} onPress={() =>  handlerIsCard()}>
+                                <IconPattern source={require('../../assets/card_img/icontrasejado.png')} />
+                                <TitleIconCategory>Selecione um cartão de credito</TitleIconCategory>
+                            </AreaIconBank>
+                        </>
+                    )}
+                    
+                    <Switch
+                        trackColor={{ false: "#6F6F6F", true: "#DEB3C7" }}
+                        thumbColor={isSwitch ? "#DD2D82" : "#CECECE"}
+                        ios_backgroundColor="#6F6F6F"
+                        style={{marginRight: 25}}
+                        onValueChange={() => {
+                        if(isSwitch) {
+                            setIsSwitch(false);
+                        } else {
+                            setIsSwitch(true);
+                        }
+                        }}
+                        value={isSwitch}
+                    />
+                    </AreaSwitch>
+                
+                </Section>
+                ) : (
+                <Section>
+                    <TitleSection>Conta</TitleSection>
+
+                    <AreaSwitch>
+                    {bank ? (
+                            <AreaIconBank activeOpacity={0.8} onPress={() =>  setModalBank(true)}>
+                                <IconBank style={{backgroundColor: bank.color_hex}}>
+                                    <IconUrl source={idIconBank} />
+                                </IconBank>
+                                <TitleIconBank>{bank.name}</TitleIconBank>
+                            </AreaIconBank>
+
+                    ) : (
+                        <>
+
+                            <AreaIconBank activeOpacity={0.8} onPress={() =>  setModalBank(true)}>
+                                <IconPattern source={require('../../assets/card_img/icontrasejado.png')} />
+                                <TitleIconCategory>Selecione uma conta</TitleIconCategory>
+                            </AreaIconBank>
+                        
+                        </>
+                    )}
+
+                    <Switch
+                        trackColor={{ false: "#6F6F6F", true: "#DEB3C7" }}
+                        thumbColor={isSwitch ? "#DD2D82" : "#CECECE"}
+                        ios_backgroundColor="#6F6F6F"
+                        style={{marginRight: 25}}
+                        onValueChange={() => {
+                        if(isSwitch) {
+                            setIsSwitch(false);
+                        } else {
+                            setIsSwitch(true);
+                        }
+                        }}
+                        value={isSwitch}
+                    />
+                    </AreaSwitch>
+
+                </Section>
+                )}
+
+                <Section>
+
+                <TitleSection>Data</TitleSection>
+
+                <AreaDate>
+
+                    <ButtonSelectPattern 
+                    style={{backgroundColor: ativeButtonDateToday ? '#FF872C' : '#C4C4C4'}}
+                    onPress={actionDay}
+                    activeOpacity={0.8}
+                    >
+                    <ButtonSelectPatternText>Hoje</ButtonSelectPatternText>
+                    </ButtonSelectPattern>
+
+                    <ButtonSelectPattern
+                    style={{backgroundColor: ativeButtonDateYesterday ? '#FF872C' : '#C4C4C4'}}
+                    onPress={yesterday}
+                    activeOpacity={0.8}
+                    >
+                    <ButtonSelectPatternText>Ontem</ButtonSelectPatternText>
+                    </ButtonSelectPattern>
+
+                    <ButtonSelectPattern 
+                    style={{backgroundColor: ativeButtonDateOther ? '#FF872C' : '#C4C4C4'}}
+                    onPress={showDatePicker}
+                    activeOpacity={0.8}
+                    >
+                    <ButtonSelectPatternText>Outro</ButtonSelectPatternText>
+                    </ButtonSelectPattern>
+
+                </AreaDate>
+
+                </Section>
+
+                <Section>
+
+                <TitleSection>Repetir lançamentos</TitleSection>
+
+                <AreaDate>
+
+                    <ButtonSelectPattern style={{ backgroundColor: fixed ? '#FF872C' : '#C4C4C4'}}
+                    onPress={getFixed}
+                    activeOpacity={0.8}
+                    >
+                    <ButtonSelectPatternText>Fixo</ButtonSelectPatternText>
+                    </ButtonSelectPattern>
+
+                    <ButtonSelectPattern style={{width: 110, backgroundColor: installments ? '#FF872C' : '#C4C4C4'}}
+                    onPress={getInstallments}
+                    activeOpacity={0.8}
+                    >
+                    <ButtonSelectPatternText>Parcelado</ButtonSelectPatternText>
+                    </ButtonSelectPattern>
+
+                </AreaDate>
+
+                </Section>
+
+                <Section>
+
+                <TitleSection>Anexos</TitleSection>
+
+                <AreaDate>
+
+                    <ButtonSelectPattern  
+                    onPress={() => setModalAnexos(true)}
+                    activeOpacity={0.8}
+                    style={{backgroundColor: colorButtonAdd ? '#FF872C' : '#C4C4C4'}}
+                    >
+                    <ButtonSelectPatternText>Add</ButtonSelectPatternText>
+                    </ButtonSelectPattern>
+                    
+                    {anexoPhoto &&
+                    <>
+                        <TitleX>+</TitleX>
+
+                        <ButtonImageInfo>
+                        <ButtonSelectPatternText>Imagem.{typePhoto}</ButtonSelectPatternText>
+                        </ButtonImageInfo>
+                    </>
+                    }
+
+                </AreaDate>
+
+                </Section>
+
+                <Section>
+
+                <TitleSection>Tags</TitleSection>
+
+                <AreaDate>
+
+                    <ButtonSelectPattern activeOpacity={0.8} onPress={() => tagsFull.length > 0 ? setModalTags(true) : toatsTags()}
+                    style={{backgroundColor: colorButtonTags ? '#FF872C' : '#C4C4C4'}}>
+                    <ButtonSelectPatternText>Tags</ButtonSelectPatternText>
+                    </ButtonSelectPattern>
+
+                    {tag &&
+                    <>
+                        <TitleX>+</TitleX>
+
+                        <ButtonImageInfo>
+                        <ButtonSelectPatternText>{tag.name}</ButtonSelectPatternText>
+                        </ButtonImageInfo>
+                    </>
+                    }
+
+                </AreaDate>
+
+                </Section>
+
+                <AreaButton>
+                <ButtonCreate activeOpacity={0.8} onPress={() => createDb()}>
+                    <FontAwesome name="check" size={30} color="#FFF" />
+                </ButtonCreate>
+                </AreaButton>
+
+            </AreaSection>
+
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={modalCategory}
+                onRequestClose={()=>setModalCategory(false)}
+            >
+                <ModalArea>
+                    <BodyModalCategory>
+
+                        <AreaTitleModal>
+                            <TitleModal>Selecione uma categoria</TitleModal>
+                        </AreaTitleModal>
+
+                        <ListBank 
+                        data={category}
+                        renderItem={({item}) => 
+                        <ListCategoryDpFull
+                            data={item} 
+                            onAction={(id) => handleCategoryId(id)}                       
+                        />} 
+                        keyExtractor={item => item.id}
+                        />
+
+                    </BodyModalCategory>
+                </ModalArea>
+            </Modal>
+
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={modalBank}
+                onRequestClose={()=>setModalBank(false)}
+            >
+                <ModalArea>
+                    <BodyModalBank>
+
+                        <AreaTitleModal>
+                            <TitleModal>Selecione uma conta</TitleModal>
+                        </AreaTitleModal>
+
+                        <ListBank 
+                        data={bankFull}
+                        renderItem={({item}) => 
+                        <ListBankFull
+                            data={item} 
+                            onAction={(id) => handleBankId(id)}                       
+                        />} 
+                        keyExtractor={item => item.id}
+                        />
+
+                    </BodyModalBank>
+                </ModalArea>
+            </Modal>
+
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={modalCard}
+                onRequestClose={()=>setModalCard(false)}
+            >
+                <ModalArea>
+                    <BodyModalBank>
+
+                        <AreaTitleModal>
+                            <TitleModal>Selecione um cartão de credito</TitleModal>
+                        </AreaTitleModal>
+
+                        <ListBank 
+                        data={cardCreditFull}
+                        renderItem={({item}) => 
+                        <ListCardCreditFull
+                            data={item} 
+                            onAction={(id) => handleCardId(id)}                       
+                        />} 
+                        keyExtractor={item => item.id}
+                        />
+
+                    </BodyModalBank>
+                </ModalArea>
+            </Modal>
+        
+            <DateTimePickerModal
+                isVisible={isDatePickerVisible}
+                mode="date"
+                onConfirm={handleConfirm}
+                onCancel={hideDatePicker}
+                cancelTextIOS={'Sair'}
+                confirmTextIOS={'OK'}
+                headerTextIOS={'Selecione uma data'}
             />
 
-            </Section>
-
-            <Section>
-
-            <TitleSection>Categoria</TitleSection>
-
-            <AreaIconCategory activeOpacity={0.8} onPress={() => setModalCategory(true)}>
-
-                {categorySelect ? (
-                <>
-                    <IconCategory style={{backgroundColor: categorySelect.color_hex}}>
-                        <IconUrl source={idIconCategory} />
-                    </IconCategory>
-                    <TitleIconCategory>{categorySelect.name}</TitleIconCategory>
-                </>
-                ) : (
-                <>
-                    <IconPattern source={require('../../assets/card_img/icontrasejado.png')} />
-                    <TitleIconCategory>Selecione uma categoria</TitleIconCategory>
-                </>
-                )}
-
-            </AreaIconCategory>
-
-            </Section>
-
-            {isSwitch ? (
-            <Section>
-                <TitleSection>Cartão de credito</TitleSection>
-
-                <AreaSwitch>
-                {cardCreditSelect ? (
-                    <>
-                        <AreaIconBank activeOpacity={0.8} onPress={() =>  setModalCard(true)}>
-                            <IconPattern style={{width: 32, height: 32}} source={cardCreditIcon.url} />
-                            <TitleIconCategory>{cardCreditSelect.name}</TitleIconCategory>
-                        </AreaIconBank>
-                    </>
-                ) : (
-                    <>
-                        <AreaIconBank activeOpacity={0.8} onPress={() =>  handlerIsCard()}>
-                            <IconPattern source={require('../../assets/card_img/icontrasejado.png')} />
-                            <TitleIconCategory>Selecione um cartão de credito</TitleIconCategory>
-                        </AreaIconBank>
-                    </>
-                )}
-                
-                <Switch
-                    trackColor={{ false: "#6F6F6F", true: "#DEB3C7" }}
-                    thumbColor={isSwitch ? "#DD2D82" : "#CECECE"}
-                    ios_backgroundColor="#6F6F6F"
-                    style={{marginRight: 25}}
-                    onValueChange={() => {
-                    if(isSwitch) {
-                        setIsSwitch(false);
-                    } else {
-                        setIsSwitch(true);
-                    }
-                    }}
-                    value={isSwitch}
-                />
-                </AreaSwitch>
-            
-            </Section>
-            ) : (
-            <Section>
-                <TitleSection>Conta</TitleSection>
-
-                <AreaSwitch>
-                {bank ? (
-                        <AreaIconBank activeOpacity={0.8} onPress={() =>  setModalBank(true)}>
-                            <IconBank style={{backgroundColor: bank.color_hex}}>
-                                <IconUrl source={idIconBank} />
-                            </IconBank>
-                            <TitleIconBank>{bank.name}</TitleIconBank>
-                        </AreaIconBank>
-
-                ) : (
-                    <>
-
-                        <AreaIconBank activeOpacity={0.8} onPress={() =>  setModalBank(true)}>
-                            <IconPattern source={require('../../assets/card_img/icontrasejado.png')} />
-                            <TitleIconCategory>Selecione uma conta</TitleIconCategory>
-                        </AreaIconBank>
+            <Modal
+                visible={modaInstallments}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={()=>setModalInstallments(false)}
+            >
+                <ModalArea>
+                <BodyModalInstallments>
                     
-                    </>
-                )}
+                    <TitleModalInstallments>Quantas vezes será parcelado?</TitleModalInstallments>
 
-                <Switch
-                    trackColor={{ false: "#6F6F6F", true: "#DEB3C7" }}
-                    thumbColor={isSwitch ? "#DD2D82" : "#CECECE"}
-                    ios_backgroundColor="#6F6F6F"
-                    style={{marginRight: 25}}
-                    onValueChange={() => {
-                    if(isSwitch) {
-                        setIsSwitch(false);
-                    } else {
-                        setIsSwitch(true);
-                    }
-                    }}
-                    value={isSwitch}
-                />
-                </AreaSwitch>
+                    <BoxModalInstallments>
+                    <Picker
+                        selectedValue={qdInstallments}
+                        style={{height: 80, width: 300, color: '#000' }}
+                        dropdownIconColor="#2F323D"
+                        onValueChange={actionPickerInstallments}>
+                        <Picker.Item label={`2x de R$ ${qd2}`}  value={'2x de '+qd2} />
+                        <Picker.Item label={`3x de R$ ${qd3}`} value={'3x de '+qd3} />
+                        <Picker.Item label={`4x de R$ ${qd4}`} value={'4x de '+qd4} />
+                        <Picker.Item label={`5x de R$ ${qd5}`} value={'5x de '+qd5} />
+                        <Picker.Item label={`6x de R$ ${qd6}`} value={'6x de '+qd6} />
+                        <Picker.Item label={`7x de R$ ${qd7}`} value={'7x de '+qd7} />
+                        <Picker.Item label={`8x de R$ ${qd8}`} value={'8x de '+qd8} />
+                        <Picker.Item label={`9x de R$ ${qd9}`} value={'9x de '+qd9} />
+                        <Picker.Item label={`10x de R$ ${qd10}`} value={'10x de '+qd10} />
+                        <Picker.Item label={`11x de R$ ${qd11}`} value={'11x de '+qd11} />
+                        <Picker.Item label={`12x de R$ ${qd12}`} value={'12x de '+qd12} />
+                    </Picker>
+                    </BoxModalInstallments>
 
-            </Section>
-            )}
+                    <ButtonActionInstallments 
+                    activeOpacity={0.8}
+                    onPress={actionCloseModalInstallments}
+                    >
+                    <TitleButtonInstallments>Concluir</TitleButtonInstallments>
+                    </ButtonActionInstallments>
 
-            <Section>
+                </BodyModalInstallments>
+                            
+                </ModalArea>
+            </Modal>
 
-            <TitleSection>Data</TitleSection>
+            <Modal
+                visible={modalAnexos}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={()=>setModalAnexos(false)}
+            >
+                <ModalArea>
+                    <BodyModalAnexos>
 
-            <AreaDate>
+                    <HeaderModalAnexo>
 
-                <ButtonSelectPattern 
-                style={{backgroundColor: ativeButtonDateToday ? '#FF872C' : '#C4C4C4'}}
-                onPress={actionDay}
-                activeOpacity={0.8}
-                >
-                <ButtonSelectPatternText>Hoje</ButtonSelectPatternText>
-                </ButtonSelectPattern>
+                        <AreaTitle>
+                        <TitleModalAnexos>Adicinar uma anexo</TitleModalAnexos>
+                        </AreaTitle>
 
-                <ButtonSelectPattern
-                style={{backgroundColor: ativeButtonDateYesterday ? '#FF872C' : '#C4C4C4'}}
-                onPress={yesterday}
-                activeOpacity={0.8}
-                >
-                <ButtonSelectPatternText>Ontem</ButtonSelectPatternText>
-                </ButtonSelectPattern>
+                        <AreaButtonClose>
 
-                <ButtonSelectPattern 
-                style={{backgroundColor: ativeButtonDateOther ? '#FF872C' : '#C4C4C4'}}
-                onPress={showDatePicker}
-                activeOpacity={0.8}
-                >
-                <ButtonSelectPatternText>Outro</ButtonSelectPatternText>
-                </ButtonSelectPattern>
+                        <ButtonClose onPress={() => setModalAnexos(false)}
+                            activeOpacity={0.8}
+                        >
+                            <AntDesign name="close" color="#fff" size={20} />
+                        </ButtonClose>
 
-            </AreaDate>
+                        </AreaButtonClose>
 
-            </Section>
+                    </HeaderModalAnexo>
 
-            <Section>
+                    <BodyButton>
 
-            <TitleSection>Repetir lançamentos</TitleSection>
-
-            <AreaDate>
-
-                <ButtonSelectPattern style={{ backgroundColor: fixed ? '#FF872C' : '#C4C4C4'}}
-                onPress={getFixed}
-                activeOpacity={0.8}
-                >
-                <ButtonSelectPatternText>Fixo</ButtonSelectPatternText>
-                </ButtonSelectPattern>
-
-                <ButtonSelectPattern style={{width: 110, backgroundColor: installments ? '#FF872C' : '#C4C4C4'}}
-                onPress={getInstallments}
-                activeOpacity={0.8}
-                >
-                <ButtonSelectPatternText>Parcelado</ButtonSelectPatternText>
-                </ButtonSelectPattern>
-
-            </AreaDate>
-
-            </Section>
-
-            <Section>
-
-            <TitleSection>Anexos</TitleSection>
-
-            <AreaDate>
-
-                <ButtonSelectPattern  
-                onPress={() => setModalAnexos(true)}
-                activeOpacity={0.8}
-                style={{backgroundColor: colorButtonAdd ? '#FF872C' : '#C4C4C4'}}
-                >
-                <ButtonSelectPatternText>Add</ButtonSelectPatternText>
-                </ButtonSelectPattern>
-                
-                {anexoPhoto &&
-                <>
-                    <TitleX>+</TitleX>
-
-                    <ButtonImageInfo>
-                    <ButtonSelectPatternText>Imagem.{typePhoto}</ButtonSelectPatternText>
-                    </ButtonImageInfo>
-                </>
-                }
-
-            </AreaDate>
-
-            </Section>
-
-            <Section>
-
-            <TitleSection>Tags</TitleSection>
-
-            <AreaDate>
-
-                <ButtonSelectPattern activeOpacity={0.8} onPress={() => tagsFull.length > 0 ? setModalTags(true) : toatsTags()}
-                style={{backgroundColor: colorButtonTags ? '#FF872C' : '#C4C4C4'}}>
-                <ButtonSelectPatternText>Tags</ButtonSelectPatternText>
-                </ButtonSelectPattern>
-
-                {tag &&
-                <>
-                    <TitleX>+</TitleX>
-
-                    <ButtonImageInfo>
-                    <ButtonSelectPatternText>{tag.name}</ButtonSelectPatternText>
-                    </ButtonImageInfo>
-                </>
-                }
-
-            </AreaDate>
-
-            </Section>
-
-            <AreaButton>
-            <ButtonCreate activeOpacity={0.8} onPress={() => createRc()}>
-                <FontAwesome name="check" size={30} color="#FFF" />
-            </ButtonCreate>
-            </AreaButton>
-
-        </AreaSection>
-
-        <Modal 
-            animationType="slide"
-            transparent={true}
-            visible={modalCategory}
-            onRequestClose={()=>setModalCategory(false)}
-        >
-            <ModalArea>
-                <BodyModalCategory>
-
-                    <AreaTitleModal>
-                        <TitleModal>Selecione uma categoria</TitleModal>
-                    </AreaTitleModal>
-
-                    <ListBank 
-                    data={category}
-                    renderItem={({item}) => 
-                    <ListCategoryDpFull
-                        data={item} 
-                        onAction={(id) => handleCategoryId(id)}                       
-                    />} 
-                    keyExtractor={item => item.id}
-                    />
-
-                </BodyModalCategory>
-            </ModalArea>
-        </Modal>
-
-        <Modal 
-            animationType="slide"
-            transparent={true}
-            visible={modalBank}
-            onRequestClose={()=>setModalBank(false)}
-        >
-            <ModalArea>
-                <BodyModalBank>
-
-                    <AreaTitleModal>
-                        <TitleModal>Selecione uma conta</TitleModal>
-                    </AreaTitleModal>
-
-                    <ListBank 
-                    data={bankFull}
-                    renderItem={({item}) => 
-                    <ListBankFull
-                        data={item} 
-                        onAction={(id) => handleBankId(id)}                       
-                    />} 
-                    keyExtractor={item => item.id}
-                    />
-
-                </BodyModalBank>
-            </ModalArea>
-        </Modal>
-
-        <Modal 
-            animationType="slide"
-            transparent={true}
-            visible={modalCard}
-            onRequestClose={()=>setModalCard(false)}
-        >
-            <ModalArea>
-                <BodyModalBank>
-
-                    <AreaTitleModal>
-                        <TitleModal>Selecione um cartão de credito</TitleModal>
-                    </AreaTitleModal>
-
-                    <ListBank 
-                    data={cardCreditFull}
-                    renderItem={({item}) => 
-                    <ListCardCreditFull
-                        data={item} 
-                        onAction={(id) => handleCardId(id)}                       
-                    />} 
-                    keyExtractor={item => item.id}
-                    />
-
-                </BodyModalBank>
-            </ModalArea>
-        </Modal>
-        
-        <DateTimePickerModal
-            isVisible={isDatePickerVisible}
-            mode="date"
-            onConfirm={handleConfirm}
-            onCancel={hideDatePicker}
-            cancelTextIOS={'Sair'}
-            confirmTextIOS={'OK'}
-            headerTextIOS={'Selecione uma data'}
-        />
-
-        <Modal
-            visible={modaInstallments}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={()=>setModalInstallments(false)}
-        >
-            <ModalArea>
-            <BodyModalInstallments>
-                
-                <TitleModalInstallments>Quantas vezes será parcelado?</TitleModalInstallments>
-
-                <BoxModalInstallments>
-                <Picker
-                    selectedValue={qdInstallments}
-                    style={{height: 80, width: 300, color: '#000' }}
-                    dropdownIconColor="#2F323D"
-                    onValueChange={actionPickerInstallments}>
-                    <Picker.Item label={`2x de R$ ${qd2}`}  value={'2x de '+qd2} />
-                    <Picker.Item label={`3x de R$ ${qd3}`} value={'3x de '+qd3} />
-                    <Picker.Item label={`4x de R$ ${qd4}`} value={'4x de '+qd4} />
-                    <Picker.Item label={`5x de R$ ${qd5}`} value={'5x de '+qd5} />
-                    <Picker.Item label={`6x de R$ ${qd6}`} value={'6x de '+qd6} />
-                    <Picker.Item label={`7x de R$ ${qd7}`} value={'7x de '+qd7} />
-                    <Picker.Item label={`8x de R$ ${qd8}`} value={'8x de '+qd8} />
-                    <Picker.Item label={`9x de R$ ${qd9}`} value={'9x de '+qd9} />
-                    <Picker.Item label={`10x de R$ ${qd10}`} value={'10x de '+qd10} />
-                    <Picker.Item label={`11x de R$ ${qd11}`} value={'11x de '+qd11} />
-                    <Picker.Item label={`12x de R$ ${qd12}`} value={'12x de '+qd12} />
-                </Picker>
-                </BoxModalInstallments>
-
-                <ButtonActionInstallments 
-                activeOpacity={0.8}
-                onPress={actionCloseModalInstallments}
-                >
-                <TitleButtonInstallments>Concluir</TitleButtonInstallments>
-                </ButtonActionInstallments>
-
-            </BodyModalInstallments>
-                        
-            </ModalArea>
-        </Modal>
-
-        <Modal
-            visible={modalAnexos}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={()=>setModalAnexos(false)}
-        >
-            <ModalArea>
-                <BodyModalAnexos>
-
-                <HeaderModalAnexo>
-
-                    <AreaTitle>
-                    <TitleModalAnexos>Adicinar uma anexo</TitleModalAnexos>
-                    </AreaTitle>
-
-                    <AreaButtonClose>
-
-                    <ButtonClose onPress={() => setModalAnexos(false)}
+                        <ButtonCamera onPress={openPicker}
                         activeOpacity={0.8}
-                    >
-                        <AntDesign name="close" color="#fff" size={20} />
-                    </ButtonClose>
+                        >
+                            <ButtonCameraTitle>Tirar foto</ButtonCameraTitle>
+                        </ButtonCamera>
 
-                    </AreaButtonClose>
+                        <ButtonLauchCamera onPress={openPickerLibrary}
+                        activeOpacity={0.8}
+                        >
+                            <ButtonLauchCameraTitle>Foto da galeria</ButtonLauchCameraTitle>
+                        </ButtonLauchCamera>
 
-                </HeaderModalAnexo>
-
-                <BodyButton>
-
-                    <ButtonCamera onPress={openPicker}
-                    activeOpacity={0.8}
-                    >
-                        <ButtonCameraTitle>Tirar foto</ButtonCameraTitle>
-                    </ButtonCamera>
-
-                    <ButtonLauchCamera onPress={openPickerLibrary}
-                    activeOpacity={0.8}
-                    >
-                        <ButtonLauchCameraTitle>Foto da galeria</ButtonLauchCameraTitle>
-                    </ButtonLauchCamera>
-
-                </BodyButton>
-                
-                </BodyModalAnexos>      
-            </ModalArea>
-        </Modal>
+                    </BodyButton>
+                    
+                    </BodyModalAnexos>      
+                </ModalArea>
+            </Modal>
         
-        <Modal 
-            animationType="slide"
-            transparent={true}
-            visible={modalTags}
-            onRequestClose={()=>setModalTags(false)}
-        >
-            <ModalArea>
-                <BodyModalTags>
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={modalTags}
+                onRequestClose={()=>setModalTags(false)}
+            >
+                <ModalArea>
+                    <BodyModalTags>
 
-                <AreaTitleModal>
-                    <TitleModal>Selecione uma tag</TitleModal>
-                </AreaTitleModal>
+                    <AreaTitleModal>
+                        <TitleModal>Selecione uma tag</TitleModal>
+                    </AreaTitleModal>
 
-                <ListTags
-                    data={tagsFull}
-                    renderItem={({item}) => 
-                    <ListTagsFull
-                        data={item} 
-                        onAction={(id) => getTagsId(id)}                       
-                    />} 
-                    keyExtractor={item => item.id}
-                /> 
+                    <ListTags
+                        data={tagsFull}
+                        renderItem={({item}) => 
+                        <ListTagsFull
+                            data={item} 
+                            onAction={(id) => getTagsId(id)}                       
+                        />} 
+                        keyExtractor={item => item.id}
+                    /> 
 
-                </BodyModalTags>
-            </ModalArea>
-        </Modal>
+                    </BodyModalTags>
+                </ModalArea>
+            </Modal>
+
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={modalMetaNotification}
+                onRequestClose={() => setModalMetaNotification(false)}
+            >
+                <ModalAreaMeta>
+
+                <BodyModalNotification>
+
+                    <AreaTitleModalNotification>
+                        <TitleModalNotification>Notificação meta</TitleModalNotification>
+                    </AreaTitleModalNotification>
+
+                    <AreaModalNotificationDesc>
+                        <DescModalNotification>Ops! Cuidado com sua meta para a</DescModalNotification>
+                        <DescModalNotification style={{ marginTop: 7 }}>{infoMetas.name}!</DescModalNotification>
+                    </AreaModalNotificationDesc>
+
+                    <AreaModalNotificationCategory>
+                        <DescCategoryModalNotification style={{ color: infoMetas.color }}>{infoMetas.name}!</DescCategoryModalNotification>
+                        <DescModalNotification style={{ marginRight: 40 }}>{formatNumber(infoMetas.porcent)}%</DescModalNotification>
+                    </AreaModalNotificationCategory>
+
+                    <AreaModalNotificationInfo>
+
+                        <AreaModalNotificationInfoRow>
+                            <AreaModalNotificationInfoText>Período</AreaModalNotificationInfoText>
+                            <AreaModalNotificationInfoText>{infoMetas.month}/{infoMetas.year}</AreaModalNotificationInfoText>
+                        </AreaModalNotificationInfoRow>
+
+                        <AreaModalNotificationInfoRow>
+                            <AreaModalNotificationInfoText>Valor da meta</AreaModalNotificationInfoText>
+                            <AreaModalNotificationInfoText>R$ {formatNumber(infoMetas.value)}</AreaModalNotificationInfoText>
+                        </AreaModalNotificationInfoRow>
+
+                        <AreaModalNotificationInfoRow>
+                            <AreaModalNotificationInfoText>Valor gasto</AreaModalNotificationInfoText>
+                            <AreaModalNotificationInfoText>R$ {formatNumber(infoMetas.used_value)}</AreaModalNotificationInfoText>
+                        </AreaModalNotificationInfoRow>
+
+                        <AreaModalNotificationButton>
+
+                        <ButtonModalNotification activeOpacity={0.8} onPress={() => {
+                            createDb(1)
+                            setModalMetaNotification(false);
+                        }}>
+                            <ButtonTextModalNotification>Concluir</ButtonTextModalNotification>
+                        </ButtonModalNotification> 
+
+                        </AreaModalNotificationButton>      
+
+                        <AreaModalNotificationButton style={{ marginBottom: 20 }}>
+
+                            <ButtonCancelModalNotification activeOpacity={0.8} onPress={() => {
+                            createDb(2);
+                            setModalMetaNotification(false);
+                            }} >
+                                <ButtonCancelTextModalNotification>Cancelar alerta referente a essa meta</ButtonCancelTextModalNotification>
+                            </ButtonCancelModalNotification>
+
+                        </AreaModalNotificationButton>
+
+                    </AreaModalNotificationInfo>
+
+                </BodyModalNotification>
+                </ModalAreaMeta>
+            </Modal>
         </Container>
     )
 }

@@ -313,3 +313,106 @@ export const ButtonLauchCameraTitle = styled.Text`
     color: #fff;
     font-size: 14px;
 `;
+
+export const ModalAreaMeta = styled.View`
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+`;
+
+export const BodyModalNotification = styled.View`
+    width: 90%;
+    border-radius: 4px;
+    background-color: #fff;
+`;
+
+export const AreaTitleModalNotification = styled.View`
+    justify-content: center;
+    align-items: center;
+    height: 45px;
+`;
+
+export const TitleModalNotification = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #2F323D;
+    font-size: 16px;
+    padding-top: 20px;
+`;
+
+export const AreaModalNotificationDesc = styled.View`
+    justify-content: center;
+    align-items: center;
+    height: 120px;
+`;
+
+export const DescModalNotification = styled.Text`
+    font-family: 'Poppins-Regular';
+    color: #2F323D;
+    font-size: 12px;
+`;
+
+export const AreaModalNotificationCategory = styled.View`
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+`;
+
+export const DescCategoryModalNotification = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #D65A3F;
+    font-size: 12px;
+    margin-left: 40px; 
+`;
+
+export const AreaModalNotificationInfo = styled.View`
+    margin-left: 15px;
+    margin-right: 15px;
+`;
+
+export const AreaModalNotificationInfoRow = styled.View`
+    flex-direction: row;
+    justify-content: space-between;
+`;
+
+export const AreaModalNotificationInfoText = styled.Text`
+    font-family: 'Poppins-Regular';
+    color: #2F323D;
+    font-size: 12px;
+    margin-top: 8px;
+`;
+
+export const AreaModalNotificationButton = styled.View`
+    justify-content: center;
+    align-items: center;
+    height: 45px;
+    margin-top: 20px;
+`;
+
+export const ButtonModalNotification = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 33px;
+    border-radius: 4px;
+    background-color: #CE510B;
+`;
+
+export const ButtonTextModalNotification = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #fff;
+    font-size: 12px;
+`;
+
+export const ButtonCancelModalNotification = styled.TouchableOpacity`
+
+    justify-content: center;
+    align-items: center;
+    height: 33px;
+`;
+
+export const ButtonCancelTextModalNotification = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #E83F5B;
+    font-size: 10px;
+`;
