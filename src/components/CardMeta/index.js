@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Dimensions } from 'react-native';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
-
 import { useNavigation } from '@react-navigation/native';
+
+import { listIconDp } from '../../utils/listIconDp';
+import formatNumber from '../../utils/formatNumber';
 
 import { 
   Container,
@@ -11,6 +13,7 @@ import {
   ButtonAdd,
   StatusText,
   AreaInfo,
+  AreaIcon,
   Icon,
   AreaInfoTitle,
   NameCategory,
@@ -21,48 +24,33 @@ import {
   Loading,
 } from './styles';
 
-const CardMeta = ({ data }) => {
+const CardMeta = (props) => {
 
-  const [ statusText, setStatusText ] = useState('Disponível');
-  const [negativo, setNegativo] = useState(true);
-  const [isFull, setIsFull] = useState(false);
-
+  const [ statusText, setStatusText ] = useState('');
   const { width } = Dimensions.get('window');
+  const [url, setUrl] = useState(null);
 
-  let valueUsed = data.valueremain;
-  let valueLimite = data.valueTotal;
+  const navigation = useNavigation();
 
-  let atual = valueUsed;
-  let total = valueLimite;
-  
-  let percentual = atual / total;
-  percentual = percentual * 100;
+  useEffect(() => {
 
-  useEffect(()=> {
-
-    if(Number(valueUsed) >= Number(valueLimite)) {
-
-      setStatusText('Limite de gasto excedido');
-      setIsFull(true);
-      percentual = 100;
-      
+    if(props.data.status) {
+      setStatusText('Limite de gasto exedido');
     } else {
       setStatusText('Disponível');
-      setIsFull(false);
     }
 
-    if(data.valueLimite < 0) {
-      setNegativo(true);
-    } else {
-      setNegativo(false);
-    }
-  });
+  }, []);
 
+  useEffect(() => {
+    let icon_url = listIconDp.filter(i => i.id === props.data.category.id_icon);
+    setUrl(icon_url[0].url);
+  },[]);
+ 
   return (
       <Container style={{
           width: width * 0.8 - 20,
           marginHorizontal: 10,
-
           shadowColor: "#000",
           shadowOffset: {
               width: 0,
@@ -72,29 +60,32 @@ const CardMeta = ({ data }) => {
           shadowRadius: 1.00,
           elevation: 1,
         }}>
+          
         <AreaTitle>
-            <TitleCard>Metas Teste</TitleCard>
-
-            <ButtonAdd activeOpacity={0.8} onPress={()=>alert('abre a screen de cadastro de meta')}>
-                <FontAwesome5 name="plus" size={14} color="#fff" />
-            </ButtonAdd>
+            <TitleCard>Meta</TitleCard>
+              <ButtonAdd activeOpacity={0.8} onPress={()=> navigation.navigate('MetaRoutes')}>
+                  <FontAwesome5 name="plus" size={14} color="#fff" />
+              </ButtonAdd>
         </AreaTitle>
 
         <StatusText>{statusText}</StatusText>
 
         <AreaInfo>
-          <Icon style={{ backgroundColor: data.iconColor }} />
+          <AreaIcon style={{ backgroundColor: props.data.category.color_hex}}>
+            <Icon source={url} />
+          </AreaIcon>
+          
           <AreaInfoTitle>
-            <NameCategory>{data.category}</NameCategory>
+            <NameCategory>{props.data.category.name}</NameCategory>
             <AreaValue>
-              <ValueTotal>R$ {data.valueTotal} </ValueTotal>
-              <Valueremain> / {`R$ `+data.valueremain}</Valueremain>
+              <ValueTotal>R$ {formatNumber(props.data.value)} </ValueTotal>
+              <Valueremain> / {formatNumber(props.data.used_value)}</Valueremain>
             </AreaValue>
           </AreaInfoTitle>
         </AreaInfo>
 
         <AreaLoading>
-          <Loading style={{width:isFull? '100%': percentual+'%'}} />
+          <Loading style={{width: `${props.data.porcent}%`}} /> 
         </AreaLoading>
 
       </Container>

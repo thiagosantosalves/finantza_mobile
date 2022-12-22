@@ -46,12 +46,18 @@ export const AreaInfo = styled.View`
     margin-left: 10px;
 `;
 
-export const Icon = styled.View`
-    width: 30px;
-    height: 30px;
-    border-radius: 15px;
-`; 
+export const AreaIcon = styled.View`
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 20px;
+`;
 
+export const Icon = styled.Image`
+    width: 22px;
+    height: 22px;
+`;
 
 export const AreaInfoTitle = styled.View`
     margin-left: 10px;

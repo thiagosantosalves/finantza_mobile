@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
-import { RefreshControl, Dimensions } from 'react-native';
+import { Dimensions } from 'react-native';
 
 import api from '../../services/api';
 
@@ -16,7 +16,6 @@ import CardInitial from '../../components/CardInitial';
 import CardInitialMeta from '../../components/CardInitialMeta';
 
 import formatNumber from '../../utils/formatNumber';
-
 
 import { 
     Container, 
@@ -41,7 +40,6 @@ import {
     List,
 } from './styles';
 
-
 const Home = () => {
 
     const { width } = Dimensions.get('window');
@@ -50,18 +48,33 @@ const Home = () => {
 
     const [userInfo, setUserInfo] = useState({});
     const [valueAccount, setValueAccount] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
     const [balanceEye, setBalanceEye] = useState(false);
     const [bank, setBank] = useState([]);
     const [card, setCard] = useState([]);
     const [meta, setMeta] = useState([]);
 
-
-
     useEffect(() => {
         getCardStatus();
+        getMeta();
     }, []);
 
+
+    const getMeta = async () => {
+        try {
+
+            let date = new Date();
+            let month = date.getMonth() + 1;
+            let year = date.getFullYear();
+
+            let metas = await api.get('/meta');
+            metas = metas.data.filter(e => e.month === month && e.year === year);
+            setMeta(metas);
+            
+        } catch (error) {
+            console.log("Error: "+error);
+        }
+    }
+    
     const getCardStatus = async () => {
         
         let date = new Date();
@@ -160,17 +173,11 @@ const Home = () => {
     }, [navigation]);
 
     const exploreRefresh = () => {
-
-        setIsLoading(true);
         setUserInfo(user);
-
         getAccount();
         getBank();
         getCard();
-
-        setTimeout(()=>{
-            setIsLoading(false);
-        }, 1000);
+        getMeta();
     }
 
     return(
@@ -281,7 +288,7 @@ const Home = () => {
                     }               
                    
 
-                   {meta.length >= 0 ?
+                   {meta.length <= 0 ?
                         (
                             <CardInitialMeta 
                                 handlerMeta={() => alert("Abrir tela de planejamento")}

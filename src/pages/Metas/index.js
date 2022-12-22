@@ -34,7 +34,6 @@ import {
     ValueRemains,
     ListMeta,
     AreaModal,
-    
     BodyModalYear,
     AreaTitleYear,
     TitleYear,
@@ -42,13 +41,6 @@ import {
     FlalistYear,
     ButtonFilterYear,
     ButtonFilterYearTitle,
-
-
-
-
-
-
-//----------------------------------------
     AreaModalCenter,
     BodyModalCenter,
     AreaTitleModal,
@@ -73,8 +65,6 @@ import {
     AreaButtonModalNotification,
     ButtonModalNotification,
     TextButtonModalNotification,
-
-
 } from './styles';
 
 const Metas = ({ navigation }) => {
@@ -97,7 +87,6 @@ const Metas = ({ navigation }) => {
     const [modalYear, setModalYear] = useState(false);
     const [modalEdit, setModalEdit] = useState(false);
     const [modalDelete, setModalDelete] = useState(false);
-
 
     const { handlerMeta } = useAuth();
 
@@ -486,5 +475,4 @@ const Metas = ({ navigation }) => {
         </Container>
     )
 }
-
 export default Metas;

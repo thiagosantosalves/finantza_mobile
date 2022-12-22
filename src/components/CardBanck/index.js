@@ -51,7 +51,7 @@ const CardBanck = ({ data }) => {
         }}>
             <AreaTitle>
                 <TitieCard>Contas</TitieCard>
-                <ButtonAdd activeOpacity={0.8} onPress={()=>navigation.navigate('HomeRoutes', {
+                <ButtonAdd activeOpacity={0.8} onPress={()=> navigation.navigate('HomeRoutes', {
                             screen: 'Bank'
                         })}>
                     <FontAwesome5 name="plus" size={14} color="#fff" />
