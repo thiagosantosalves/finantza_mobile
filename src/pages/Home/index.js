@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { Dimensions } from 'react-native';
 
 import api from '../../services/api';
@@ -206,17 +207,25 @@ const Home = () => {
                         <ButtonEye activeOpacity={0.8} onPress={balanceEyeHandler}>
                             {balanceEye ? 
                                 (   
-                                    <Ionicons name="md-eye-off-outline" size={28} color="#FF872C" /> 
+                                    <Ionicons name="md-eye-off-outline" size={24} color="#FF872C" /> 
                                 )
                                 :
                                 (
-                                    <Ionicons name="md-eye-outline" size={28} color="#FF872C" />
+                                    <Ionicons name="md-eye-outline" size={24} color="#FF872C" />
                                 )
                             }
                         </ButtonEye>
+
+                        <ButtonNotification activeOpacity={0.8} onPress={()=> navigation.navigate('HomeRoutes', {
+                            screen: 'PerfilScreen'
+                        })}>
+                            <FontAwesome name="gear" size={24} color="#FF872C" />
+                        </ButtonNotification>
                         
-                        <ButtonNotification activeOpacity={0.8} onPress={()=> alert('Entrar na tela de Notificação')}>
-                            <Feather name="bell" size={28} color="#FF872C" />
+                        <ButtonNotification activeOpacity={0.8} onPress={()=> navigation.navigate('HomeRoutes', { 
+                            screen: 'NotificationScreen'
+                        })}>
+                            <Feather name="bell" size={24} color="#FF872C" />
                         </ButtonNotification>
 
                     </AreaNotification>

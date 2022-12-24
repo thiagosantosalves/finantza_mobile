@@ -2,6 +2,10 @@ import React, { useLayoutEffect } from 'react';
 import { Dimensions } from 'react-native';
 
 import Evillcons from 'react-native-vector-icons/EvilIcons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 import { 
     Container, 
@@ -20,7 +24,6 @@ import {
     AreaConfig,
     TitleConfig,
     AreaSection,
-    IconSection,
     TitleSection,
     AreaLine,
     Line,
@@ -82,7 +85,8 @@ const PerfilScreen = ({ navigation, ...rest }) => {
                     <TitleConfig>Configurações</TitleConfig>
 
                     <AreaSection activeOpacity={0.8} onPress={() => navigation.navigate('bank')}>
-                        <IconSection source={require('../../assets/card_img/bank_icon.png')} />
+                       
+                        <FontAwesome name="bank" size={27} color="#2F323D" /> 
                         <TitleSection>Contas</TitleSection>
                     </AreaSection>
 
@@ -91,7 +95,7 @@ const PerfilScreen = ({ navigation, ...rest }) => {
                     </AreaLine>
 
                     <AreaSection activeOpacity={0.8} onPress={() => navigation.navigate('CardCreditScreen')}>
-                        <IconSection source={require('../../assets/card_img/credit-card.png')} />
+                        <AntDesign name="creditcard" size={32} color="#2F323D" />
                         <TitleSection>Cartões de crédito</TitleSection>
                     </AreaSection>
 
@@ -100,7 +104,7 @@ const PerfilScreen = ({ navigation, ...rest }) => {
                     </AreaLine>
 
                     <AreaSection activeOpacity={0.8} onPress={() => navigation.navigate('categoryRevenue')}>
-                        <IconSection source={require('../../assets/card_img/pasta_icon.png')} />
+                        <MaterialIcons name="category" size={33} color="#2F323D" />
                         <TitleSection>Categoria de receitas</TitleSection>
                     </AreaSection>
 
@@ -109,7 +113,7 @@ const PerfilScreen = ({ navigation, ...rest }) => {
                     </AreaLine>
 
                     <AreaSection activeOpacity={0.8} onPress={() => navigation.navigate('categoryDebit')}>
-                        <IconSection source={require('../../assets/card_img/pasta_icon.png')} />
+                        <MaterialIcons name="category" size={33} color="#2F323D" />
                         <TitleSection>Categoria de despesas</TitleSection>
                     </AreaSection>
 
@@ -117,9 +121,9 @@ const PerfilScreen = ({ navigation, ...rest }) => {
                         <Line />
                     </AreaLine>
 
-                    <AreaSection activeOpacity={0.8} onPress={() => alert('Abrir tela de planejamento financeiro')}>
-                        <IconSection source={require('../../assets/card_img/metas.png')} />
-                        <TitleSection>Planejamento financeiro</TitleSection>
+                    <AreaSection activeOpacity={0.8} onPress={() => navigation.navigate('ConciliationBank')}>
+                        <MaterialCommunityIcons name="bank-transfer-out" size={36} color="#2F323D" />
+                        <TitleSection>Conciliação Bancária</TitleSection>
                     </AreaSection>
 
                     <AreaLine>
@@ -127,7 +131,7 @@ const PerfilScreen = ({ navigation, ...rest }) => {
                     </AreaLine>
 
                     <AreaSection activeOpacity={0.8} onPress={() => navigation.navigate('tags')}>
-                        <IconSection source={require('../../assets/card_img/tag_icon.png')} />
+                        <AntDesign name="tags" size={33} color="#2F323D" />
                         <TitleSection>Tags</TitleSection>
                     </AreaSection>                    
                 

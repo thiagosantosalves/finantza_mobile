@@ -2,33 +2,27 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import ButtonAddHeader from '../components/ButtonAddHeader';
-
 import Bank from '../pages/Bank';
 import BankCreate from '../pages/BankCreate';
 import BankEdit from '../pages/BankEdit';
-
 import CardCreditScreen from '../pages/CardCreditScreen';
 import CardCreditScreenCreate from '../pages/CardCreditScreenCreate';
 import CardCreditScreenInfo from '../pages/CardCreditScreenInfo';
 import CardCreditScreenEdit from '../pages/CardCreditScreenEdit';
-
 import PerfilScreen from '../pages/PerfilScreen';
-
 import PerfilEdit from '../pages/PerfilEdit';
 import PremiumScreem from '../pages/PremiumScreem';
-
 import ConfigScreen from '../pages/ConfigScreen';
-
 import CategoryDebit from '../pages/CategoryDebit';
 import CategoryDebitCreate from '../pages/CategoryDebitCreate';
 import CategoryDebitEdit from '../pages/CategoryDebitEdit';
-
 import CategoryRevenue from '../pages/CategoryRevenue';
 import CategoryRevenueCreate from '../pages/CategoryRevenueCreate';
 import CategoryRevenueEdit from '../pages/CategoryRevenueEdit';
-
 import Tags from '../pages/Tags';
 import TagsCreate from '../pages/TagsCreate';
+import ConciliationBank from '../pages/ConciliationBank';
+import NotificationScreen from '../pages/NotificationScreen';
 
 import { useNavigation } from '@react-navigation/native';
 
@@ -196,7 +190,6 @@ const HomeRoutes = () => {
                 },
             }}/> 
 
-
             <HomeRoute.Screen name="configScreen" component={ConfigScreen} options={{
                 title: 'Configurações', 
                 headerTintColor: '#FFF',
@@ -218,6 +211,24 @@ const HomeRoutes = () => {
 
             <HomeRoute.Screen name="tagsCreate" component={TagsCreate} options={{
                 title: 'Cadastro tags', 
+                headerTintColor: '#FFF',
+                headerStyle: { 
+                    backgroundColor: colorPrimary,
+                    shadowColor: "transparent",
+                },
+            }}/>
+
+            <HomeRoute.Screen name="ConciliationBank" component={ConciliationBank} options={{
+                title: 'Conciliação Bancária', 
+                headerTintColor: '#FFF',
+                headerStyle: { 
+                    backgroundColor: colorPrimary,
+                    shadowColor: "transparent",
+                },
+            }}/>
+
+            <HomeRoute.Screen name="NotificationScreen" component={NotificationScreen} options={{
+                title: 'Notificações', 
                 headerTintColor: '#FFF',
                 headerStyle: { 
                     backgroundColor: colorPrimary,

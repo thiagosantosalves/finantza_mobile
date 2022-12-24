@@ -55,7 +55,6 @@ import {
   ButtonLauchCameraTitle,
   ListTags,
   BodyModalTags,
-
   ButtonAnexoClose
 } from './styles';
 
@@ -298,14 +297,13 @@ const ScreenSetCredit = ({ route, navigation }) => {
         setModalTags(false);
     }
 
-
     function toatsError() {
         const toastOpts = {
         data: 'Preencha os dados, descrição e conta origem e conta destino são obrigatorios!',
         textColor: '#ffffff',
         backgroundColor: '#36393F',
-        duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-        position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+        duration: WToast.duration.SHORT,
+        position: WToast.position.CENTER,
         }
         WToast.show(toastOpts)
     }
@@ -315,8 +313,8 @@ const ScreenSetCredit = ({ route, navigation }) => {
         data: 'Saldo insuficiente da conta de origem pra transferência!',
         textColor: '#ffffff',
         backgroundColor: '#36393F',
-        duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-        position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+        duration: WToast.duration.SHORT,
+        position: WToast.position.CENTER,
         }
         WToast.show(toastOpts)
     }
@@ -326,8 +324,8 @@ const ScreenSetCredit = ({ route, navigation }) => {
         data: 'A conta de origem não pode ser a igual a conta de destino!',
         textColor: '#ffffff',
         backgroundColor: '#36393F',
-        duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-        position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+        duration: WToast.duration.SHORT,
+        position: WToast.position.CENTER,
         }
         WToast.show(toastOpts)
     }
@@ -337,8 +335,8 @@ const ScreenSetCredit = ({ route, navigation }) => {
         data: 'Nenhuma tag foi cadastrada!',
         textColor: '#ffffff',
         backgroundColor: '#36393F',
-        duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-        position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+        duration: WToast.duration.SHORT,
+        position: WToast.position.CENTER,
         }
         WToast.show(toastOpts)
     }

@@ -108,11 +108,6 @@ export const AreaSection = styled.TouchableOpacity`
     margin-bottom: 25px;
 `;
 
-export const IconSection = styled.Image`
-    width: 30px;
-    height: 30px;
-`;
-
 export const TitleSection = styled.Text`
     font-family: 'Poppins-Regular';
     color: #2F323D;
