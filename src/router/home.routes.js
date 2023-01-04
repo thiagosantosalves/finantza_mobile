@@ -22,6 +22,7 @@ import CategoryRevenueEdit from '../pages/CategoryRevenueEdit';
 import Tags from '../pages/Tags';
 import TagsCreate from '../pages/TagsCreate';
 import ConciliationBank from '../pages/ConciliationBank';
+import ConciliationBankImport from '../pages/ConciliationBankImport';
 import NotificationScreen from '../pages/NotificationScreen';
 
 import { useNavigation } from '@react-navigation/native';
@@ -220,6 +221,15 @@ const HomeRoutes = () => {
 
             <HomeRoute.Screen name="ConciliationBank" component={ConciliationBank} options={{
                 title: 'Conciliação Bancária', 
+                headerTintColor: '#FFF',
+                headerStyle: { 
+                    backgroundColor: colorPrimary,
+                    shadowColor: "transparent",
+                },
+            }}/>
+
+            <HomeRoute.Screen name="ConciliationBankImport" component={ConciliationBankImport} options={{
+                title: 'Importar OFX', 
                 headerTintColor: '#FFF',
                 headerStyle: { 
                     backgroundColor: colorPrimary,

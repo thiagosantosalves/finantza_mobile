@@ -76,23 +76,17 @@ import {
 const ScreenSetCredit = ({ route, navigation }) => {
 
   const [description, setDescription] = useState('');
-
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-
   const [category, setCategory] = useState('bankFull');
   const [categorySelect, setCategorySelect] = useState('');
   const [idIconCategory, setIconCategory] = useState(null);
-
   const [bankFull, setBankFull] = useState({});
   const [bank, setBank] = useState('');
   const [idIconBank, setIdIconBank] = useState(null);
-
   const [isSwitch, setIsSwitch] = useState(false);
-  
   const [ativeButtonDateToday, setAtiveButtonDateToday] = useState(true);
   const [ativeButtonDateYesterday, setAtiveButtonDateYesterday] = useState(false);
   const [ativeButtonDateOther, setAtiveButtonDateOther] = useState(false);
-  
   const [fixed, setFixed] = useState(false);
   const [installments, setInstallments] = useState(false);
   const [modaInstallments, setModalInstallments] = useState(false);
@@ -108,17 +102,13 @@ const ScreenSetCredit = ({ route, navigation }) => {
   const [qd10, setQd10] = useState('');
   const [qd11, setQd11] = useState('');
   const [qd12, setQd12] = useState('');
-
   const [dateFinal, setDateFinal] = useState(null);
-
   const [anexoPhoto, setAnexoPhoto] = useState(null);
   const [typePhoto, setTypePhoto] = useState(null);
   const [colorButtonAdd, setColorButtonAdd] = useState(false);
-
   const [tagsFull, setTagsFull] = useState(null);
   const [tag, setTag] = useState(null);
   const [colorButtonTags, setColorButtonTags] = useState(false);
-
   const [modalCategory, setModalCategory] = useState(false);
   const [modalBank, setModalBank] = useState(false);
   const [modalAnexos, setModalAnexos] = useState(false);
@@ -471,7 +461,13 @@ const ScreenSetCredit = ({ route, navigation }) => {
         });  
   
         try {
-          const file = await api.post('files', data);
+          const config = {
+            headers: {
+              "Content-Type": "multipart/form-data"
+            }
+          };
+
+          const file = await api.post('files', data, config);
           id_img = file.data.id;
           attachment = true;
         } catch (error) {

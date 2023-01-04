@@ -13,7 +13,7 @@ export const SectionArea = styled.View`
 
 export const Title = styled.Text`
     font-family: 'Poppins-Regular';
-    font-size: 16px;
+    font-size: 14px;
     color: #2F323D;
     margin-left: 12px;
     margin-bottom: 10px;

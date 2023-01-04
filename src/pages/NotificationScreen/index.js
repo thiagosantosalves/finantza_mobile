@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
+import { Modal } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
 import { WToast } from 'react-native-smart-tip';
 
@@ -12,16 +13,27 @@ import {
     TitleOps,
     Title,
     AreaBodyOps,
+    AreaModal,
+    BodyModalDelete,
+    AreaTitleModalNotification,
+    TitleModalNotification,
+    AreaDescriptionModalNotification,
+    NameCategoryDel,
+    DescriptionModalNotification,
+    AreaButtonModalNotification,
+    ButtonModalNotification,
+    TextButtonModalNotification,
 } from './styles';
 
 const NotificationScreen = ({ navigation }) => {
 
     const [notification, setNotification] = useState([]);
+    const [modal, setModal] = useState(true);
 
     useLayoutEffect(() => {
         navigation.setOptions({
             headerRight: () => (
-                <AreaIconDelete acttiveOpacity={0.8} onPress={() => handlerDelete()}>
+                <AreaIconDelete acttiveOpacity={0.8} onPress={() => setModal(true)}>
                     <MaterialCommunityIcons name="delete" size={30} color="#FFF"  />
                 </AreaIconDelete>
             )
@@ -41,7 +53,8 @@ const NotificationScreen = ({ navigation }) => {
 
 
     const handlerDelete = async () => {
-        alert("Teste")
+      
+        setModal(false);
     }
 
     const handlerNotification = async () => {
@@ -96,6 +109,41 @@ const NotificationScreen = ({ navigation }) => {
                     />}
                 />
             )}
+
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={modal}
+                onRequestClose={()=>{
+                    setModal(false)
+                }}
+            >
+                <AreaModal>
+                    <BodyModalDelete>
+
+                        <AreaTitleModalNotification>
+                            <TitleModalNotification>Notificações</TitleModalNotification>
+                        </AreaTitleModalNotification>
+
+                        <AreaDescriptionModalNotification>
+                            <DescriptionModalNotification>Deseja apagar todas as notificações?</DescriptionModalNotification>
+                        </AreaDescriptionModalNotification>
+
+                        <AreaButtonModalNotification>
+                            
+                            <ButtonModalNotification activeOpacity={0.8} onPress={() => setModal(false) }>
+                                <TextButtonModalNotification>CANCELAR</TextButtonModalNotification>
+                            </ButtonModalNotification>
+
+                            <ButtonModalNotification activeOpacity={0.8} onPress={() => handlerDelete() }>
+                                <TextButtonModalNotification>OK</TextButtonModalNotification>
+                            </ButtonModalNotification>
+                            
+                        </AreaButtonModalNotification>
+
+                    </BodyModalDelete>
+                </AreaModal>
+            </Modal>
         </Container>
     )
 }

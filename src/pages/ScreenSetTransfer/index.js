@@ -349,9 +349,15 @@ const ScreenSetCredit = ({ route, navigation }) => {
           type: anexoPhoto.type,
           name: anexoPhoto.fileName,
         });  
-  
+        
+        const config = {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        };
+
         try {
-          const file = await api.post('files', data);
+          const file = await api.post('files', data, config);
           id_img = file.data.id;
           attachment = true;
         } catch (error) {

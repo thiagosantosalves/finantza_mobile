@@ -12,7 +12,6 @@ import { useNavigation } from '@react-navigation/native';
 import CardBanck from '../../components/CardBanck';
 import CardCredit from '../../components/CardCredit';
 import CardMeta from '../../components/CardMeta';
-
 import CardInitial from '../../components/CardInitial';
 import CardInitialMeta from '../../components/CardInitialMeta';
 
@@ -45,7 +44,7 @@ const Home = () => {
 
     const { width } = Dimensions.get('window');
     const navigation = useNavigation();
-    const { user } = useAuth();
+    const { user, handlerMeta } = useAuth();
 
     const [userInfo, setUserInfo] = useState({});
     const [valueAccount, setValueAccount] = useState(null);
@@ -69,6 +68,12 @@ const Home = () => {
 
             let metas = await api.get('/meta');
             metas = metas.data.filter(e => e.month === month && e.year === year);
+
+            let id = metas.map(e => {
+                return e.category.id
+            });
+            
+            handlerMeta(id);
             setMeta(metas);
             
         } catch (error) {
@@ -232,7 +237,6 @@ const Home = () => {
                 
                 </AreaInfo>
                 
-
                 <AreaTotalBalance>
 
                     <TitleBalance>Saldo geral</TitleBalance>
@@ -300,10 +304,7 @@ const Home = () => {
                    {meta.length <= 0 ?
                         (
                             <CardInitialMeta 
-                                handlerMeta={() => alert("Abrir tela de planejamento")}
-                                /* handlerMeta={() => navigation.navigate('HomeRoutes', {
-                                    screen: ''
-                                })} */
+                                handlerMeta={() => navigation.navigate('MetaRoutes')}
                             />
                         ) 
                         :

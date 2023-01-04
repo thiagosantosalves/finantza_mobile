@@ -678,8 +678,8 @@ const Releases = ({ navigation }) => {
                                     {realese.attachment_img_id &&
                                         <AreaAnexo>
                                             <ImgAnexo
-                                                //source={{ uri: realese.anexo_img.url}} 
-                                                source={{ uri: 'https://avatars.githubusercontent.com/u/73440909?v=4' }}
+                                                source={{ uri: realese.anexo_img.url}} 
+                                                //source={{ uri: 'https://avatars.githubusercontent.com/u/73440909?v=4' }}
                                                 resizeMode="cover"
                                             />
                                         </AreaAnexo>

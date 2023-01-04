@@ -362,18 +362,26 @@ const ScreenSetCredit = ({ route, navigation }) => {
 
         if(description && bankOrigin && bankDestiny) {
         if(anexoPhoto) {
-            const data = new FormData();
-    
-            data.append("file", {
-            uri: anexoPhoto.uri,
-            type: anexoPhoto.type,
-            name: anexoPhoto.fileName,
-            });  
-    
+            
             try {
-            const file = await api.post('files', data);
-            setImgId(file.data.id);
-            setAttachment(true);
+
+                const data = new FormData();
+    
+                data.append("file", {
+                    uri: anexoPhoto.uri,
+                    type: anexoPhoto.type,
+                    name: anexoPhoto.fileName,
+                });  
+
+                const config = {
+                    headers: {
+                      "Content-Type": "multipart/form-data"
+                    }
+                };
+                
+                const file = await api.post('files', data, config);
+                setImgId(file.data.id);
+                setAttachment(true);
             } catch (error) {
             console.log(error);
             }

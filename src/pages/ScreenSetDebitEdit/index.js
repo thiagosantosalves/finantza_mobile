@@ -589,7 +589,14 @@ const ScreenSetDebit = ({ route, navigation }) => {
             });  
     
             try {
-            const file = await api.post('files', data);
+
+                const config = {
+                    headers: {
+                      "Content-Type": "multipart/form-data"
+                    }
+                };
+                
+                const file = await api.post('files', data, config);
                 id_img = file.data.id;
                 setAttachment(true);
             } catch (error) {
