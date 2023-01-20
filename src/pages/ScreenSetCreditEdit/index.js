@@ -2,28 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-
 import {Picker} from '@react-native-picker/picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
-
-import formatNumber from '../../utils/formatNumber';
-import transformNumber from '../../utils/transformNumber';
-import PatternInput from '../../components/PatternInput';
-
-import formatDateMonth from '../../utils/formatDateMonth';
+import { WToast } from 'react-native-smart-tip';
 
 import ListBankFull from '../../components/ListBankFull';
 import ListCategoryRcFull from '../../components/ListCategoryRcFull';
-
+import PatternInput from '../../components/PatternInput';
 import ListTagsFull from '../../components/ListTagsFull';
 
 import { listIconAccount } from '../../utils/listIconAccount';
 import { listIconRc } from '../../utils/listIconRc';
+import formatNumber from '../../utils/formatNumber';
+import transformNumber from '../../utils/transformNumber';
+import formatDateMonth from '../../utils/formatDateMonth';
 
 import api from '../../services/api';
-
-import { WToast } from 'react-native-smart-tip';
 
 import { 
   Container,
@@ -77,23 +72,17 @@ import {
 const ScreenCreditEdit = ({ route, navigation }) => {
 
   const [description, setDescription] = useState(route.params.data.description);
-
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
-
   const [category, setCategory] = useState('bankFull');
   const [categorySelect, setCategorySelect] = useState(route.params.data.rc_category);
   const [idIconCategory, setIconCategory] = useState(null);
-
   const [bankFull, setBankFull] = useState({});
   const [bank, setBank] = useState(route.params.data.account);
   const [idIconBank, setIdIconBank] = useState(null);
-  
   const [isSwitch, setIsSwitch] = useState(false);
-  
   const [ativeButtonDateToday, setAtiveButtonDateToday] = useState(true);
   const [ativeButtonDateYesterday, setAtiveButtonDateYesterday] = useState(false);
   const [ativeButtonDateOther, setAtiveButtonDateOther] = useState(false);
-  
   const [fixed, setFixed] = useState(route.params.data.fixo);
   const [installments, setInstallments] = useState(route.params.data.installments);
   const [modaInstallments, setModalInstallments] = useState(false);
@@ -109,22 +98,17 @@ const ScreenCreditEdit = ({ route, navigation }) => {
   const [qd10, setQd10] = useState('');
   const [qd11, setQd11] = useState('');
   const [qd12, setQd12] = useState('');
-
   const [dateFinal, setDateFinal] = useState(null);
-
   const [anexoPhoto, setAnexoPhoto] = useState(null);
   const [typePhoto, setTypePhoto] = useState(null);
   const [colorButtonAdd, setColorButtonAdd] = useState(false);
-
   const [tagsFull, setTagsFull] = useState(null);
   const [tag, setTag] = useState(route.params.data.tags);
   const [colorButtonTags, setColorButtonTags] = useState(false);
-
   const [modalCategory, setModalCategory] = useState(false);
   const [modalBank, setModalBank] = useState(false);
   const [modalAnexos, setModalAnexos] = useState(false);
   const [modalTags, setModalTags] = useState(false);
-
   const [response, setResponse] = useState(route.params.data);
   const [attachment, setAttachment] = useState(route.params.data.attachment_img);
 
@@ -396,9 +380,7 @@ const ScreenCreditEdit = ({ route, navigation }) => {
         const type = response.assets[0].type.split('/');
 
         setTypePhoto(type[1]);
-
         setModalAnexos(false);
-
       }
 
     });
@@ -447,8 +429,8 @@ const ScreenCreditEdit = ({ route, navigation }) => {
       data: 'Preencha os dados, descrição e categoria são obrigatorios!',
       textColor: '#ffffff',
       backgroundColor: '#36393F',
-      duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-      position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+      duration: WToast.duration.SHORT,
+      position: WToast.position.CENTER,
     }
     WToast.show(toastOpts)
   }
@@ -458,8 +440,8 @@ const ScreenCreditEdit = ({ route, navigation }) => {
       data: 'Nenhuma tag foi cadastrada!',
       textColor: '#ffffff',
       backgroundColor: '#36393F',
-      duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-      position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+      duration: WToast.duration.SHORT,
+      position: WToast.position.CENTER,
     }
     WToast.show(toastOpts)
   }

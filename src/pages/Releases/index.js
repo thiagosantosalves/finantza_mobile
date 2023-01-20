@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Modal, PermissionsAndroid, Platform } from 'react-native';
+import { addMonths, subMonths, format } from 'date-fns';
+import { FlashList } from "@shopify/flash-list";
+import ptBR from 'date-fns/locale/pt-BR';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import Feather from 'react-native-vector-icons/Feather';
-import  RNFetchBlob  from 'rn-fetch-blob';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import RNFetchBlob  from 'rn-fetch-blob';
 import { WToast } from 'react-native-smart-tip';
 
-import MonthScroll from '../../components/MonthScroll';
+import CardReleaseShimmer from '../../components/CardReleaseShimmer';
 import CardReleases from '../../components/CardReleases';
 import PatternInput from '../../components/PatternInput';
 import ReleasesFilterComponet from '../../components/ReleasesFilterComponet';
@@ -19,14 +23,14 @@ import api from '../../services/api';
 
 import {
     Container,
-    AreaYear,
-    TitleHeaderYear,
+    DateFilter,
+    DateFilterRows,
+    AreaTitleDateFilter,
+    DateFilterTitle,
     AreaBodyOps,
     TitleOps,
     DescriptionOps,
     AreaRelease,
-    Header,
-    ListReleases,
     AreaCardInfo,
     CardInfo,
     TitleCard,
@@ -80,6 +84,8 @@ import {
 const Releases = ({ navigation }) => {
     
     let today = new Date();
+    const [date, setDate] = useState(today);
+    const [currentDate, setCurrentDate] = useState('Janeiro 2023');
     const [data, setData] = useState([]);
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
@@ -106,14 +112,12 @@ const Releases = ({ navigation }) => {
                     onPress={ async (e) => {
                         if(e === 1) setModalSearch(true);
                         if(e === 2) setModalFilter(true);
-                        if(e === 3) setModalExport(true);
-                           
+                        if(e === 3) setModalExport(true);     
                     }}
                 />
             )
         });
     }, [navigation]);
-
 
     const [realese, setRealese] = useState({
         account:{
@@ -136,24 +140,16 @@ const Releases = ({ navigation }) => {
             setSearchText('');
         });
         return unsubscribe;
-    }, [realese, selectedMonth]);
-
-    useEffect(() => { 
-        getReleases();
-    }, [selectedMonth]);
+    }, []);
 
     const handlerCalc = (data) => {
 
         const resRc = data.filter(item => item.type === 1 && item.installments === false);
         const resRcInstallments = data.filter(item => item.type === 1 && item.installments === true);
-
         const resDp = data.filter(item => item.type === 2 && item.installments === false);
         const resDpInstallments = data.filter(item => item.type === 2 && item.installments === true);
-
-
         const sum = resRc.reduce((prevVal, elem) => Number(prevVal) + Number(elem.value), 0)
         const sumParc = resRcInstallments.reduce((prevVal, elem) => Number(prevVal) + Number(elem.value_installments), 0);
-
         const sumD = resDp.reduce((prevVal, elem) => Number(prevVal) + Number(elem.value), 0)
         const sumParcD = resDpInstallments.reduce((prevVal, elem) => Number(prevVal) + Number(elem.value_installments), 0);
 
@@ -165,51 +161,165 @@ const Releases = ({ navigation }) => {
         setTotal( Number(sumRc) - Number(sumDp));
     }
 
-    useEffect(() => {
-        getReleases();
-        getReleasesFilter();
-    }, [selectedYear]);
+    const getReleasesFilter = async (data) => {
 
-    const getReleasesFilter = (data) => {
-        if(data) {
-            const resYear = data.filter(item => item.year === selectedYear);
-            const resFilter = resYear.sort((x, y) => {
-                let a = new Date(x.createdAt);
-                let b = new Date(y.createdAt);
-                return a - b;
-            });
+        try {
+            setData([]);
+
+            let month = date.getMonth() + 1;
+            let year = date.getFullYear();
+
+            const res = await api.get(`releases/${month}&${year}`);
+            let result = res.data.releases;
+
+            if(data.all === true && data.idBank === null && data.idCardCredit === null && data.idCatDp === null && data.idCatRc === null &&
+                data.idTag === null && data.isFixo === null && data.isInstallments === null && data.isFixo === null) {
+                toatsError('Nenhum filtro foi selecionado!');
+
+                handlerCalc(result);
+                setData(result)
+                return false;
+            } 
     
-            const releasesFilter = resFilter.filter(item => item.month === selectedMonth + 1);
+            if(data.type) {
+                result = result.filter(item => Number(item.type) === Number(data.type));
+            }
 
-            handlerAccount();
-            handlerCalc(releasesFilter);
-            setData(releasesFilter);
+            if(data.isInstallments) {
+                result = result.filter(item => item.installments === data.isInstallments);
+            }
+
+            if(data.isFixo) {
+                result = result.filter(item => item.fixo === true);
+            }
+            
+            if(data.idBank) {
+                result = result.filter(item => Number(item.account_id) === Number(data.idBank));
+            }
+
+            if(data.idCardCredit) {
+                result = result.filter(item => Number(item.card_credit_id) === Number(data.idCardCredit));
+            }
+
+            if(data.idCatRc) {
+                result = result.filter(item => Number(item.rc_category_id) === Number(data.idCatRc));
+            }
+            
+            if(data.idCatDp) {
+                result = result.filter(item => Number(item.dp_category_id) === Number(data.idCatDp));
+            }
+
+            if(data.idTag) {
+                result = result.filter(item => Number(item.tag_id) === Number(data.idTag));
+            }
+            
+            handlerCalc(result);
+            setData(result)
+
+        } catch (error) {
+            toatsError('Erro ao se comunicar com o servidor !');
         }
     }
 
-    const getReleases = async (data) => {
+    const getReleases = async (t) => {
 
-        if(data) {
-            setSelectedYear(data);
-        } else {
-            const res = await api.get('releases');
-            const resYear = res.data.filter(item => item.year === selectedYear);
-            const resFilter = resYear.sort((x, y) => {
-                let a = new Date(x.createdAt);
-                let b = new Date(y.createdAt);
-                return a - b;
-            });
-    
-            const releasesFilter = resFilter.filter(item => item.month === selectedMonth + 1);    
+        const date = new Date();
 
-            handlerAccount();
-            handlerCalc(releasesFilter);
-            setData(releasesFilter);
+        try {
+
+            setIsLoading(true);
+            setData([]);
+
+            let month = selectedMonth + 1;
+            const res = await api.get(`releases/${month}&${selectedYear}`);
+            
+            const formattedDate = format(
+                date, 
+                "MMMM"+" "+"YYY",
+                { locale: ptBR }
+            );
+
+            setCurrentDate(formattedDate);
+            handlerCalc(res.data.releases);
+            setData(res.data.releases);
+            setIsLoading(false);
+
+        } catch (error) {
+            setTimeout(() => {
+                setIsLoading(false);
+                toatsError('Erro ao se comunicar com o servidor !');
+            }, 500);
+           
         }
     }
 
-    useEffect(() => {
+    const handlerDateAdd = async () => {
+        setIsLoading(true);
 
+        const result = addMonths(date, 1)
+        setDate(result);
+        setData([]);
+
+        let month = result.getMonth() + 1;
+        let year = result.getFullYear();
+        
+        try {
+
+            const res = await api.get(`releases/${month}&${year}`);
+            handlerCalc(res.data.releases);
+            setData(res.data.releases);
+            
+        } catch (error) {
+            setTimeout(() => {
+                setIsLoading(false);
+                toatsError('Erro ao se comunicar com o servidor !');
+            }, 1000);
+        } 
+
+        setIsLoading(false);
+        const formattedDate = format(
+            result, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+        setCurrentDate(formattedDate);
+    }
+
+    const handlerDateSub = async () => {
+        setIsLoading(true)
+
+        const result = subMonths(date, 1)
+        setDate(result);
+        setData([]);
+
+        let month = result.getMonth() + 1;
+        let year = result.getFullYear();
+
+        try {
+
+            const res = await api.get(`releases/${month}&${year}`);
+            handlerCalc(res.data.releases);
+            setData(res.data.releases);
+           
+        } catch (error) {
+            setTimeout(() => {
+                setIsLoading(false);
+                toatsError('Erro ao se comunicar com o servidor !');
+            }, 1000);
+        } 
+     
+        setIsLoading(false)
+        const formattedDate = format(
+            result, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+        setCurrentDate(formattedDate);
+        
+        
+    }
+
+    useEffect(() => {
         if(searchText === '') {
             getReleases();
         } else {
@@ -217,19 +327,7 @@ const Releases = ({ navigation }) => {
             handlerCalc(res);
             setData(res);
         }
-
     }, [searchText]);
-
-    const handlerAccount = async () => {
-
-        try {
-            const response = await api.get('account');
-            setAccount(response.data);
-        } catch (error) {
-            console.log(error)
-        }
-
-    }
 
     const openModalRelease = (id) => {
 
@@ -435,33 +533,42 @@ const Releases = ({ navigation }) => {
     return(
         <Container>
 
-            <AreaYear>
-                <TitleHeaderYear>{selectedYear}</TitleHeaderYear>
-            </AreaYear>
+            <DateFilter>
+                <DateFilterRows activeOpacity={0.8} onPress={() => handlerDateSub() }>
+                    <MaterialCommunityIcons name='chevron-left' color="#fff" size={30} />
+                </DateFilterRows>
 
-            <Header>
-                <MonthScroll 
-                    selectedMonth={selectedMonth}
-                    setSelectedMonth={setSelectedMonth}
-                />  
-            </Header>
-            
-            {data.length <= 0 ? (
+                <AreaTitleDateFilter>
+                    <DateFilterTitle>{currentDate}</DateFilterTitle>
+                </AreaTitleDateFilter>
+                
+                <DateFilterRows activeOpacity={0.8} onPress={() => handlerDateAdd()} >
+                    <MaterialCommunityIcons name='chevron-right' color="#fff" size={30} />
+                </DateFilterRows>
+            </DateFilter>
+
+            {isLoading === true &&
+                <CardReleaseShimmer />
+            }
+
+            {data.length <= 0 && isLoading === false ? (
 
                 <AreaBodyOps>
                     <Fontisto name="arrow-swap" size={70} color="#000" />
                     <TitleOps>Ops!</TitleOps>
                     <DescriptionOps>Nenhum lançamento.</DescriptionOps>
                 </AreaBodyOps>
+             
             ) : (
                 <AreaRelease>
 
-                    <ListReleases 
+                    <FlashList 
                         data={data}
                         renderItem={({item}) => <CardReleases data={item} 
                             onAction={(id) => openModalRelease(id)}
                         />}
                         keyextractor={item => item.id}
+                        estimatedItemSize={180}
                     />
 
                     <AreaCardInfo>
@@ -549,7 +656,6 @@ const Releases = ({ navigation }) => {
                             onChangeModal={() => {
                                 setModalFilter(false);
                             }}
-                            onChangeYear={(data) => getReleases(data)}
                             onChangeFilter={(data) => getReleasesFilter(data)}
                         />
 

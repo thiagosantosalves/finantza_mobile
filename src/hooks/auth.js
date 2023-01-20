@@ -8,15 +8,8 @@ const AuthProvider = ({ children }) => {
 
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
-
     const [idsMeta, setIdsMeta] = useState({});
-
-    const [openModalReleases, setOpenModalReleases] = useState(false);
-    const [openModalFilterReleases, setOpenModalFilterReleases] = useState(false);
-    const [openModalMenuReleases, setOpenModalMenuReleases] = useState(false);
-
-    const [openModalFilterReport, setOpenModalFilterReport] = useState(false);
-    const [openModalReport, setOpenModalReport] = useState(false);
+    const [importOFX, setImporOFX] = useState(null);
 
     useEffect(() => {
 
@@ -68,47 +61,13 @@ const AuthProvider = ({ children }) => {
         setIdsMeta(data);
     }, []);
 
+    const handlerIsImportOFX = useCallback((status) => {
+        setImporOFX(status);
+    }, []);
 
-    //------------------------------------------------
-    const handlerModalReleases = () => {
-        if(openModalReleases) {
-            setOpenModalReleases(false)
-        } else {
-            setOpenModalReleases(true)
-        }
-    }
-
-    const handlerModalFilterReleases = () => {
-        if(openModalFilterReleases) {
-            setOpenModalFilterReleases(false)
-        } else {
-            setOpenModalFilterReleases(true)
-        }
-    }
-
-    const handlerModalMenuReleases = () => {
-        if(openModalMenuReleases) {
-            setOpenModalMenuReleases(false)
-        } else {
-            setOpenModalMenuReleases(true)
-        }
-    }
-
-    const handlerModalFilterReport = () => {
-        if(openModalFilterReport) {
-            setOpenModalFilterReport(false)
-        } else {
-            setOpenModalFilterReport(true)
-        }
-    }
-
-    const handlerModalReport = () => {
-        if(openModalReport) {
-            setOpenModalReport(false)
-        } else {
-            setOpenModalReport(true)
-        }
-    }
+    const handlerDateFilter = useCallback((date) => {
+        setDateFilter(date);
+    }, []);
 
 
     return (
@@ -119,19 +78,8 @@ const AuthProvider = ({ children }) => {
             signOut, 
             handlerMeta,
             idsMeta: idsMeta,
-
-
-            //-------------------
-            openModalReleases, 
-            handlerModalReleases,
-            openModalFilterReleases,
-            handlerModalFilterReleases,
-            openModalMenuReleases,
-            handlerModalMenuReleases,
-            handlerModalFilterReport,
-            openModalFilterReport,
-            handlerModalReport,
-            openModalReport
+            importOFX: importOFX,
+            handlerIsImportOFX
         }}>
             {children}
         </AuthContext.Provider>

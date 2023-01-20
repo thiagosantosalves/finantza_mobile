@@ -1,24 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
-import { WToast } from 'react-native-smart-tip';
 
-import MonthPicker from '../../components/MonthPicker';
 import ListBankFull from '../../components/ListBankFull';
 import ListCategoryRcFull from '../../components/ListCategoryRcFull';
 import ListCategoryDpFull from '../../components/ListCategoryDpFull';
 import ListTagsFull from '../../components/ListTagsFull';
+import ListCardCreditFull from '../../components/ListCardCreditFull';
 
+import { listIconAccount } from '../../utils/listIconAccount';
+import { institution } from '../../utils/institution';
 import { listIconRc } from '../../utils/listIconRc';
 import { listIconDp } from '../../utils/listIconDp';
-
-import { format } from 'date-fns';
 
 import api from '../../services/api';
 
 import { 
     Container,
-    FlalistYear,
     AreaFilter,
     TitleFilter,
     AreaFilterButton,
@@ -46,13 +44,13 @@ import {
     ButtonTagAddText,
     AreaIcon,
     IconImage,
+    IconCard,
     ButtonText,
+    AreaTagStatus,
+    TagStatus,
 } from './styles';
 
-
 const ReleasesFilterComponet = (props) => {
-
-    const [date, setDate] = useState(new Date());
 
     const [all, setAll] = useState(true);
     const [credit, setCredit] = useState(false);
@@ -60,37 +58,33 @@ const ReleasesFilterComponet = (props) => {
     const [transf, setTransf] = useState(false);
     const [fixo, setFixo] = useState(false);
     const [installments, setInstallments] = useState(false);
-
-    const [allStatus, setAllStatus] = useState(false);
-    const [padOut, setPadOut] = useState(false);
-    const [payable, setPayable] = useState(false);
-
     const [bank, setBank] = useState(false);
+    const [iconBank, setIconBank] = useState(false);
+    const [cardCreditFull, setCardCreditFull] = useState(false);
+    const [cardCredit, setCardCredit] = useState(false);
+    const [iconCard, setIconCard] = useState(false);
     const [catRc, setCatRc] = useState(false);
     const [catDp, setCatDp] = useState(false);   
     const [tag, setTag] = useState(false);
-
     const [bankFull, setBankFull] = useState([]);
     const [categoryRc, setCategoryRc] = useState([]);
     const [categoryDp, setCategoryDp] = useState([]);
     const [tagsFull, setTagsFull] = useState([]);
-
     const [iconRc, setIconRc] = useState(false);
-    const [iconDp, setIconDp] = useState(false);
-
-    const [releases, setReleases] = useState([]);
-    
+    const [iconDp, setIconDp] = useState(false); 
     const [modalBank, setModalBank] = useState(false);
+    const [modalCard, setModalCard] = useState(false);
     const [modalCategoryRc, setModalCategoryRc] = useState(false);
     const [modalCategoryDp, setModalCategoryDp] = useState(false);
     const [modalTag, setModalTag] = useState(false);
+    const [tagMsn , setTagMsn] = useState(false);
 
     useEffect(() => {
         getBank();
+        getCardCreedit();
         getRcCategory();
         getDpCategory();
         getTags();
-        getReleases();
     }, []);
 
     const getBank = async () => {
@@ -106,6 +100,16 @@ const ReleasesFilterComponet = (props) => {
         } catch (error) {
             console.log(error)
         }
+    }
+
+    const getCardCreedit = async () => {
+        const res = await api.get('cardcredit');
+            const respoFilter = res.data.sort((x, y) => {
+              let a = new Date(x.createdAt);
+              let b = new Date(y.createdAt);
+              return a - b;
+            });
+        setCardCreditFull(respoFilter);
     }
 
     const getRcCategory = async () => {
@@ -150,16 +154,6 @@ const ReleasesFilterComponet = (props) => {
         }
     }
 
-    const getReleases = async () => {
-
-        try {
-            const res = await api.get('releases');
-            setReleases(res.data);
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
     const getAll = () => {
         if(debit === false && credit === false && transf === false && fixo === false && installments === false) {
             if(all === true) {
@@ -174,10 +168,11 @@ const ReleasesFilterComponet = (props) => {
     const getDebit = () => {
         if(all === false) {
             if(debit === true) {
-                setDebit(false)
+                setDebit(false);
             }
             if(debit === false) {
                 setDebit(true)
+                setAll(false)
             }
         }
     }
@@ -226,51 +221,28 @@ const ReleasesFilterComponet = (props) => {
         }
     }
 
-    const getAllStatus = () => {
-
-        if(padOut === false && payable === false) {
-            if(allStatus === true) {
-                setAllStatus(false)
-            }
-            if(allStatus === false) {
-                setAllStatus(true)
-            }
-        }
-    }
-
-    const getPadOut = () => {
-
-        if(allStatus === false && payable === false) {
-            if(padOut === true) {
-                setPadOut(false)
-            }
-            if(padOut === false) {
-                setPadOut(true)
-            }
-        }
-    }
-
-    const getPayable = () => {
-
-        if(allStatus === false && padOut === false) {
-            if(payable === true) {
-                setPayable(false)
-            }
-            if(payable === false) {
-                setPayable(true)
-            }
-        }
-    }
-
     const handleBankId = (id) => {
         const res = bankFull.filter(item => item.id === id);
+        const resIcon = listIconAccount.filter(item => Number(item.id) === Number(res[0].type_id));
+
         setBank(res[0]);
+        setIconBank(resIcon[0].url)
         setModalBank(false);
+    }
+
+    const handlerCardId = (id) => {
+        const res = cardCreditFull.filter(item => item.id === id);
+        const resIcon = institution.filter(item => Number(item.id) === Number(res[0].id_institution));
+
+        setCardCredit(res[0])
+        setIconCard(resIcon[0].url);
+        setModalCard(false);
     }
 
     const handleCategoryRcId = (id) => {
         const res = categoryRc.filter(item => item.id === id);;
         const resIcon = listIconRc.filter(item => item.id === res[0].id_icon);
+
         setCatRc(res[0]);
         setIconRc(resIcon[0]);
         setModalCategoryRc(false);
@@ -279,6 +251,7 @@ const ReleasesFilterComponet = (props) => {
     const handleCategoryDpId = (id) => {
         const res = categoryDp.filter(item => item.id === id);;
         const resIcon = listIconDp.filter(item => item.id === res[0].id_icon);
+        
         setCatDp(res[0]);
         setIconDp(resIcon[0]);
         setModalCategoryDp(false);
@@ -289,75 +262,72 @@ const ReleasesFilterComponet = (props) => {
         setTag(res[0]);
         setModalTag(false);
     }
-
-    function toatsTags() {
-        const toastOpts = {
-          data: 'Nenhuma tag foi cadastrada!',
-          textColor: '#ffffff',
-          backgroundColor: '#36393F',
-          duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-          position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
-        }
-        WToast.show(toastOpts)
-    }
-
-    function toatsReleases() {
-        const toastOpts = {
-          data: 'Nenhuma tipo foi selecionado!',
-          textColor: '#ffffff',
-          backgroundColor: '#36393F',
-          duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-          position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
-        }
-        WToast.show(toastOpts)
-    }
-
+    
     const handlerFilter = () => {
-        const year = format(date, 'yyyy');
-        let yearNumber = Number(year);
 
-        let releasesFIlterYear = releases.filter(item => item.year === yearNumber);
-
-        if(!all && !credit && !debit && !transf && !fixo && !installments) {
-            toatsReleases();
-        } 
+        let isAll = all;
+        let type = null;
+        let isInstallments = null;
+        let isFixo = null;
+        let idBank = null;
+        let idCardCredit = null;
+        let idCatRc = null;
+        let idCatDp = null;
+        let idTag = null;
 
         if(credit) {
-            releasesFIlterYear = releasesFIlterYear.filter(item => item.type === 1);
+            type = 1;
         }
+
         if(debit) {
-            releasesFIlterYear = releasesFIlterYear.filter(item => item.type === 2);
+            type = 2;
         }
+
         if(transf) {
-            releasesFIlterYear = releasesFIlterYear.filter(item => item.type === 3);
+            type = 3;
         }
+
         if(installments) {
-            releasesFIlterYear = releasesFIlterYear.filter(item => item.installments === true);
+            isInstallments = true;
         }
+
         if(fixo) {
-            releasesFIlterYear = releasesFIlterYear.filter(item => item.fixo === true);
+            isFixo = true;
         }
+
         if(bank) {
-            releasesFIlterYear = releasesFIlterYear.filter(item => item.account_id === bank.id);
+            idBank = bank.id;
         }
+
+        if(cardCredit) {
+            idCardCredit = cardCredit.id;
+        }
+
         if(catRc) {
-            releasesFIlterYear = releasesFIlterYear.filter(item => item.rc_category_id === catRc.id);
+            idCatRc = catRc.id;
         }
+
         if(catDp) {
-            releasesFIlterYear = releasesFIlterYear.filter(item => item.dp_category_id === catDp.id);
+            idCatDp = catDp.id;
         }
+        
         if(tag) {
-            releasesFIlterYear = releasesFIlterYear.filter(item => item.tag_id === tag.id);
+            idTag = tag.id
         }
 
-        const responseFilter = releasesFIlterYear.sort((x, y) => {
-            let a = new Date(x.createdAt);
-            let b = new Date(y.createdAt);
-            return a - b;
-        }); 
+        const resultFilter = {
+            all: isAll,
+            type,
+            isInstallments,
+            isFixo,
+            idBank,
+            idCardCredit,
+            idCatRc,
+            idCatDp,
+            idTag,
+        }
 
-        props.onChangeYear(yearNumber);
-        props.onChangeFilter(responseFilter)
+        props.onChangeFilter(resultFilter);
         props.onChangeModal();
     }
 
@@ -365,21 +335,6 @@ const ReleasesFilterComponet = (props) => {
         <Container
             showsVerticalScrollIndicator={false}
         >
-
-            <AreaFilter>
-                <TitleFilter>Ano</TitleFilter>
-
-                <AreaFilterButton>
-                    <FlalistYear 
-                        horizontal={true}
-                        ListHeaderComponent={<MonthPicker 
-                            date={date} 
-                            onChange={(newDate) => setDate(newDate)}
-                        />}
-                    />
-                </AreaFilterButton>
-            </AreaFilter>
-
             <AreaFilter>
 
                 <TitleFilter>Tipo</TitleFilter>
@@ -451,49 +406,13 @@ const ReleasesFilterComponet = (props) => {
             </AreaLineFilter>
 
             <AreaFilter>
-                <TitleFilter>Status</TitleFilter>
-
-                <AreaFilterButton>
-
-                    <ButtonAddFilter
-                        onPress={() => getAllStatus()}
-                        activeOpacity={0.8} 
-                        style={{ backgroundColor: allStatus ? '#FF872C' : '#C4C4C4' }}
-                    >
-                        <ButtonAddFilterText>Todos</ButtonAddFilterText>
-                    </ButtonAddFilter>
-
-                    <ButtonAddFilter
-                        onPress={() => getPadOut()}
-                        activeOpacity={0.8} 
-                        style={{ backgroundColor: padOut ? '#FF872C' : '#C4C4C4' }}
-                    >
-                        <ButtonAddFilterText>Pago</ButtonAddFilterText>
-                    </ButtonAddFilter>
-
-                    <ButtonAddFilter
-                        onPress={() => getPayable()}
-                        activeOpacity={0.8} 
-                        style={{ backgroundColor: payable ? '#FF872C' : '#C4C4C4' }}
-                    >
-                        <ButtonAddFilterText>A pagar</ButtonAddFilterText>
-                    </ButtonAddFilter>
-
-                </AreaFilterButton>
-            </AreaFilter>
-
-            <AreaLineFilter>
-                <LineFilter />
-            </AreaLineFilter>
-
-            <AreaFilter>
                 <TitleFilter>Conta</TitleFilter>
 
                 {bank ? (
                     <AreaFilterButton>
                         <AreaButtonDashed onPress={() => setModalBank(true)}>
                             <AreaIcon style={{ backgroundColor: bank.color_hex }}>
-                            {/*  <IconImage source={bank.} /> */}
+                                <IconImage source={iconBank} />
                             </AreaIcon>
                             <ButtonText>{bank.name}</ButtonText> 
                         </AreaButtonDashed>
@@ -509,6 +428,33 @@ const ReleasesFilterComponet = (props) => {
 
             </AreaFilter>
             
+            <AreaLineFilter>
+                <LineFilter />
+            </AreaLineFilter>
+
+            <AreaFilter>
+                <TitleFilter>Cartão de credito</TitleFilter>
+
+                {cardCredit ? (
+                    <AreaFilterButton>
+                        <AreaButtonDashed onPress={() => setModalCard(true)}>
+                           
+                            <IconCard source={iconCard} />
+                    
+                            <ButtonText>{cardCredit.name}</ButtonText> 
+                        </AreaButtonDashed>
+                    </AreaFilterButton>
+                ) : (
+                    <AreaFilterButton>
+                        <AreaButtonDashed onPress={() => setModalCard(true)}>
+                            <ButtonDashed source={require('../../assets/card_img/icontrasejado.png')} />
+                            <ButtonDashedTitle>Selecione uma cartão</ButtonDashedTitle>
+                        </AreaButtonDashed>
+                    </AreaFilterButton>
+                )}
+
+            </AreaFilter>
+
             <AreaLineFilter>
                 <LineFilter />
             </AreaLineFilter>
@@ -554,7 +500,7 @@ const ReleasesFilterComponet = (props) => {
                         </AreaButtonDashed>
                     </AreaFilterButton>
 
-                ): (
+                ):(
 
                     <AreaFilterButton>
                         <AreaButtonDashed onPress={() => setModalCategoryDp(true)}>
@@ -574,12 +520,18 @@ const ReleasesFilterComponet = (props) => {
                 <TitleFilter>Tags</TitleFilter>
 
                 <AreaFilterButton>
-                    <ButtonTag onPress={() => {tagsFull.length > 0 ? setModalTag(true) : toatsTags()}}
+                    <ButtonTag onPress={() => {tagsFull.length > 0 ? setModalTag(true) : setTagMsn(true)}}
                         activeOpacity={0.8}
                         style={{backgroundColor: tag ? '#FF872C' : '#C4C4C4'
                     }}>
                         <ButtonTagText>Tags</ButtonTagText>
                     </ButtonTag>
+
+                    {tagMsn && 
+                        <AreaTagStatus>
+                            <TagStatus>Nenhuma tag!</TagStatus>
+                        </AreaTagStatus>
+                    }
 
                     {tag &&
                         <>  
@@ -587,7 +539,6 @@ const ReleasesFilterComponet = (props) => {
                                 <TitleX>+</TitleX>
                             </AreaTitleX>
                             
-
                             <ButtonTagAdd>
                                 <ButtonTagAddText>{tag.name}</ButtonTagAddText>
                             </ButtonTagAdd>
@@ -627,6 +578,34 @@ const ReleasesFilterComponet = (props) => {
                                 data={item} 
                                 onAction={(id) => handleBankId(id)}                       
                             />} 
+                            keyExtractor={item => item.id}
+                        />
+
+                    </BodyModalBank>
+                </AreaModalBank>
+            </Modal>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalCard}
+                onRequestClose={()=> setModalCard(false)}
+            >
+                <AreaModalBank>
+
+                    <BodyModalBank>
+
+                        <AreaTitleModal>
+                            <TitleModal>Selecione um cartão de credito</TitleModal>
+                        </AreaTitleModal>
+
+                        <ListBank 
+                            data={cardCreditFull}
+                            renderItem={({item}) => 
+                            <ListCardCreditFull
+                            data={item} 
+                            onAction={(id) => handlerCardId(id)}                       
+                        />} 
                             keyExtractor={item => item.id}
                         />
 

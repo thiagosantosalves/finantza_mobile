@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from 'react-native';
 import { WToast } from 'react-native-smart-tip';
+import { useAuth } from '../../hooks/auth';
 
 import CardImportOfx from '../../components/CardImportOfx';
 import ButtonPatternAdd from '../../components/ButtonPatternAdd';
@@ -51,6 +52,7 @@ const ConciliationBankImport = ({ route, navigation }) => {
     const [nameBank, setNomeBank] = useState('Conta Inicial');
     const [description, setDescription] = useState('');
     const [colorBank, setColorBank] = useState('#17BA89');
+    const [bankValue, setBankValue] = useState(0);
     const [urlIcon, setUrlIcon] = useState(require('../../assets/icon_account/bank_while.png'));
     const [bank, setBank] = useState({});
     const [categoryRc, setCategoryRc] = useState([]);
@@ -59,6 +61,8 @@ const ConciliationBankImport = ({ route, navigation }) => {
     const [modalCategoryRc, setModalCategoryRc] = useState(false);
     const [modalCategoryDp, setModalCategoryDp] = useState(false);
     const [modalDescription, setModalDescription] = useState(false);
+
+    const { handlerIsImportOFX } = useAuth();
 
     const [id, setId] = useState('');
     
@@ -69,6 +73,8 @@ const ConciliationBankImport = ({ route, navigation }) => {
         handlerRcCategory();
         handlerDpCategory();
     },[]);
+
+
 
     function toatsError(res) {
         const toastOpts = {
@@ -110,7 +116,7 @@ const ConciliationBankImport = ({ route, navigation }) => {
         } catch (error) {
           console.log(error)
         }
-    
+
     }
 
     const handlerRcCategory = async () => {
@@ -152,10 +158,11 @@ const ConciliationBankImport = ({ route, navigation }) => {
         const account = bank.filter(e => e.id === id);
         const icon = listIconAccount.filter(item => item.id === Number(account[0].type_id));
         
-        setIdBank(id);
+        setIdBank(account[0].id);
         setUrlIcon(icon[0].url);
         setNomeBank(account[0].name);
         setColorBank(account[0].color_hex);
+        setBankValue(account[0].value);
         setModalBank(false);
     }
 
@@ -241,26 +248,49 @@ const ConciliationBankImport = ({ route, navigation }) => {
 
     const handlerImport = async () => {
 
+        let idAccount = '';
+        let nameAccount = '';
+        let type = '';
+        let accountValue = 0;
+    
+        if(idBank === '') {
+    
+            const resAccount = await api.get('account');
+            const id = resAccount.data.filter(e => e.name === 'Conta Inicial');
+            idAccount = id[0].id;
+            nameAccount = id[0].name;
+            accountValue = id[0].value.toFixed(2); 
+
+        } else {
+            idAccount = idBank;
+            nameAccount = nameBank;
+            accountValue = bankValue.toFixed(2);
+        }
 
         let isValid = data.filter(e => e.category_id === null);
 
-
         const newData = data.map(e => {
+
+            if(e.type === 0 ) {
+                type = 2
+            } else {
+                type = 1;
+            }
 
             let res = {
 
-                description: '',
-                value: 0,
-                rc_category_id: null || 1,
-                dp_category_id: null || 1,
+                description: e.description,
+                value: e.value,
+                rc_category_id: e.category_id,
+                dp_category_id: e.category_id,
                 type_payer: false,
-                account_id: 1,
+                account_id: idAccount,
                 account_origin: null,
                 account_destiny: null,
                 card_credit_id: null,
-                day: 3,
-                month: 1,
-                year: 2022,
+                day: e.day,
+                month: e.month,
+                year: e.year,
                 fixo: false,
                 installments: false,
                 value_installments: 0,
@@ -268,11 +298,11 @@ const ConciliationBankImport = ({ route, navigation }) => {
                 attachment_img: false,
                 attachment_img_id: null,
                 tag: false,
-                type: "2", // se for debito deixar como 2, se for 1 e credito
+                type: type,
                 tag_id: null,
-                paying_account_name: 'nome do banco',
-                meta_id: 1,
-                meta: 'se tiver meta true se não false'
+                paying_account_name: nameAccount,
+                meta_id: null,
+                meta: false
             }
 
             return res;
@@ -280,13 +310,56 @@ const ConciliationBankImport = ({ route, navigation }) => {
         });
 
 
-        console.log(newData)
+        let valueRc = newData.filter(e => e.type === 1);
+        valueRc  = valueRc.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        
+        let valueDp = newData.filter(e => e.type === 2);
+        valueDp  = valueDp.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        
+       
+        let sumValueImport = Number(valueRc) - Number(valueDp);
+        sumValueImport = sumValueImport.toFixed(2); 
 
+        if(sumValueImport < 0) {
+            sumValueImport = Math.abs(sumValueImport);
+            accountValue = Number(accountValue) - Number(sumValueImport)
+        } else {
+            accountValue = Number(accountValue) + Number(sumValueImport)
+        }
+
+       
         if(isValid.length === 0) {
 
-            toatsError('Pode fazer a ação !');
+            try {
+                await api.post('bankconsolidation', newData);
+            } catch (error) {
+                console.log(error);
+            }
+           
+            let valueRc = newData.filter(e => e.type === 1);
+            valueRc  = valueRc.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+            
+            let valueDp = newData.filter(e => e.type === 2);
+            valueDp  = valueDp.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+            
+            let sumValueImport = Number(valueRc) - Number(valueDp);
+            sumValueImport = sumValueImport.toFixed(2); 
 
-            //await api.post('', newData);
+            if(sumValueImport < 0) {
+                sumValueImport = Math.abs(sumValueImport);
+                accountValue = Number(accountValue) - Number(sumValueImport)
+            } else {
+                accountValue = Number(accountValue) + Number(sumValueImport)
+            }     
+
+            try {
+                handlerIsImportOFX(true);
+                await api.put(`account/${idAccount}`, { value: accountValue });
+            } catch (error) {
+                console.log(error);
+            }
+           
+            navigation.navigate('ConciliationBank');
 
         } else {
             toatsError('Os campos de categoria são obrigatórios para importação. Por favor, preencha-os para continuar.')
@@ -376,10 +449,10 @@ const ConciliationBankImport = ({ route, navigation }) => {
 
                         <AreaModalInput>
                             <InputModal 
+                                placeholder="Digite a nova descrição" 
                                 placeholderTextColor="#7E7E7E"
                                 maxLength={18}
                                 onChangeText={(text)=> setDescription(text)}
-                                defaultValue="Digite aqui"
                                 value={description} 
                             />
                         </AreaModalInput>

@@ -106,9 +106,7 @@ const MetaCreate = ({ route, navigation }) => {
 
         let val = limit;
         let total = 0;
-
-        console.log(limit);
-        
+      
         let res = data.map(e => {
 
             if(e.id === id) {

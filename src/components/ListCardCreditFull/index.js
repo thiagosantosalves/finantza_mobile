@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
-
-import { Container, Title, AreaIcon, Icon, AreaLine, Line } from './styles';
-
+import React from 'react';
 import { institution } from '../../utils/institution';
+
+import { 
+    Container, 
+    Title, 
+    AreaIcon, 
+    Icon
+} from './styles';
 
 const ListCardCreditFull = (props) => {
 
@@ -17,10 +21,6 @@ const ListCardCreditFull = (props) => {
                 
                 <Title>{props.data.name}</Title>
             </Container>
-
-            <AreaLine>
-                <Line />
-            </AreaLine>       
         </>
     )
 }

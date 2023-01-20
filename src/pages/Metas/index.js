@@ -156,6 +156,8 @@ const Metas = ({ navigation }) => {
     const getMeta = async () => {
         try {
 
+            // Erro filtrar a meta por mês e ano pra assim fazerr o calculo.
+            
             const res = await api.get('meta');
 
             const sumMetaTotal = res.data.reduce((a, b) => a + b.value, 0);

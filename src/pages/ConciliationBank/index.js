@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import DocumentPicker from 'react-native-document-picker';
 import { WToast } from 'react-native-smart-tip';
+import { useAuth } from '../../hooks/auth';
 
 import api from '../../services/api';
 
@@ -17,6 +18,20 @@ import {
 
 const ConciliationBank = ({ navigation }) => {
 
+    const { importOFX, handlerIsImportOFX } = useAuth();
+
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', () => { 
+
+            if(importOFX) {
+                toatsError("A importação do arquivo OFX foi realizada com sucesso.");
+                handlerIsImportOFX(false);
+            }
+
+        });
+        return unsubscribe;
+    }, [importOFX]);
+
     function toatsError(text) {
         const toastOpts = {
           data: text,
@@ -26,7 +41,7 @@ const ConciliationBank = ({ navigation }) => {
           position: WToast.position.CENTER,
         }
         WToast.show(toastOpts)
-      }
+    }
 
     const handlerOfx = async () => {
         try {

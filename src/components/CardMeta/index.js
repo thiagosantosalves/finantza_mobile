@@ -78,8 +78,8 @@ const CardMeta = (props) => {
           <AreaInfoTitle>
             <NameCategory>{props.data.category.name}</NameCategory>
             <AreaValue>
-              <ValueTotal>R$ {formatNumber(props.data.value)} </ValueTotal>
-              <Valueremain> / {formatNumber(props.data.used_value)}</Valueremain>
+              <ValueTotal>R$ {formatNumber(props.data.used_value)} </ValueTotal>
+              <Valueremain> / {formatNumber(props.data.value)}</Valueremain>
             </AreaValue>
           </AreaInfoTitle>
         </AreaInfo>

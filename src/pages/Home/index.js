@@ -56,6 +56,8 @@ const Home = () => {
     useEffect(() => {
         getCardStatus();
         getMeta();
+
+        console.log("entrou aqui")
     }, []);
 
 

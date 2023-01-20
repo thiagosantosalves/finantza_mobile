@@ -4,8 +4,6 @@ export const Container = styled.ScrollView`
     margin-top: 20px;
 `;
 
-export const FlalistYear = styled.FlatList``;
-
 export const AreaFilter = styled.View``;
 
 export const TitleFilter = styled.Text`
@@ -92,7 +90,7 @@ export const AreaModalBank = styled.View`
 
 export const BodyModalBank = styled.View`
     width: 100%;
-    height: 180px;
+    height: 260px;
     background-color: #fff;
 `;
 
@@ -166,15 +164,33 @@ export const AreaIcon = styled.View`
     margin-right: 15px;
 `;
 
+export const IconCard = styled.Image`
+    width: 32px;
+    height: 32px;
+    margin-right: 20px;
+`;
+
 export const IconImage = styled.Image`
-    width: 25px;
-    height: 25px;
+    width: 22px;
+    height: 22px;
 `;
 
 export const ButtonText = styled.Text`
     font-family: 'Poppins-Medium';
     font-size: 13px;
     color: #2F323D;
+`;
+
+export const AreaTagStatus = styled.View`
+    justify-content: center;
+    height: 34px;
+    margin-left: 10px;
+`;
+
+export const TagStatus = styled.Text`
+    font-family: 'Poppins-Bold';
+    font-size: 10px;
+    color: #E83F5B;
 `;
 
 
