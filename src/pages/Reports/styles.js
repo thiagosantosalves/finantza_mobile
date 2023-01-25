@@ -5,18 +5,38 @@ export const Container = styled.View`
     background-color: #fff;
 `;
 
-export const AreaYear = styled.View`
-    width: 100%;
-    height: 40px;
+export const TextType = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #2F323D;
+    font-size: 12px;
+`; 
+
+export const DateFilter = styled.View`
+    flex-direction: row;
     justify-content: center;
     align-items: center;
     background-color: #2C3CD1;
+    height: 60px;
 `;
 
-export const Header = styled.View`
+export const DateFilterRows = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    margin-left: 3px;
+    margin-right: 3px;
+    margin-bottom: 5px;
 `;
 
-export const TitleHeaderYear = styled.Text`
+export const AreaTitleDateFilter = styled.View`
+    justify-content: center;
+    align-items: center;
+    width: 115px;
+    height: 30px;
+`;
+
+export const DateFilterTitle = styled.Text`
     font-family: 'Poppins-SemiBold';
     color: #FFF;
     font-size: 12px;
@@ -46,7 +66,7 @@ export const AreaSwitch = styled.View`
     align-items: center;
     width: 100%;
     height: 10%;
-    z-index: 1;
+    z-index: 2;
 `;
 
 export const SwiperGraphics = styled.View`
@@ -142,8 +162,8 @@ export const BodyModalExport = styled.View`
 `;
 
 export const BodyModalFilterYear = styled.View`
-   width: 90%;
-    height: 55%;
+    width: 90%;
+    height: 36%;
     border-radius: 8px;
     background-color: #fff;
 `;
@@ -154,11 +174,8 @@ export const AreaFilterYear = styled.View`
     width: 100%;
 `;
 
-export const FlalistYear = styled.FlatList`
-    margin-top: 30px;
-`;
-
 export const BodyAreaFilter = styled.View`
+    margin-top: 25px;
     margin-bottom: 20px;
 `;
 

@@ -85,7 +85,7 @@ const Releases = ({ navigation }) => {
     
     let today = new Date();
     const [date, setDate] = useState(today);
-    const [currentDate, setCurrentDate] = useState('Janeiro 2023');
+    const [currentDate, setCurrentDate] = useState('');
     const [data, setData] = useState([]);
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
@@ -270,10 +270,10 @@ const Releases = ({ navigation }) => {
             setData(res.data.releases);
             
         } catch (error) {
-            setTimeout(() => {
-                setIsLoading(false);
-                toatsError('Erro ao se comunicar com o servidor !');
-            }, 1000);
+        
+            setIsLoading(false);
+            toatsError('Erro ao se comunicar com o servidor !');
+       
         } 
 
         setIsLoading(false);
@@ -302,10 +302,8 @@ const Releases = ({ navigation }) => {
             setData(res.data.releases);
            
         } catch (error) {
-            setTimeout(() => {
-                setIsLoading(false);
-                toatsError('Erro ao se comunicar com o servidor !');
-            }, 1000);
+            setIsLoading(false);
+            toatsError('Erro ao se comunicar com o servidor !');
         } 
      
         setIsLoading(false)

@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Modal, Dimensions, PermissionsAndroid, Platform } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import  RNFetchBlob  from 'rn-fetch-blob';
 import { VictoryPie, VictoryBar, VictoryChart, VictoryLine, VictoryTheme } from 'victory-native';
 import { format, subMonths, addMonths } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
+import { WToast } from 'react-native-smart-tip';
 
-import MonthScroll from '../../components/MonthScroll';
+import CardReportShimmer from '../../components/CardReportShimmer';
 import CardListReport from '../../components/CardListReport';
-import MonthPicker from '../../components/MonthPicker';
 import ButtonHeaderReportComponents from '../../components/ButtonHeaderReportComponents';
 
 import api from '../../services/api';
@@ -15,9 +17,11 @@ import formatNumber from '../../utils/formatNumber';
 
 import {
     Container,
-    AreaYear,
-    TitleHeaderYear,
-    Header,
+    TextType,
+    DateFilter,
+    DateFilterRows,
+    AreaTitleDateFilter,
+    DateFilterTitle,
     AreaSwitch,
     SwiperGraphics,
     ButtonSwiper,
@@ -41,19 +45,22 @@ import {
     AreaModalFilter,
     BodyModalFilterYear,
     AreaFilterYear,
-    FlalistYear,
     BodyAreaFilter,
     AreaTypeFilter,
     ButtonFilterYear,
     ButtonFilterYearTitle
 } from './styles';
 
-
 const Reports = ({ navigation }) => {
 
     let today = new Date();
     const [date, setDate] = useState(new Date());
-    const { width, height } = Dimensions.get('window');
+    const [isLoading, setIsLoading] = useState(false);
+    const [currentDate, setCurrentDate] = useState('');
+    const { width } = Dimensions.get('window');
+    const [typeData, setTypeData] = useState('1');
+    const [isTypeAccount, setIsTypeAccount] = useState('0'); 
+    const [nameType, setNameType] = useState('Receita por categoria')
     const [data, setData] = useState([]);
     const [dataLine, setDataLine] = useState([]);
     const [selected, setSelected] = useState();
@@ -85,7 +92,6 @@ const Reports = ({ navigation }) => {
         });
     }, [navigation]);
 
-
     const resetActionButton = () => {
         setActiveCreditAccountFilter(false);
         setActiveDebitAccountFilter(false);
@@ -100,17 +106,7 @@ const Reports = ({ navigation }) => {
             resetActionButton();
         });
         return unsubscribe;
-    }, [selectedMonth]);
-
-    useEffect(() => { 
-        getReleases();
-        resetActionButton();
-    }, [selectedMonth]);
-
-    useEffect(() => {
-        getReleases();
-        resetActionButton();
-    }, [selectedYear]);
+    }, []);
 
     const handlerCardOnPress = (id) => {
         setSelected(prev => prev === id ? "" : id);
@@ -140,367 +136,179 @@ const Reports = ({ navigation }) => {
     }
 
     const handlerCredit = async () => {
-        
+        setIsLoading(true);
         setTypeFilter(1);
-        let res = await api.get('releases');
-        let resDataLine = res;
-        res = res.data.filter(item => item.year === selectedYear);
-        res = res.filter(item => item.month === selectedMonth + 1);
-        res = res.filter(item => item.type === 1);
- 
-        let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        setTypeData('1');
+        setNameType('Receita por categoria');
 
-        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
-        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
-        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
+        const formattedDate = format(
+            date, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
 
-        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 1);
-        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        setCurrentDate(formattedDate);
 
-        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 1);
-        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-        
-        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 1);
-        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-
-        let dataLine = [
-            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
-            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
-            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
-            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
-        ];
-
-        setDataLine(dataLine);
-        setCalcTotal(valueSum);
-       
-        res = res.reduce((soma, cur) => {
- 
-            let id = cur.rc_category.id;
-            let repetido = soma.find(elem => elem.rc_category.id === id);
+        try {
+            let month = selectedMonth + 1;
+            let res = await api.get(`reportFilter/${month}&${selectedYear}&1&0`);
     
-            if (repetido) {
-                repetido.value += cur.value;
-            } else {
-                soma.push(cur);
-            }
-
-            return soma;
-        }, []);
-
-
-        const newRes = res.map(elem => {
-
-            let release = {
-                id: elem.id,
-                label: elem.rc_category.name,
-                value: elem.value,
-                color: elem.rc_category.color_hex,
-                idIcon: elem.rc_category.id_icon,
-                type: elem.type,
-                account: false,
-                card_credit: false
-            }
-
-            return release;
-        });
+            setDataLine(res.data.dataLine);
+            setCalcTotal(res.data.valueSum);
+            setData(res.data.newRes);    
+        } catch (error) {
+            console.log(error);
+        }
 
         if(activeCreditFilter) setActiveCreditFilter(false);
         if(activeCreditAccountFilter) setActiveCreditAccountFilter(false);
         if(activeDebitAccountFilter) setActiveDebitAccountFilter(false);
         if(activeDebitCardFilter) setActiveDebitCardFilter(false);
+
         setActiveDebitFilter(true);
-        setData(newRes);
+        setIsLoading(false);
     }
 
     const handlerDebit = async () => {
-
+        setIsLoading(true);
         setTypeFilter(2);
-        let res = await api.get('releases');
-        let resDataLine = res;
-        res = res.data.filter(item => item.year === selectedYear);
-        res = res.filter(item => item.month === selectedMonth + 1);
-        res = res.filter(item => item.type === 2);
+        setTypeData('2');
+        setNameType('Despesas por categoria');
 
-        let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        const formattedDate = format(
+            date, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
 
-        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
-        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
-        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
+        setCurrentDate(formattedDate);
 
-        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 2);
-        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        try {
+            let month = selectedMonth + 1;
+            let res = await api.get(`reportFilter/${month}&${selectedYear}&2&0`);
 
-        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 2);
-        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-        
-        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 2);
-        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-
-        let dataLine = [
-            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
-            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
-            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
-            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
-        ];
-
-        setDataLine(dataLine);
-        setCalcTotal(valueSum);
-       
-        res = res.reduce((soma, cur) => {
- 
-            let id = cur.dp_category.id;
-            let repetido = soma.find(elem => elem.dp_category.id === id);
+            setDataLine(res.data.dataLine);
+            setCalcTotal(res.data.valueSum);
+            setData(res.data.newRes);
     
-            if (repetido) {
-                repetido.value += cur.value;
-            } else {
-                soma.push(cur);
-            }
-
-            return soma;
-        }, []);
-
-
-        const newRes = res.map(elem => {
-
-            let release = {
-                id: elem.id,
-                label: elem.dp_category.name,
-                value: elem.value,
-                color: elem.dp_category.color_hex,
-                idIcon: elem.dp_category.id_icon,
-                type: elem.type,
-                account: false,
-                card_credit: false
-            }
-
-            return release;
-        });
-
+        } catch (error) {
+            console.log(error);
+        }
+        
         if(activeDebitFilter) setActiveDebitFilter(false);
         if(activeCreditAccountFilter) setActiveCreditAccountFilter(false);
         if(activeDebitAccountFilter) setActiveDebitAccountFilter(false);
         if(activeDebitCardFilter) setActiveDebitCardFilter(false);
+    
         setActiveCreditFilter(true);
-        setData(newRes); 
+        setIsLoading(false);
     }
 
     const handlerAccountCredit = async () => {
-
-        setTypeFilter(3);
-        let res = await api.get('releases');
-        let resDataLine = res;
-        res = res.data.filter(item => item.year === selectedYear);
-        res = res.filter(item => item.month === selectedMonth + 1);
-        res = res.filter(item => item.type === 1);
-
-        let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-
-        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
-        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
-        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
-
-        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 1);
-        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-
-        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 1);
-        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
         
-        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 1);
-        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        setIsLoading(true);
+        setTypeFilter(3);
+        setTypeData('1');
+        setIsTypeAccount('1');
+        setNameType('Receita por conta');
 
-        let dataLine = [
-            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
-            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
-            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
-            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
-        ];
+        const formattedDate = format(
+            date, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
 
-        setDataLine(dataLine);
-        setCalcTotal(valueSum);
+        setCurrentDate(formattedDate);
 
-        res = res.reduce((soma, cur) => {
- 
-            let id = cur.account.id;
-            let repetido = soma.find(elem => elem.account.id === id);
+        try {
+            let month = selectedMonth + 1;
+            let res = await api.get(`reportFilter/${month}&${selectedYear}&1&1`);
+
+            setDataLine(res.data.dataLine);
+            setCalcTotal(res.data.valueSum);
+            setData(res.data.newRes);
     
-            if (repetido) {
-                repetido.value += cur.value;
-            } else {
-                soma.push(cur);
-            }
-
-            return soma;
-        }, []);
-
-        const newRes = res.map(elem => {
-
-            let release = {
-                id: elem.id,
-                label: elem.account.name,
-                value: elem.value,
-                color: elem.account.color_hex,
-                idIcon: elem.account.type_id,
-                type: elem.type,
-                account: true,
-                card_credit: false
-            }
-
-            return release;
-        }); 
-
+        } catch (error) {
+            console.log(error);
+        }
+        
         if(activeCreditFilter) setActiveCreditFilter(false);
         if(activeDebitFilter) setActiveDebitFilter(false);
         if(activeDebitAccountFilter) setActiveDebitAccountFilter(false);
         if(activeDebitCardFilter) setActiveDebitCardFilter(false);
         setActiveCreditAccountFilter(true);
-        setData(newRes); 
+        setIsLoading(false);
     }
 
     const handlerAccountDebit = async () => {
-
+        setIsLoading(true);
         setTypeFilter(4);
-        let res = await api.get('releases');
-        let resDataLine = res; 
-        res = res.data.filter(item => item.year === selectedYear);
-        res = res.filter(item => item.month === selectedMonth + 1);
-        res = res.filter(item => item.type === 2);
-        res = res.filter(item => item.account != null);
-        let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        setTypeData('2');
+        setIsTypeAccount('1');
+        setNameType('Despesas por conta');
 
-        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
-        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
-        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
+        const formattedDate = format(
+            date, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
 
-        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 2 && item.account != null);
-        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        setCurrentDate(formattedDate);
 
-        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 2 && item.account != null);
-        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-        
-        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 2 && item.account != null);
-        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        try {
+            let month = selectedMonth + 1;
+            let res = await api.get(`reportFilter/${month}&${selectedYear}&2&1`);
 
-        let dataLine = [
-            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
-            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
-            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
-            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
-        ];
-
-        setDataLine(dataLine);
-        setCalcTotal(valueSum);
-        
-        res = res.reduce((soma, cur) => {
- 
-            let id = cur.account.id;
-            let repetido = soma.find(elem => elem.account.id === id);
+            setDataLine(res.data.dataLine);
+            setCalcTotal(res.data.valueSum);
+            setData(res.data.newRes);
     
-            if (repetido) {
-                repetido.value += cur.value;
-            } else {
-                soma.push(cur);
-            }
-
-            return soma;
-        }, []);
-
-        const newRes = res.map(elem => {
-
-            let release = {
-                id: elem.id,
-                label: elem.account.name,
-                value: elem.value,
-                color: elem.account.color_hex,
-                idIcon: elem.account.type_id,
-                type: elem.type,
-                account: true,
-                card_credit: false
-            }
-
-            return release;
-        });
+        } catch (error) {
+            console.log(error);
+        }
         
         if(activeCreditFilter) setActiveCreditFilter(false);
         if(activeDebitFilter) setActiveDebitFilter(false);
         if(activeCreditAccountFilter) setActiveCreditAccountFilter(false);
         if(activeDebitCardFilter) setActiveDebitCardFilter(false);
         setActiveDebitAccountFilter(true);
-        setData(newRes); 
+        
+        setIsLoading(false);
     }
 
     const handlerCardDebit = async () => {
-
+        setIsLoading(true);
         setTypeFilter(5);
-        let res = await api.get('releases');
-        let resDataLine = res; 
-        res = res.data.filter(item => item.year === selectedYear);
-        res = res.filter(item => item.month === selectedMonth + 1);
-        res = res.filter(item => item.type === 2);
-        res = res.filter(item => item.card_credit != null);
+        setTypeData('2');
+        setIsTypeAccount('2');
+        setNameType('Despesas por cartão');
+        const formattedDate = format(
+            date, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
 
-        let valueSum = res.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
+        setCurrentDate(formattedDate);
 
-        let datePreviousTwo = subMonths(new Date(selectedYear, selectedMonth, 1), 2);
-        let datePreviousOne = subMonths(new Date(selectedYear, selectedMonth, 1), 1);
-        let dateNext = addMonths(new Date(selectedYear, selectedMonth, 1), 1);
+        try {
+            let month = selectedMonth + 1;
+            let res = await api.get(`reportFilter/${month}&${selectedYear}&2&2`);
 
-        let resPreviusTwo = resDataLine.data.filter(item => item.year === datePreviousTwo.getFullYear() && item.month === datePreviousTwo.getMonth() + 1 && item.type === 2 && item.card_credit != null);
-        let sumPreviusTwo = resPreviusTwo.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-
-        let resPreviusOne = resDataLine.data.filter(item => item.year === datePreviousOne.getFullYear() && item.month === datePreviousOne.getMonth() + 1 && item.type === 2 && item.card_credit != null);
-        let sumPreviusOne = resPreviusOne.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-        
-        let resPreviuNext = resDataLine.data.filter(item => item.year === dateNext.getFullYear() && item.month === dateNext.getMonth() + 1 && item.type === 2 && item.card_credit != null);
-        let sumPreviuNext = resPreviuNext.reduce((prevVal, elem) => Number(prevVal) + (Number(elem.value)), 0);
-
-        let dataLine = [
-            { id: 1, key: new Date(datePreviousTwo.getFullYear(), datePreviousTwo.getMonth(), 1), b: sumPreviusTwo },
-            { id: 2, key: new Date(datePreviousOne.getFullYear(), datePreviousOne.getMonth(), 1), b: sumPreviusOne },
-            { id: 3, key: new Date(selectedYear, selectedMonth, 1), b: valueSum },
-            { id: 4, key: new Date(dateNext.getFullYear(), dateNext.getMonth(), 1), b: sumPreviuNext },
-        ];
-
-        setDataLine(dataLine);
-        setCalcTotal(valueSum);
-        
-        res = res.reduce((soma, cur) => {
- 
-            let id = cur.card_credit.id;
-            let repetido = soma.find(elem => elem.card_credit.id === id);
+            setDataLine(res.data.dataLine);
+            setCalcTotal(res.data.valueSum);
+            setData(res.data.newRes);
     
-            if (repetido) {
-                repetido.value += cur.value;
-            } else {
-                soma.push(cur);
-            }
-
-            return soma;
-        }, []);
-
-        const newRes = res.map(elem => {
-
-            let release = {
-                id: elem.id,
-                label: elem.card_credit.name,
-                value: elem.value,
-                color: elem.card_credit.color_hex,
-                idIcon: elem.card_credit.id_institution,
-                type: elem.type,
-                account: false,
-                card_credit: true
-            }
-
-            return release;
-        });
-
+        } catch (error) {
+            console.log(error);
+        }
 
         if(activeCreditFilter) setActiveCreditFilter(false);
         if(activeDebitFilter) setActiveDebitFilter(false);
         if(activeCreditAccountFilter) setActiveCreditAccountFilter(false);
         if(activeDebitAccountFilter) setActiveDebitAccountFilter(false);
         setActiveDebitCardFilter(true);
-        setData(newRes); 
+        
+        setIsLoading(false);
     }
 
     const handlerFilterYear = () => {
@@ -529,8 +337,6 @@ const Reports = ({ navigation }) => {
         try {
 
             let res = await api.post('reportfullexel', newData);
-
-            console.log(res.data.url)
             
             const granted = await PermissionsAndroid.request(
                 PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
@@ -641,24 +447,114 @@ const Reports = ({ navigation }) => {
         }
     }
 
+    function toatsError(res) {
+        const toastOpts = {
+          data: res,
+          textColor: '#ffffff',
+          backgroundColor: '#36393F',
+          duration: WToast.duration.SHORT, 
+          position: WToast.position.CENTER,
+        }
+        WToast.show(toastOpts);
+    }
+
+
+    const handlerDateAdd = async () => {
+
+        setIsLoading(true);
+
+        const result = addMonths(date, 1)
+        setDate(result);
+        setData([]);
+
+        let month = result.getMonth() + 1;
+        let year = result.getFullYear();
+        
+        try {      
+
+            let res = await api.get(`reportFilter/${month}&${year}&${typeData}&${isTypeAccount}`);
+
+            setDataLine(res.data.dataLine);
+            setCalcTotal(res.data.valueSum);
+            setData(res.data.newRes);
+    
+        } catch (error) {
+            setIsLoading(false);
+        } 
+
+        setIsLoading(false);
+        const formattedDate = format(
+            result, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+        setCurrentDate(formattedDate);
+        
+    }
+
+    const handlerDateSub = async () => {
+
+        setIsLoading(true)
+
+        const result = subMonths(date, 1)
+        setDate(result);
+        setData([]);
+
+        let month = result.getMonth() + 1;
+        let year = result.getFullYear();
+
+        try {
+
+            let res = await api.get(`reportFilter/${month}&${year}&${typeData}&${isTypeAccount}`);
+
+            setDataLine(res.data.dataLine);
+            setCalcTotal(res.data.valueSum);
+            setData(res.data.newRes);
+           
+        } catch (error) {
+            setIsLoading(false);
+        } 
+     
+        setIsLoading(false)
+        const formattedDate = format(
+            result, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+        setCurrentDate(formattedDate); 
+    }
+
+    
+
     return (
         <Container>
-            <AreaYear>
-                <TitleHeaderYear>{selectedYear}</TitleHeaderYear>
-            </AreaYear>
 
-            <Header>
-                <MonthScroll 
-                    selectedMonth={selectedMonth}
-                    setSelectedMonth={setSelectedMonth}
-                />  
-            </Header>
+            <DateFilter>
+                <DateFilterRows activeOpacity={0.8} onPress={() => handlerDateSub() }>
+                    <MaterialCommunityIcons name='chevron-left' color="#fff" size={30} />
+                </DateFilterRows>
 
-            {data.length <= 0 ? (
+                <AreaTitleDateFilter>
+                    <DateFilterTitle>{currentDate}</DateFilterTitle>
+                </AreaTitleDateFilter>
+                
+                <DateFilterRows activeOpacity={0.8} onPress={() => handlerDateAdd()} >
+                    <MaterialCommunityIcons name='chevron-right' color="#fff" size={30} />
+                </DateFilterRows>
+            </DateFilter>
+
+           
+            {isLoading === true ? (
+                <CardReportShimmer />
+            ) : (
+                <>
+                
+                {data.length <= 0 ? (
                 <AreaBodyOps>
                     <Fontisto name="arrow-swap" size={70} color="#000" />
                     <TitleOps>Ops!</TitleOps>
-                    <DescriptionOps>Nenhum lançamento.</DescriptionOps>
+                    <DescriptionOps>Nenhum lançamento em</DescriptionOps>
+                    <DescriptionOps>{nameType}</DescriptionOps>
                 </AreaBodyOps> 
             ) : (
                 <>
@@ -737,8 +633,8 @@ const Reports = ({ navigation }) => {
                                 y="value"
                                 innerRadius={20}
                                 padAngle={2}
-                                height={height - 150}
-                                width={width - 140}
+                                height={280}
+                                width={280}
                                 animate={{
                                     duration: 500,
                                     easing: "bounce"
@@ -765,8 +661,8 @@ const Reports = ({ navigation }) => {
                                 x="label"
                                 y="value"
                                 alignment="start"
-                                height={300}
-                                width={350}
+                                height={280}
+                                width={280}
                                 animate={{
                                     duration: 500,
                                     easing: "bounce"
@@ -792,7 +688,6 @@ const Reports = ({ navigation }) => {
                             <VictoryChart  
                                 theme={VictoryTheme.material}
                             >
-
                                 <VictoryLine
                                     style={{
                                         data: { stroke: "tomato" }
@@ -808,6 +703,8 @@ const Reports = ({ navigation }) => {
                     </AreaCharts>
 
                     <AreaListReport>
+
+                        <TextType>{nameType}</TextType>
 
                         <CardList style={{
                             width: width - 30,
@@ -830,8 +727,8 @@ const Reports = ({ navigation }) => {
                     </AreaListReport>
                 </>
             )}
-
-            {/*  Modals  */ }
+                </>
+            )}
 
             <Modal
                 animationType="slide"
@@ -843,19 +740,9 @@ const Reports = ({ navigation }) => {
                     <AreaModalFilter activeOpacity={1}> 
                                 
                         <BodyModalFilterYear>
-                            <AreaTitleExport>
-                                <TitleExport>Filtrar por ano</TitleExport>
-                            </AreaTitleExport>
-
+                            
                             <AreaFilterYear>
 
-                                <FlalistYear 
-                                    horizontal={true}
-                                    ListHeaderComponent={<MonthPicker 
-                                        date={date} 
-                                        onChange={(newDate) => setDate(newDate)}
-                                    />}
-                                />
                                 <BodyAreaFilter>
                                     <AreaTypeFilter>
                                         <ButtonFilter style={{ backgroundColor: activeDebitFilter ? '#FF872C' : '#c4c4c4' }} onPress={() => handlerCredit()}>

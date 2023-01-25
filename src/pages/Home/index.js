@@ -56,10 +56,7 @@ const Home = () => {
     useEffect(() => {
         getCardStatus();
         getMeta();
-
-        console.log("entrou aqui")
     }, []);
-
 
     const getMeta = async () => {
         try {

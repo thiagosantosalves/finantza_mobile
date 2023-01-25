@@ -49,7 +49,7 @@ const CardReleaseShimmer = () => {
                     ]}
                 />
             </Card>      
-           <Card style={{ overflow: 'hidden' }}>
+            <Card style={{ overflow: 'hidden' }}>
                 <AnimatedView 
                     colors={[primaryColor, secondaryColor, secondaryColor,primaryColor]}
                     start={{x:0, y:0}}
