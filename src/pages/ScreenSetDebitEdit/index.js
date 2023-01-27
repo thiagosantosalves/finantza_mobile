@@ -94,7 +94,6 @@ import {
 
 const ScreenSetDebit = ({ route, navigation }) => {
 
-    const [meta, setMeta] = useState([]);
     const [description, setDescription] = useState(route.params.data.description);
     const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
     const [category, setCategory] = useState('bankFull');
@@ -229,17 +228,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
         getTags();
         actionDayIntial();
         getIcon();
-        handlerMeta();
     }, []);
-
-    const handlerMeta = async () => {
-        try {
-          const meta = await api.get('meta');
-          setMeta(meta.data);
-        } catch (error) {
-          console.log(error);
-        }    
-      }
 
     const handleCategoryId = async (id) => {
         
@@ -509,8 +498,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
           data: e,
           textColor: '#ffffff',
           backgroundColor: '#36393F',
-          duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-          position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+          duration: WToast.duration.SHORT,
+          position: WToast.position.CENTER,
         }
         WToast.show(toastOpts);
       }
@@ -665,8 +654,10 @@ const ScreenSetDebit = ({ route, navigation }) => {
             console.log('error');
         }
 
-        let isMeta = meta.filter(e => e.year === Number(year) 
-        && e.month === Number(month ) && e.category.id === categorySelect.id);
+        const resMeta = await api.get(`meta/${month}&${year}`);
+        let isMeta = resMeta.data.filter(e => e.category.id === categorySelect.id);
+
+        
 
         let meta_id = null;
         let metaIsTrue = false; 
@@ -702,14 +693,32 @@ const ScreenSetDebit = ({ route, navigation }) => {
             meta: metaIsTrue
         }
 
+        
+
         try {
 
+            let sumMetaEdit = '';
                 if(route.params.data.meta) {
-                    let isMetaEdit = meta.filter(e => e.id === route.params.data.meta_id);
-                    let sumMetaEdit = Number(isMetaEdit[0].used_value) - Number(route.params.data.value);
 
-                    await api.put(`meta/${isMetaEdit[0].id}`, {
-                        newValue: sumMetaEdit
+                    let isMetaEdit = await api.get(`metafilter/${route.params.data.meta_id}`);
+                    isMetaEdit = isMetaEdit.data;
+
+                    sumMetaEdit = Number(isMetaEdit[0].used_value) - Number(route.params.data.value);
+
+                    let porcent = sumMetaEdit * 100;
+                    porcent = porcent / isMetaEdit[0].value;
+
+                    let status = false;
+                    
+                    if(porcent >= 100 ) {
+                        porcent = 100;
+                        status = true;
+                    }
+
+                    await api.put(`metareleases/${isMetaEdit[0].id}`, {
+                        used_value: sumMetaEdit,
+                        porcent,
+                        status
                     });
                 }
 
@@ -717,7 +726,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
                     let newValue = installments ? valueP : value;
 
-                    let usedValue = Number(newValue) + Number(isMeta[0].used_value);
+                    let usedValue = Number(newValue) + Number(sumMetaEdit);
                     usedValue = usedValue.toFixed(2);
 
                     let newPorcent = usedValue * 100;
@@ -760,7 +769,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                             notification: false
                         });
                         } catch (error) {
-                        console.log(error)
+                            console.log(error)
                         }
                     }
                 
@@ -855,7 +864,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                             invoice_amount: limit_full
                         }); 
                     }
-                }    
+                } 
 
             } catch (error) {
                 console.log(error);

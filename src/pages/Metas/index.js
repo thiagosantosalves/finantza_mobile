@@ -1,23 +1,21 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { RefreshControl, Modal } from 'react-native';
-import { format } from 'date-fns';
+import { Modal } from 'react-native';
+import { format, subMonths, addMonths } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 import { WToast } from 'react-native-smart-tip';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import formatNumber from '../../utils/formatNumber';
 import { listIconDp } from '../../utils/listIconDp';
-import MonthScroll from '../../components/MonthScroll';
 import CardMetaInfo from '../../components/CardMetaInfo';
 import ButtonHeaderComponentsMeta from '../../components/ButtonHeaderComponentsMeta';
-import MonthPicker from '../../components/MonthPicker';
+import CardMetaShimmer from '../../components/CardMetaShimmer';
 
 import api from '../../services/api';
 import { useAuth } from '../../hooks/auth';
 
 import {
     Container,
-    AreaMonth,
-    AreaYear,
-    TitleHeaderYear,
     AreaBodyOps,
     ImageOps,
     AreaTitle,
@@ -32,15 +30,8 @@ import {
     BoxPlanning,
     ValuePlanning,
     ValueRemains,
+    AreaListMeta,
     ListMeta,
-    AreaModal,
-    BodyModalYear,
-    AreaTitleYear,
-    TitleYear,
-    AreaButtonYear,
-    FlalistYear,
-    ButtonFilterYear,
-    ButtonFilterYearTitle,
     AreaModalCenter,
     BodyModalCenter,
     AreaTitleModal,
@@ -65,6 +56,10 @@ import {
     AreaButtonModalNotification,
     ButtonModalNotification,
     TextButtonModalNotification,
+    DateFilter,
+    DateFilterRows,
+    AreaTitleDateFilter,
+    DateFilterTitle,
 } from './styles';
 
 const Metas = ({ navigation }) => {
@@ -72,7 +67,9 @@ const Metas = ({ navigation }) => {
     let today = new Date();
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
-    const [date, setDate] = useState(new Date());
+    const [isLoading, setIsLoading] = useState(false);
+    const [currentDate, setCurrentDate] = useState('');
+    const [date, setDate] = useState(today);
     const [titleStatus, setTitleStatus] = useState('restam');
     const [meta, setMeta] = useState({});
     const [limit, setLimit] = useState(0);
@@ -81,21 +78,18 @@ const Metas = ({ navigation }) => {
     const [colorCategory, setColorCategory] = useState('');
     const [iconCategory, setIconCategory] = useState('');
     const [nameCategory, setNameCategory] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
     const [valueTotal, setValueTotal] = useState(0);
     const [valueUsed, setValueUsed] = useState(0);
-    const [modalYear, setModalYear] = useState(false);
     const [modalEdit, setModalEdit] = useState(false);
     const [modalDelete, setModalDelete] = useState(false);
 
-    const { handlerMeta } = useAuth();
+    const { handlerMeta, handlerMetaDate } = useAuth();
 
     useLayoutEffect(() => {
         navigation.setOptions({
             headerRight: () => (
                 <ButtonHeaderComponentsMeta 
                     onPress={ async (e) => {
-                        if(e === 1) setModalYear(true);
                         if(e === 2) {
                             navigation.navigate('MetaRoutes', {
                                 screen: 'MetaInitial',
@@ -110,37 +104,10 @@ const Metas = ({ navigation }) => {
     useEffect(()=>{
         const unsubscribe = navigation.addListener('focus', () => {
             getMeta();
-            exploreRefresh();
         });
         return unsubscribe;
-    }, [selectedMonth]);
+    }, []);
 
-    useEffect(() => { 
-        getMeta();
-    }, [selectedMonth]);
-
-    useEffect(() => {
-        getMeta();
-    }, [selectedYear]);
-
-    const handlerFilterYear = () => {
-
-        const year = format(date, 'yyyy');
-        let yearNumber = Number(year);
-
-        setSelectedYear(yearNumber);
-        setModalYear(false);
-    }
-
-    const exploreRefresh = () => {
-
-        setIsLoading(true);
-        getMeta();
-
-        setTimeout(()=>{
-            setIsLoading(false);
-        }, 1000);
-    }
 
     const toatsError = (text) => {
         const toastOpts = {
@@ -153,57 +120,135 @@ const Metas = ({ navigation }) => {
         WToast.show(toastOpts)
     }
 
+    const handlerCalcMeta = (data) => {
+
+        const sumMetaTotal = data.reduce((a, b) => a + b.value, 0);
+        const isMeta = data.filter(e => e.status === false);
+        const sumTotalAvailable = isMeta.reduce((a, b) => a + b.value, 0);
+        const useDValueTotalAvailable = isMeta.reduce((a, b) => a + b.used_value, 0);
+
+        let value = sumTotalAvailable - useDValueTotalAvailable;
+        setValueTotal(sumMetaTotal);
+
+        const excedidoFilter = data.filter(e => e.status === true);
+        const exceededValue = excedidoFilter.reduce((a, b) => a + b.value, 0);
+        const exceededUsedValue = excedidoFilter.reduce((a, b) => a + b.used_value, 0);
+        const subtraction = exceededUsedValue - exceededValue;
+
+        if(value <= 0) {
+
+            setValueUsed(subtraction);
+            setTitleStatus('exedeu');
+
+        } else {
+            setValueUsed(value);
+            setTitleStatus('restam');
+        }
+
+        let id = data.map(e => {
+            return e.category.id
+        });
+        
+        handlerMeta(id);
+    } 
+
     const getMeta = async () => {
+
+        setIsLoading(true);
+
+        const date = new Date();
+        setDate(date);
+
+        const formattedDate = format(
+            date, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+
+        setCurrentDate(formattedDate);
+
         try {
 
-            // Erro filtrar a meta por mês e ano pra assim fazerr o calculo.
+            let month = selectedMonth + 1;
+            const res = await api.get(`meta/${month}&${selectedYear}`);
+
+            handlerCalcMeta(res.data);
             
-            const res = await api.get('meta');
-
-            const sumMetaTotal = res.data.reduce((a, b) => a + b.value, 0);
-            const isMeta = res.data.filter(e => e.status === false);
-            const sumTotalAvailable = isMeta.reduce((a, b) => a + b.value, 0);
-            const useDValueTotalAvailable = isMeta.reduce((a, b) => a + b.used_value, 0);
-
-            let value = sumTotalAvailable - useDValueTotalAvailable;
-            setValueTotal(sumMetaTotal);
-
-            const excedidoFilter = res.data.filter(e => e.status === true);
-            const exceededValue = excedidoFilter.reduce((a, b) => a + b.value, 0);
-            const exceededUsedValue = excedidoFilter.reduce((a, b) => a + b.used_value, 0);
-            const subtraction = exceededUsedValue - exceededValue;
-
-            if(value <= 0) {
-
-                setValueUsed(subtraction);
-                setTitleStatus('exedeu');
-
-            } else {
-                setValueUsed(value);
-                setTitleStatus('restam');
-            }
-
-            let newData = res.data.filter(e => e.year === selectedYear && e.month === selectedMonth + 1);
-
-            let id = newData.map(e => {
-                return e.category.id
-            });
-            
-            handlerMeta(id);
-
-            newData = newData.sort((x, y) => {
-                let a = new Date(x.createdAt);
-                let b = new Date(y.createdAt);
-        
-                return a - b;
-            });
-
-            setMeta(newData);  
-
+            handlerMetaDate(month+'&'+selectedYear);
+            setMeta(res.data);  
+            setIsLoading(false);
         } catch (error) {
-            console.log(error)
-            toatsError('Erro, não foi possível se conectar ao servidor');
+            setIsLoading(false);
+            toatsError('Erro ao se comunicar com o servidor !');
+        }
+    }
+
+    const handlerDateAdd = async () => {
+        setIsLoading(true);
+
+        const result = addMonths(date, 1)
+        setDate(result);
+        setMeta([]);  
+
+        let month = result.getMonth() + 1;
+        let year = result.getFullYear();
+        
+        handlerMetaDate(month+'&'+year);
+
+        try {
+
+            const res = await api.get(`meta/${month}&${year}`);
+            handlerCalcMeta(res.data);
+            setMeta(res.data);  
+            
+        } catch (error) {
+            setTimeout(() => {
+                setIsLoading(false);
+                toatsError('Erro ao se comunicar com o servidor !');
+            }, 1000);
         } 
+
+        const formattedDate = format(
+            result, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+        setCurrentDate(formattedDate);
+
+        setIsLoading(false);
+    }
+
+    const handlerDateSub = async () => {
+        setIsLoading(true)
+
+        const result = subMonths(date, 1)
+        setDate(result);
+        setMeta([]);  
+
+        let month = result.getMonth() + 1;
+        let year = result.getFullYear();
+
+        try {
+
+            const res = await api.get(`meta/${month}&${year}`);
+            handlerCalcMeta(res.data);
+            setMeta(res.data);  
+           
+        } catch (error) {
+            setTimeout(() => {
+                setIsLoading(false);
+                toatsError('Erro ao se comunicar com o servidor !');
+            }, 1000);
+        } 
+     
+        setIsLoading(false);
+
+        const formattedDate = format(
+            result, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+        setCurrentDate(formattedDate);
     }
 
     
@@ -253,7 +298,16 @@ const Metas = ({ navigation }) => {
 
             setLimit(0);
             setLimitFormat('R$ 0,00');
-            getMeta();
+
+            let month = date.getMonth() + 1;
+            let year = date.getFullYear();
+
+            const res = await api.get(`meta/${month}&${year}`);
+
+            handlerCalcMeta(res.data);
+            handlerMetaDate(month+'&'+year);
+            setMeta(res.data);  
+    
             setModalEdit(false)
         }
     }   
@@ -268,10 +322,28 @@ const Metas = ({ navigation }) => {
     const handlerDelete = async () => {
         try {
             await api.delete(`meta/${idMeta}`);
-            getMeta();
+
+            let month = date.getMonth() + 1;
+            let year = date.getFullYear();
+
+            const res = await api.get(`meta/${month}&${year}`);
+
+            handlerCalcMeta(res.data);
+            handlerMetaDate(month+'&'+year);
+            setMeta(res.data);  
+
             setModalDelete(false);
         } catch (error) {
-            getMeta();
+
+            let month = date.getMonth() + 1;
+            let year = date.getFullYear();
+
+            const res = await api.get(`meta/${month}&${year}`);
+
+            handlerCalcMeta(res.data);
+            handlerMetaDate(month+'&'+year);
+            setMeta(res.data);  
+
             setModalDelete(false);
         }
     }   
@@ -279,18 +351,25 @@ const Metas = ({ navigation }) => {
     return (
         <Container>
 
-            <AreaYear>
-                <TitleHeaderYear>{selectedYear}</TitleHeaderYear>
-            </AreaYear>
+            <DateFilter>
+                <DateFilterRows activeOpacity={0.8} onPress={() => handlerDateSub() }>
+                    <MaterialCommunityIcons name='chevron-left' color="#fff" size={30} />
+                </DateFilterRows>
 
-            <AreaMonth>
-                <MonthScroll 
-                    selectedMonth={selectedMonth}
-                    setSelectedMonth={setSelectedMonth}
-                />  
-            </AreaMonth>
+                <AreaTitleDateFilter>
+                    <DateFilterTitle>{currentDate}</DateFilterTitle>
+                </AreaTitleDateFilter>
+                
+                <DateFilterRows activeOpacity={0.8} onPress={() => handlerDateAdd()} >
+                    <MaterialCommunityIcons name='chevron-right' color="#fff" size={30} />
+                </DateFilterRows>
+            </DateFilter>
 
-            {meta.length <= 0  ? (
+            {isLoading === true &&
+                <CardMetaShimmer />
+            }
+
+            {meta.length <= 0 && isLoading === false  ? (
                 <AreaBodyOps>
                     <ImageOps source={require('../../assets/card_img/metas.png')} />
                     <AreaTitle>
@@ -309,41 +388,47 @@ const Metas = ({ navigation }) => {
                 </AreaBodyOps> 
             ) : (
                 <>
-                    <AreaTitleValue>
-                        <TitleValueMeta>Meta total</TitleValueMeta>
-                    </AreaTitleValue>
 
-                    <AreaValuePlanning>
+                    {isLoading === false &&
+                        <>
+                            <AreaTitleValue>
+                                <TitleValueMeta>Meta total</TitleValueMeta>
+                            </AreaTitleValue>
 
-                        <BoxPlanning>
-                            <ValuePlanning>R$ {formatNumber(valueUsed)}</ValuePlanning>
-                            <ValueRemains>{titleStatus}</ValueRemains>
-                        </BoxPlanning>
+                            <AreaValuePlanning>
 
-                        <BoxPlanning>
-                            <ValuePlanning>R$ {formatNumber(valueTotal)}</ValuePlanning>
-                            <ValueRemains>total das metas</ValueRemains>
-                        </BoxPlanning>
+                                <BoxPlanning>
+                                    <ValuePlanning>R$ {formatNumber(valueUsed)}</ValuePlanning>
+                                    <ValueRemains>{titleStatus}</ValueRemains>
+                                </BoxPlanning>
+
+                                <BoxPlanning>
+                                    <ValuePlanning>R$ {formatNumber(valueTotal)}</ValuePlanning>
+                                    <ValueRemains>total das metas</ValueRemains>
+                                </BoxPlanning>
+                            
+                            </AreaValuePlanning>
+                        </>
+                    }
+
+                    {isLoading === false &&
+
                     
-                    </AreaValuePlanning>
-
-                    <ListMeta 
-                        refreshControl={
-                            <RefreshControl 
-                                refreshing={isLoading}
-                                onRefresh={exploreRefresh}
-                                progressBackgroundColor="#fff"
-                                colors={['#2C3CD1']} 
-                            />
-                        }  
-                        data={meta}
-                        keyExtractor={item => item.id}
-                        renderItem={({item}) => <CardMetaInfo
-                            data={item} 
-                            onEdit={(data) => handlerId(data)}
-                            onDelete={(data) => handlerIdDelete(data)}
-                        />} 
-                    /> 
+                        <AreaListMeta>
+                  
+                            <ListMeta 
+                                data={meta}
+                                keyExtractor={item => item.id}
+                                renderItem={({item}) => <CardMetaInfo
+                                    data={item} 
+                                    onEdit={(data) => handlerId(data)}
+                                    onDelete={(data) => handlerIdDelete(data)}
+                                />} 
+                            /> 
+                            
+                        </AreaListMeta>
+                    
+                    }
                 </>
             )}
 
@@ -434,44 +519,6 @@ const Metas = ({ navigation }) => {
                     </BodyModalCenter>
 
                 </AreaModalCenter>
-            </Modal>
-            
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalYear}
-                onRequestClose={()=> {
-                    setModalYear(false)
-                }}
-            >
-                <AreaModal>
-                    <BodyModalYear>
-
-                        <AreaTitleYear>
-                            <TitleYear>Filtrar por ano</TitleYear>
-                        </AreaTitleYear>
-
-                        <AreaButtonYear>
-
-                            <FlalistYear 
-                                horizontal={true}
-                                ListHeaderComponent={<MonthPicker 
-                                    date={date} 
-                                    onChange={(newDate) => setDate(newDate)}
-                                />}
-                            />
-
-                            <ButtonFilterYear 
-                                activeOpacity={0.8}
-                                onPress={() => { handlerFilterYear() }}
-                            >
-                                    <ButtonFilterYearTitle>Concluir</ButtonFilterYearTitle>
-                            </ButtonFilterYear>
-                        
-                        </AreaButtonYear>
-
-                    </BodyModalYear>
-                </AreaModal>
             </Modal>
 
         </Container>

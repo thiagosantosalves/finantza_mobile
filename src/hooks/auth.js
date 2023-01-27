@@ -9,6 +9,7 @@ const AuthProvider = ({ children }) => {
     const [data, setData] = useState({});
     const [loading, setLoading] = useState(true);
     const [idsMeta, setIdsMeta] = useState({});
+    const [metaDate, setMetaDate] = useState('');
     const [importOFX, setImporOFX] = useState(null);
 
     useEffect(() => {
@@ -61,13 +62,14 @@ const AuthProvider = ({ children }) => {
         setIdsMeta(data);
     }, []);
 
+    const handlerMetaDate = useCallback((date) => {
+        setMetaDate(date);
+    }, []);
+
     const handlerIsImportOFX = useCallback((status) => {
         setImporOFX(status);
     }, []);
 
-    const handlerDateFilter = useCallback((date) => {
-        setDateFilter(date);
-    }, []);
 
 
     return (
@@ -78,6 +80,8 @@ const AuthProvider = ({ children }) => {
             signOut, 
             handlerMeta,
             idsMeta: idsMeta,
+            handlerMetaDate,
+            metaDate: metaDate,
             importOFX: importOFX,
             handlerIsImportOFX
         }}>

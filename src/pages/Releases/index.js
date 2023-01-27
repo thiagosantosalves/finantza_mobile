@@ -224,7 +224,15 @@ const Releases = ({ navigation }) => {
     const getReleases = async (t) => {
 
         const date = new Date();
-
+        setDate(date);
+        
+        const formattedDate = format(
+            date, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+        setCurrentDate(formattedDate);
+        
         try {
 
             setIsLoading(true);
@@ -232,14 +240,8 @@ const Releases = ({ navigation }) => {
 
             let month = selectedMonth + 1;
             const res = await api.get(`releases/${month}&${selectedYear}`);
-            
-            const formattedDate = format(
-                date, 
-                "MMMM"+" "+"YYY",
-                { locale: ptBR }
-            );
 
-            setCurrentDate(formattedDate);
+            
             handlerCalc(res.data.releases);
             setData(res.data.releases);
             setIsLoading(false);

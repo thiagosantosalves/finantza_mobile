@@ -9,6 +9,8 @@ import CardMetaSelectValue from '../../components/CardMetaSelectValue';
 import ButtonPatternAdd from '../../components/ButtonPatternAdd';
 
 import api from '../../services/api';
+import { useAuth } from '../../hooks/auth';
+
 
 import { 
     Container,
@@ -49,6 +51,8 @@ const MetaCreate = ({ route, navigation }) => {
     const [iconCategory, setIconCategory] = useState('');
     const [nameCategory, setNameCategory] = useState('');
     const [modal, setModal] = useState(false);
+
+    const { metaDate } = useAuth();
 
     useEffect(() => {
         let data = route.params.data;
@@ -144,9 +148,15 @@ const MetaCreate = ({ route, navigation }) => {
 
     const handlerMeta = async () => {
 
-        let date = new Date();
-        let month = date.getMonth() + 1; 
-        let year = date.getFullYear();
+        let date = metaDate.split('&');
+        let month = date[0];
+        let year = date[1];
+
+        if(date[0] === "") {
+            let dateNow = new Date();
+            month = dateNow.getMonth() + 1;
+            year = dateNow.getFullYear();
+        }
 
         let newData = data.map(e => {
 
@@ -171,7 +181,7 @@ const MetaCreate = ({ route, navigation }) => {
         }
 
         try {
-            
+                
             await api.post('meta', newData);
 
             navigation.navigate("TabRoutes", {
@@ -180,7 +190,7 @@ const MetaCreate = ({ route, navigation }) => {
 
         } catch (error) {
             toatsError("Error ao se conectar ao servidor !");
-        }
+        } 
     }
 
     return (

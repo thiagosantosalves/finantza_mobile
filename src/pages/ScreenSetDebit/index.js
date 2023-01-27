@@ -90,7 +90,6 @@ import {
 
 const ScreenSetDebit = ({ route, navigation }) => {
 
-  const [meta, setMeta] = useState([]);
   const [description, setDescription] = useState('');
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [category, setCategory] = useState(null);
@@ -200,17 +199,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
     getCard();
     getTags();
     actionDayIntial();
-    handlerMeta();
   }, []);
-
-  const handlerMeta = async () => {
-    try {
-      const meta = await api.get('meta');
-      setMeta(meta.data);
-    } catch (error) {
-      console.log(error);
-    }    
-  }
 
   const handleCategoryId = async (id) => {
     
@@ -597,8 +586,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
       let month = date[1];
       let year = date[2];
 
-      let isMeta = meta.filter(e => e.year === Number(year) 
-      && e.month === Number(month ) && e.category.id === categorySelect.id);
+      const resMeta = await api.get(`meta/${month}&${year}`);
+      let isMeta = resMeta.data.filter(e => e.category.id === categorySelect.id);
 
       let meta_id = null;
       let metaIsTrue = false; 
@@ -689,11 +678,11 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
           try {
               
-              await api.put(`metareleases/${isMeta[0].id}`, {
-                used_value: usedValue,
-                porcent: newPorcent.toFixed(2),
-                status: status
-              });
+            await api.put(`metareleases/${isMeta[0].id}`, {
+              used_value: usedValue,
+              porcent: newPorcent.toFixed(2),
+              status: status
+            });
 
             } catch (error) {
               console.log(error);

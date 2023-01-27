@@ -65,15 +65,16 @@ const Home = () => {
             let month = date.getMonth() + 1;
             let year = date.getFullYear();
 
-            let metas = await api.get('/meta');
-            metas = metas.data.filter(e => e.month === month && e.year === year);
+            let metas = await api.get(`meta/${month}&${year}`);
 
-            let id = metas.map(e => {
+
+
+            let id = metas.data.map(e => {
                 return e.category.id
             });
             
             handlerMeta(id);
-            setMeta(metas);
+            setMeta(metas.data);
             
         } catch (error) {
             console.log("Error: "+error);

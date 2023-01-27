@@ -141,6 +141,9 @@ const Reports = ({ navigation }) => {
         setTypeData('1');
         setNameType('Receita por categoria');
 
+        const date = new Date();
+        setDate(date);
+        
         const formattedDate = format(
             date, 
             "MMMM"+" "+"YYY",
@@ -157,7 +160,10 @@ const Reports = ({ navigation }) => {
             setCalcTotal(res.data.valueSum);
             setData(res.data.newRes);    
         } catch (error) {
-            console.log(error);
+            setTimeout(() => {
+                setIsLoading(false);
+                toatsError('Erro ao se comunicar com o servidor !');
+            }, 1000);
         }
 
         if(activeCreditFilter) setActiveCreditFilter(false);
@@ -282,6 +288,7 @@ const Reports = ({ navigation }) => {
         setTypeData('2');
         setIsTypeAccount('2');
         setNameType('Despesas por cartão');
+
         const formattedDate = format(
             date, 
             "MMMM"+" "+"YYY",
@@ -310,15 +317,7 @@ const Reports = ({ navigation }) => {
         
         setIsLoading(false);
     }
-
-    const handlerFilterYear = () => {
-        const year = format(date, 'yyyy');
-        let yearNumber = Number(year);
-        setSelectedYear(yearNumber);
-        setModalFilter(false);
-    }
-   
-
+    
     const handlerExportExel = async () => {
         
         let newData = data.map((item) => {
@@ -775,7 +774,7 @@ const Reports = ({ navigation }) => {
 
                                 <ButtonFilterYear 
                                     activeOpacity={0.8}
-                                    onPress={() => { handlerFilterYear() }}
+                                    onPress={() => {setModalFilter(false) }}
                                 >
                                     <ButtonFilterYearTitle>Concluir</ButtonFilterYearTitle>
                                 </ButtonFilterYear>
