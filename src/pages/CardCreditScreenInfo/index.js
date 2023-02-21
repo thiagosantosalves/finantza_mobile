@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { Modal, RefreshControl } from 'react-native';
-import { format } from 'date-fns';
+import { Modal } from 'react-native';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import { WToast } from 'react-native-smart-tip';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { format, subMonths, addMonths } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 
-import MonthScroll from '../../components/MonthScroll';
+import CardCreditReleaseShimmier from '../../components/CardCreditReleaseShimmer';
 import CardCreditInfo from '../../components/CardCreditInfo';
 import ButtonHeaderComponentsCard from '../../components/ButtonHeaderComponentsCard';
 import MonthPicker from '../../components/MonthPicker';
@@ -13,9 +15,10 @@ import api from '../../services/api';
 
 import { 
     Container, 
-    AreaMonth,
-    AreaYear,
-    TitleHeaderYear,
+    DateFilter,
+    DateFilterRows,
+    AreaTitleDateFilter,
+    DateFilterTitle,
     AreaBodyOps,
     TitleOps,
     DescriptionOps,
@@ -43,8 +46,9 @@ const CardCreditScreenInfo = ({ route, navigation }) => {
     const [data, setData] = useState({});
     const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
     const [selectedYear, setSelectedYear] = useState(today.getFullYear());
-    const [date, setDate] = useState(new Date());
+    const [date, setDate] = useState(today);
     const [isLoading, setIsLoading] = useState(false);
+    const [currentDate, setCurrentDate] = useState('Janeiro 2023');
     const [modal, setModal] = useState(false);
     const [modalYear, setModalYear] = useState(false);
 
@@ -53,7 +57,6 @@ const CardCreditScreenInfo = ({ route, navigation }) => {
             headerRight: () => (
                 <ButtonHeaderComponentsCard 
                     onPress={(e) => {
-                        if(e === 1) setModalYear(true);
                         if(e === 2) setModal(true);
                     }}
                 />
@@ -72,28 +75,12 @@ const CardCreditScreenInfo = ({ route, navigation }) => {
         WToast.show(toastOpts)
     }
 
-    const exploreRefresh = () => {
-        setIsLoading(true);
-        setTimeout(()=>{
-            setIsLoading(false);
-        }, 1000);
-    }
-
     useEffect(() => {
         const unsubscribe = navigation.addListener('focus', () => { 
             getCardCredit();
-            exploreRefresh();
         });
         return unsubscribe;
-    }, [selectedMonth]);
-
-    useEffect(() => { 
-        getCardCredit();
-    }, [selectedMonth]);
-
-    useEffect(() => {
-        getCardCredit();
-    }, [selectedYear]);
+    }, []);
 
     const handlerFilterYear = () => {
 
@@ -111,15 +98,100 @@ const CardCreditScreenInfo = ({ route, navigation }) => {
     const handlerExportPdf = () => {
         setModal(false);
     }
+    
+    const handlerDateAdd = async () => {
+        setIsLoading(true);
 
-    const getCardCredit = async () => {
+        const result = addMonths(date, 1)
+        setDate(result);
+        setData([]);
+
+        let month = result.getMonth() + 1;
+        let year = result.getFullYear();
+        
+        try {
+
+            const card = route.params.cardCredit;
+
+            const resData = await api.get(`cardcreditreleases/${month}&${year}`);
+            let res = resData.data.filter(e => e.card_credit.id === card.id);
+            setData(res);
+            
+        } catch (error) {
+            setTimeout(() => {
+                setIsLoading(false);
+                toatsError('Erro ao se comunicar com o servidor !');
+            }, 1000);
+        } 
+
+        setIsLoading(false);
+        const formattedDate = format(
+            result, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+        setCurrentDate(formattedDate);
+    }
+
+    const handlerDateSub = async () => {
+        setIsLoading(true)
+
+        const result = subMonths(date, 1)
+        setDate(result);
+        setData([]);
+
+        let month = result.getMonth() + 1;
+        let year = result.getFullYear();
 
         try {
 
             const card = route.params.cardCredit;
-            const resData = await api.get('cardcreditreleases');
-            let res = resData.data.filter(e => e.card_credit.id === card.id && e.year === selectedYear && e.month === selectedMonth + 1);
+
+            const resData = await api.get(`cardcreditreleases/${month}&${year}`);
+            let res = resData.data.filter(e => e.card_credit.id === card.id);
+            setData(res);
+        
+        } catch (error) {
+            setTimeout(() => {
+                setIsLoading(false);
+                toatsError('Erro ao se comunicar com o servidor !');
+            }, 1000);
+        } 
+    
+        setIsLoading(false)
+        const formattedDate = format(
+            result, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+        setCurrentDate(formattedDate);
+    }
+
+    const getCardCredit = async () => {
+
+        const date = new Date();
+        setDate(date);
+
+        const formattedDate = format(
+            date, 
+            "MMMM"+" "+"YYY",
+            { locale: ptBR }
+        );
+
+        setCurrentDate(formattedDate);
+
+        try {
+
+            setIsLoading(true);
+            setData([]);
+
+            const card = route.params.cardCredit;
+            let month = selectedMonth + 1;
+
+            const resData = await api.get(`cardcreditreleases/${month}&${selectedYear}`);
+            let res = resData.data.filter(e => e.card_credit.id === card.id);
             setData(res); 
+            setIsLoading(false);
             
         } catch (error) {
             toatsError('Error, não foi possível se conectar ao servidor!');
@@ -160,35 +232,33 @@ const CardCreditScreenInfo = ({ route, navigation }) => {
     return (
         <Container>
 
-            <AreaYear>
-                <TitleHeaderYear>{selectedYear}</TitleHeaderYear>
-            </AreaYear>
+            <DateFilter>
+                <DateFilterRows activeOpacity={0.8} onPress={() => handlerDateSub() }>
+                    <MaterialCommunityIcons name='chevron-left' color="#fff" size={30} />
+                </DateFilterRows>
 
-            <AreaMonth>
-                <MonthScroll 
-                    selectedMonth={selectedMonth}
-                    setSelectedMonth={setSelectedMonth}
-                />  
-            </AreaMonth>
+                <AreaTitleDateFilter>
+                    <DateFilterTitle>{currentDate}</DateFilterTitle>
+                </AreaTitleDateFilter>
+                
+                <DateFilterRows activeOpacity={0.8} onPress={() => handlerDateAdd()} >
+                    <MaterialCommunityIcons name='chevron-right' color="#fff" size={30} />
+                </DateFilterRows>
+            </DateFilter>
 
-            {data.length <= 0 ? (
+            {isLoading === true &&
+                <CardCreditReleaseShimmier />
+            }
+
+            {data.length <= 0 && isLoading === false  ? (
                 <AreaBodyOps>
                     <Fontisto name="arrow-swap" size={70} color="#000" />
                     <TitleOps>Ops!</TitleOps>
                     <DescriptionOps>Nenhum lançamento.</DescriptionOps>
                 </AreaBodyOps>
-
             ) : (
 
                 <ListCard
-                   refreshControl={
-                        <RefreshControl 
-                            refreshing={isLoading}
-                            onRefresh={exploreRefresh}
-                            progressBackgroundColor="#fff"
-                            colors={['#2C3CD1']} 
-                        />
-                    }
                     data={data}
                     renderItem={({item}) => <CardCreditInfo 
                         data={item} 
@@ -206,7 +276,6 @@ const CardCreditScreenInfo = ({ route, navigation }) => {
                     setModalYear(false)
                 }}
             >
-
                 <AreaModal>
 
                     <BodyModalYear>

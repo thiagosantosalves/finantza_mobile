@@ -1,17 +1,20 @@
-import React, { useLayoutEffect } from 'react';
+import React, { useLayoutEffect, useEffect } from 'react';
 import { Dimensions } from 'react-native';
-
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Evillcons from 'react-native-vector-icons/EvilIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
+import { useAuth } from '../../hooks/auth';
+
 import { 
     Container, 
     ButtonGear,
     AreaPerfil,
     ImagePerfil,
+    Avatar,
     AreaNamePerfil,
     Name,
     ButtonPerfil,
@@ -30,10 +33,10 @@ import {
 
 } from './styles';
 
-
 const PerfilScreen = ({ navigation, ...rest }) => {
 
     const { width } = Dimensions.get('window');
+    const { user } = useAuth();
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -45,13 +48,25 @@ const PerfilScreen = ({ navigation, ...rest }) => {
         })
     }, [navigation]);
 
+    useEffect(() => {
+        console.log(user.avatar);
+    }, []);
+
     return (
         <Container>
             
             <AreaPerfil>
-                <ImagePerfil source={require('../../assets/perfil.png')} />
+
+                <ImagePerfil>   
+                    {user.Avatar ? (
+                         <Avatar source={{ uri: user.avatar.url }} />
+                    ) : (   
+                        <Ionicons name='person' size={42} color="#2F323D" />
+                    )}
+                </ImagePerfil>
+
                 <AreaNamePerfil>
-                    <Name>Thiago</Name>
+                    <Name>{user.name}</Name>
                     <ButtonPerfil activeOpacity={0.8} onPress={() => navigation.navigate('perfilEdit')} >
                         <ButtonPerfilText>Editar perfil</ButtonPerfilText>
                     </ButtonPerfil>
@@ -81,7 +96,6 @@ const PerfilScreen = ({ navigation, ...rest }) => {
                         elevation: 1,
                     }}
                 >
-
                     <TitleConfig>Configurações</TitleConfig>
 
                     <AreaSection activeOpacity={0.8} onPress={() => navigation.navigate('bank')}>
@@ -136,10 +150,7 @@ const PerfilScreen = ({ navigation, ...rest }) => {
                     </AreaSection>                    
                 
                 </AreaConfig>
-
-            
             </AreaBody>
-
         </Container>
     );
 }

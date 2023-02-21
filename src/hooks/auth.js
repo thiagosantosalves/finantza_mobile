@@ -33,7 +33,6 @@ const AuthProvider = ({ children }) => {
         loadStoragedData();
     }, []);
 
-
     const signIn = useCallback(async (data) => {
 
         const response = await api.post('/session', data);
@@ -49,6 +48,12 @@ const AuthProvider = ({ children }) => {
         
         setData({ token, user });
 
+    }, []);
+
+    const updateUser = useCallback(async (info) => {
+        data.user = info;
+        await AsyncStorage.setItem('@Finantza:user', JSON.stringify(data.user));
+        setData(data);
     }, []);
 
     const signOut = useCallback(async () => {
@@ -71,11 +76,11 @@ const AuthProvider = ({ children }) => {
     }, []);
 
 
-
     return (
         <AuthContext.Provider value={{ 
             signIn, 
             user: data.user, 
+            updateUser,
             loading, 
             signOut, 
             handlerMeta,

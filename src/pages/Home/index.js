@@ -14,6 +14,7 @@ import CardCredit from '../../components/CardCredit';
 import CardMeta from '../../components/CardMeta';
 import CardInitial from '../../components/CardInitial';
 import CardInitialMeta from '../../components/CardInitialMeta';
+import CardInitialAccountShimmer from '../../components/CardInitialAccountShimmer';
 
 import formatNumber from '../../utils/formatNumber';
 
@@ -40,11 +41,14 @@ import {
     List,
 } from './styles';
 
+
 const Home = () => {
 
     const { width } = Dimensions.get('window');
     const navigation = useNavigation();
     const { user, handlerMeta } = useAuth();
+
+    const [isAccountLoading, setIsAccountLoading] = useState(false);
 
     const [userInfo, setUserInfo] = useState({});
     const [valueAccount, setValueAccount] = useState(null);
@@ -64,10 +68,7 @@ const Home = () => {
             let date = new Date();
             let month = date.getMonth() + 1;
             let year = date.getFullYear();
-
             let metas = await api.get(`meta/${month}&${year}`);
-
-
 
             let id = metas.data.map(e => {
                 return e.category.id
@@ -77,7 +78,7 @@ const Home = () => {
             setMeta(metas.data);
             
         } catch (error) {
-            console.log("Error: "+error);
+            console.log("Error: ");
         }
     }
     
@@ -85,7 +86,6 @@ const Home = () => {
         
         let date = new Date();
         let day = date.getDate();
-        let month = date.getMonth() + 1;
        
         try {
             
@@ -106,7 +106,7 @@ const Home = () => {
             } 
 
         } catch (error) {
-            console.log("Error: "+error);
+            console.log("Error: dddd "+error);
         }
     }
     
@@ -123,44 +123,38 @@ const Home = () => {
 
         } catch (error) {
             console.log(error);
-        }
-        
+        }   
     }
 
     const getBank = async () => {
 
         try {
+
+            setIsAccountLoading(true);
+
             const response = await api.get('account');
 
             const resIsFiledFilter = response.data.filter(item => item.is_filed == false);
+            setBank(resIsFiledFilter);
 
-            const resFilterDateDesc = resIsFiledFilter.sort((x, y) => {
-                let a = new Date(x.createdAt);
-                let b = new Date(y.createdAt);
-                return a - b;
-            });
 
-            setBank(resFilterDateDesc);
-
+            setIsAccountLoading(false)
         } catch (error) {
+            setIsAccountLoading(false);
             console.log(error);
         }   
 
     }
 
     const getCard = async () => {
-        
-        const response = await api.get('/cardcredit');
 
-        const resFilterFiled = response.data.filter((item) => item.is_filed == false);
-        const resFilterDateDesc = resFilterFiled.sort((x, y) => {
-            let a = new Date(x.createdAt);
-            let b = new Date(y.createdAt);
-
-            return a - b;
-        });
-
-        setCard(resFilterDateDesc);
+        try {
+            const response = await api.get('/cardcredit');
+            const resFilterFiled = response.data.filter((item) => item.is_filed == false);
+            setCard(resFilterFiled);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
     const balanceEyeHandler = useCallback(() => {
@@ -197,12 +191,18 @@ const Home = () => {
                     })}>
 
                         <AreaImgPerfil>
-                            <Img source={require('../../assets/perfil.png')} />
+
+                            {user.avatar ? (
+                                <Img source={{ uri: user.avatar.url }} />
+                            ) : (
+                                <Ionicons name='person' size={32} color="#2F323D" />
+                            )}
+                            
                         </AreaImgPerfil>
 
                         <AreaTitle>
                             <TextPresentation>Olá,</TextPresentation>
-                            <TitleUser>{userInfo.name}</TitleUser>
+                            <TitleUser>{user.name}</TitleUser>
                         </AreaTitle>
                     
                     </AreaPerfil>
@@ -252,8 +252,13 @@ const Home = () => {
             </Header> 
 
             <AreaBody showsVerticalScrollIndicator={false}>
-                <ContainerCard>
 
+                {isAccountLoading === true ? (
+                    <CardInitialAccountShimmer />
+                    ) : (
+
+                        <ContainerCard>
+                     
                     <AreaList>
                         <List
                             data={bank}
@@ -268,7 +273,9 @@ const Home = () => {
                             keyExtractor={item => item.id}
                         />
                     </AreaList>
+                
 
+                  
                     {card.length <= 0 ? 
                         (
                             <>
@@ -299,9 +306,8 @@ const Home = () => {
                             </>
                         )
                     }               
-                   
 
-                   {meta.length <= 0 ?
+                    {meta.length <= 0 ?
                         (
                             <CardInitialMeta 
                                 handlerMeta={() => navigation.navigate('MetaRoutes')}
@@ -327,7 +333,8 @@ const Home = () => {
                     }
                     
                 </ContainerCard>
-            
+                       
+                )}          
             </AreaBody>
         </Container>
     )

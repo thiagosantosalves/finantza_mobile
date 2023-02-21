@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { Modal } from 'react-native';
+import { Modal, Dimensions } from 'react-native';
 import { format, subMonths, addMonths } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import { WToast } from 'react-native-smart-tip';
@@ -13,6 +13,9 @@ import CardMetaShimmer from '../../components/CardMetaShimmer';
 
 import api from '../../services/api';
 import { useAuth } from '../../hooks/auth';
+
+let windowHeight = Dimensions.get('window').height;
+windowHeight = windowHeight / 2 - 10;
 
 import {
     Container,
@@ -104,10 +107,11 @@ const Metas = ({ navigation }) => {
     useEffect(()=>{
         const unsubscribe = navigation.addListener('focus', () => {
             getMeta();
+
+            console.log(windowHeight);
         });
         return unsubscribe;
     }, []);
-
 
     const toatsError = (text) => {
         const toastOpts = {
@@ -414,7 +418,7 @@ const Metas = ({ navigation }) => {
                     {isLoading === false &&
 
                     
-                        <AreaListMeta>
+                        <AreaListMeta style={{ height: windowHeight}}>
                   
                             <ListMeta 
                                 data={meta}

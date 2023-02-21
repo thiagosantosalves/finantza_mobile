@@ -18,12 +18,20 @@ export const AreaPerfil = styled.TouchableOpacity`
     margin-left: 20px;
 `;
 
-export const AreaImgPerfil = styled.View``;
+export const AreaImgPerfil = styled.View`
+    justify-content: center;
+    align-items: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    background-color: #c4c4c4;
+    margin-bottom: 5px;
+`;
 
 export const Img = styled.Image`
     width: 48px;
     height: 48px;
-    margin-bottom: 10px;
+    
 `;
 
 export const AreaTitle = styled.View``;

@@ -2,8 +2,38 @@ import styled from 'styled-components/native';
 
 export const Container = styled.View`
     flex: 1;
-    align-items: center;
     background-color: #FFF;
+`;
+
+export const DateFilter = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    background-color: #2C3CD1;
+    height: 60px;
+`;
+
+export const DateFilterRows = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    height: 30px;
+    margin-left: 3px;
+    margin-right: 3px;
+    margin-bottom: 5px;
+`;
+
+export const AreaTitleDateFilter = styled.View`
+    justify-content: center;
+    align-items: center;
+    width: 115px;
+    height: 30px;
+`;
+
+export const DateFilterTitle = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #FFF;
+    font-size: 12px;
 `;
 
 export const AreaMonth = styled.View`

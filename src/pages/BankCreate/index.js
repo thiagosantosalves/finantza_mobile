@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Alert, Dimensions } from 'react-native';
-
+import React, { useState } from 'react';
+import { Modal } from 'react-native';
+import { WToast } from 'react-native-smart-tip';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Entypo from 'react-native-vector-icons/Entypo';
@@ -45,6 +45,17 @@ const BankCreate = ({ navigation }) => {
         setColor_hex(item.nameColor);
         setModalColor(false);
     } 
+
+    const toatsError = (text) => {
+        const toastOpts = {
+          data: text,
+          textColor: '#ffffff',
+          backgroundColor: '#36393F',
+          duration: WToast.duration.SHORT, 
+          position: WToast.position.CENTER,
+        }
+        WToast.show(toastOpts)
+    }
           
     const createAccount = async () => {
 
@@ -70,11 +81,7 @@ const BankCreate = ({ navigation }) => {
             } 
             
         } else {
-
-            Alert.alert(
-                'Erro, campos não foram preenchidos.', 
-                'Os campos do cadastro de contas são obrigatório!', 
-            );
+            toatsError('Erro, campos não foram preenchidos. Os campos do cadastro de contas são obrigatório!');
         }
     }
            

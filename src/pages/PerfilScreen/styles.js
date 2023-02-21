@@ -17,14 +17,23 @@ export const AreaPerfil = styled.View`
     align-items: center;
 `;
 
-export const ImagePerfil = styled.Image`
+export const ImagePerfil = styled.View`
+    justify-content: center;
+    align-items: center;
     width: 80px;
     height: 80px;
     border-radius: 40px;
+    background-color: #c4c4c4;
     margin-left: 15px;
     margin-right: 15px;
     margin-top: 25px;
     margin-bottom: 20px;
+`;
+
+export const Avatar = styled.Image`
+    width: 80px;
+    height: 80px;
+    border-radius: 40px;
 `;
 
 export const AreaNamePerfil = styled.View`
