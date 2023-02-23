@@ -107,8 +107,6 @@ const Metas = ({ navigation }) => {
     useEffect(()=>{
         const unsubscribe = navigation.addListener('focus', () => {
             getMeta();
-
-            console.log(windowHeight);
         });
         return unsubscribe;
     }, []);

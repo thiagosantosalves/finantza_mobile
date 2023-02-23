@@ -94,10 +94,9 @@ const MetaInitial = ({ route, ...props}) => {
 
                     return res;
                 });
-
                 
                 props.navigation.navigate('MetaCreate', { data: res });
-                
+    
             } catch (error) {
                 console.log(error);
             } 
