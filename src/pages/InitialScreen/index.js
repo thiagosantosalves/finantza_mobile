@@ -63,6 +63,10 @@ const InitialScreen = ({ navigation }) => {
 
                 try {
                     await signIn({ email: userInfo.user.email, password:'14fc101454e622bfe0a78a0d3ccf8123' }); 
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'TabRoutes' }],
+                    });
                 } catch (error) {
                     console.log(error)
                     toatsError('Erro não foi possível conectar ao servidor');
@@ -78,6 +82,10 @@ const InitialScreen = ({ navigation }) => {
                     }); 
     
                     await signIn({ email: userInfo.user.email, password:'14fc101454e622bfe0a78a0d3ccf8123' }); 
+                    navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'TabRoutes' }],
+                    });
                 } catch (error) {
                     console.log(error)
                     toatsError('Erro não foi possível conectar ao servidor');

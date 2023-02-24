@@ -12,7 +12,7 @@ import {
     ButtonSignUpTitle
 } from './styles';
 
-const SignIn = () => {
+const SignIn = ({ navigation }) => {
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -45,6 +45,11 @@ const SignIn = () => {
             });
     
             await signIn({ email, password }); 
+
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'TabRoutes' }],
+            });
     
         }catch(err) {
             toatsError('Ocorreu um erro ao fazer login, cheque as credencias.');

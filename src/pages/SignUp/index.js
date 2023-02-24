@@ -33,7 +33,7 @@ const SignUp = () => {
         WToast.show(toastOpts) 
     }
 
-    const handleSignUp = async () => {
+    const handleSignUp = async ({ navigation }) => {
 
         try {
 
@@ -47,7 +47,11 @@ const SignUp = () => {
                 email,
                 password
             }); 
-     
+            
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'TabRoutes' }],
+            });
             
         } catch (error) {
             console.log(error);

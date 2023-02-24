@@ -11,7 +11,6 @@ import Metas from '../pages/Metas';
 import EmptyScreen from '../pages/EmptyScreen';
 
 import FloatButton from '../components/FloatButton';
-import ButtonHeaderReportComponents from '../components/ButtonHeaderReportComponents';
 
 const Tab = createBottomTabNavigator();
 

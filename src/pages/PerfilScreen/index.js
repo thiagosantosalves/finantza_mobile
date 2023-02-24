@@ -48,10 +48,6 @@ const PerfilScreen = ({ navigation, ...rest }) => {
         })
     }, [navigation]);
 
-    useEffect(() => {
-        console.log(user.avatar);
-    }, []);
-
     return (
         <Container>
             
