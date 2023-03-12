@@ -57,18 +57,17 @@ const InitialScreen = ({ navigation }) => {
             const userInfo = await GoogleSignin.signIn();
 
             const users = await api.get('user');
-            const res = users.data.filter(e => e.email === userInfo.user.email);
+            const res = users.data.filter(e => e.id_google === userInfo.user.id);
 
             if(res.length > 0) {
 
                 try {
-                    await signIn({ email: userInfo.user.email, password:'14fc101454e622bfe0a78a0d3ccf8123' }); 
+                    await signIn({ email: users.data[0].email, password: userInfo.user.id}); 
                     navigation.reset({
                         index: 0,
                         routes: [{ name: 'TabRoutes' }],
                     });
                 } catch (error) {
-                    console.log(error)
                     toatsError('Erro não foi possível conectar ao servidor');
                 }
             
@@ -78,16 +77,17 @@ const InitialScreen = ({ navigation }) => {
                     await api.post('/user', {
                         name: userInfo.user.name,
                         email: userInfo.user.email,
-                        password: '14fc101454e622bfe0a78a0d3ccf8123'
+                        password: userInfo.user.id,
+                        id_google: userInfo.user.id
+                        
                     }); 
     
-                    await signIn({ email: userInfo.user.email, password:'14fc101454e622bfe0a78a0d3ccf8123' }); 
+                    await signIn({ email: userInfo.user.email, password: userInfo.user.id }); 
                     navigation.reset({
                         index: 0,
                         routes: [{ name: 'TabRoutes' }],
                     });
                 } catch (error) {
-                    console.log(error)
                     toatsError('Erro não foi possível conectar ao servidor');
                 }
             }
@@ -96,13 +96,10 @@ const InitialScreen = ({ navigation }) => {
           if (error.code === statusCodes.SIGN_IN_CANCELLED) {
             toatsError("Login com google cancelado!");
           } else if (error.code === statusCodes.IN_PROGRESS) {
-            console.log(error)
             toatsError('Erro não foi possível conectar ao servidor');
           } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-            console.log(error)
             toatsError('Erro não foi possível conectar ao servidor');
           } else {
-            console.log(error)
             toatsError('Erro não foi possível conectar ao servidor');
           }
         }

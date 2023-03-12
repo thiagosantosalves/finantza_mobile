@@ -531,6 +531,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
     let bankId = null;
     let cardId = null;
     let payingName = '';
+    let idFixed = null;
 
     if(categorySelect && description) { 
       if(qdInstallments.length > 0) {
@@ -592,9 +593,34 @@ const ScreenSetDebit = ({ route, navigation }) => {
       let meta_id = null;
       let metaIsTrue = false; 
 
-     if(isMeta.length > 0) {
+      if(isMeta.length > 0) {
         meta_id = isMeta[0].id;
         metaIsTrue = true;
+      }
+
+      if(fixed) {
+
+        const infoFixedRelease = {
+          day: day,
+          description,
+          value: value,
+          rc_category_id: null,
+          dp_category_id: categorySelect.id,
+          account_id: bank.id,
+          card_credit_id: null,
+          type: "2",
+          paying_account_name: payingName,
+          meta_id: meta_id,
+          meta: metaIsTrue
+        }
+
+        try {
+          let fixedRelease = await api.post('fixedrelease', infoFixedRelease);
+          idFixed = fixedRelease.data.id;
+        } catch (error) {
+            console.log(error)
+        }
+      
       }
 
       const releases = {

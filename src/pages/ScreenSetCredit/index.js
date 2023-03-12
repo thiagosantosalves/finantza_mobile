@@ -442,6 +442,7 @@ const ScreenSetCredit = ({ route, navigation }) => {
     let attachment = false;
     let tagIsTrue = false;
     let tagId = null;
+    let idFixed = null;
 
     if(categorySelect && description && bank) {
       if(qdInstallments.length > 0) {
@@ -484,7 +485,32 @@ const ScreenSetCredit = ({ route, navigation }) => {
       let day = date[0];
       let month = date[1];
       let year = date[2];
-    
+
+      if(fixed) {
+
+        const infoFixedRelease = {
+          day: day,
+          description,
+          value: value,
+          rc_category_id: categorySelect.id,
+          dp_category_id: null,
+          account_id: bank.id,
+          card_credit_id: null,
+          type: "1",
+          paying_account_name: bank.name,
+          meta_id: null,
+          meta: null
+        }
+
+        try {
+          let fixedRelease = await api.post('fixedrelease', infoFixedRelease);
+          idFixed = fixedRelease.data.id;
+        } catch (error) {
+            console.log(error)
+        }
+      
+      }
+
       const releases = {
         description,
         value: value,
@@ -507,7 +533,8 @@ const ScreenSetCredit = ({ route, navigation }) => {
         tag: tagIsTrue,
         type: "1", //  1 receita, 2 despesa
         tag_id: tagId,
-        paying_account_name: bank.name
+        paying_account_name: bank.name,
+        id_fixed_release: idFixed
       }
 
       try {

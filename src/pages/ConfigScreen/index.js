@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Modal } from 'react-native';
-
+import React, { useState } from 'react';
+import { WToast } from 'react-native-smart-tip';
 import { useAuth } from '../../hooks/auth';
+
+import api from '../../services/api';
 
 import { 
     Container,
@@ -22,8 +23,25 @@ const ConfigScreen = ({ navigation }) => {
 
     const [activeDelete, setActiveDelete] = useState(false);
 
+    const toatsError = (text) => {
+
+        const toastOpts = {
+          data: text,
+          textColor: '#ffffff',
+          backgroundColor: '#36393F',
+          duration: WToast.duration.SHORT, 
+          position: WToast.position.CENTER,
+        }
+        WToast.show(toastOpts) 
+    }
+
     async function handlerDeleteprofile() {
-        alert('apaga tudo')
+
+        try {
+            await api.post('historydelete');
+        } catch (error) {
+            toatsError('Erro não foi possível conectar ao servidor');
+        }
     }
 
     async function handlerExit() {

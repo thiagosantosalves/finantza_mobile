@@ -58,7 +58,7 @@ const AuthProvider = ({ children }) => {
 
     const signOut = useCallback(async () => {
 
-        await AsyncStorage.multiRemove(['@Finantza:token', '@Finantza:user']);
+        await AsyncStorage.multiRemove(['@Finantza:token', '@Finantza:user', 'lastExecutionDate']);
         setData({});
         
     }, []);

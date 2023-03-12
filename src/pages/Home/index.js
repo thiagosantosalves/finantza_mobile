@@ -3,6 +3,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { Dimensions } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
+import OneSignal from 'react-native-onesignal';
 
 import api from '../../services/api';
 
@@ -45,17 +47,145 @@ import {
 const Home = () => {
 
     const { width } = Dimensions.get('window');
-    const navigation = useNavigation();
     const { user, handlerMeta } = useAuth();
-
+    const [hasExecutedToday, setHasExecutedToday] = useState(false);
+    const navigation = useNavigation();
     const [isAccountLoading, setIsAccountLoading] = useState(false);
-
     const [userInfo, setUserInfo] = useState({});
     const [valueAccount, setValueAccount] = useState(null);
     const [balanceEye, setBalanceEye] = useState(false);
     const [bank, setBank] = useState([]);
     const [card, setCard] = useState([]);
     const [meta, setMeta] = useState([]);
+
+
+    useEffect(() => {
+        OneSignal.setLogLevel(6, 0)
+        OneSignal.setAppId('88d61bea-830c-4198-8957-b045e807b780');
+        OneSignal.setNotificationOpenedHandler( notification => {
+            console.log('result: '+ notification);
+        });
+    }, []);
+
+    const sendNotification = async (textMsn) => {
+
+        const { userId } = await OneSignal.getDeviceState();
+
+        const notificationObj = {
+            contents: {en: textMsn},
+            include_player_ids: [userId]
+        };
+
+        const jsonString = JSON.stringify(notificationObj);
+
+        OneSignal.postNotification(jsonString, (success) => {
+            console.log("Success:", success);
+          }, (error) => {
+            console.log("Error:", error );
+        });
+    }
+
+
+    useEffect( () => {
+        async function teste() {
+            
+            //sendNotification("Olá, você recebeu uma notificação!");
+
+            const date = new Date();
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+
+            const fixedRelease = await api.get(`fixedrelease/${day}`);  
+
+            console.log(fixedRelease.data)
+        
+            if(fixedRelease.data.length > 0) {
+                
+
+                const newFixedRelease = fixedRelease.data.map(e => {
+
+                    let typePlayer = false;
+
+                    if(e.account_id) {
+                        typePlayer = true;
+                    }
+
+                    if(e.card_credit_id != null) {
+                        console.log(e.card_credit_id);
+                    }
+
+                    let res = {
+                        description: e.description,
+                        value: e.value,
+                        rc_category_id: e.rc_category_id,
+                        dp_category_id: e.dp_category_id,
+                        type_payer: typePlayer,
+                        account_id: e.account_id,
+                        account_origin: null,
+                        account_destiny: null,
+                        card_credit_id: e.card_credit_id,
+                        day: day,
+                        month: month,
+                        year: year,
+                        fixo: true,
+                        installments: false,
+                        value_installments: 0,
+                        qd_installments: - 1,
+                        attachment_img: false,
+                        attachment_img_id: null,
+                        tag: false,
+                        type: e.type,
+                        tag_id: null,
+                        paying_account_name: e.paying_account_name,
+                        id_fixed_release: e.id,
+                        user_id: e.user_id
+                    }
+
+                    return res;
+                });
+
+                try {
+
+                    //const newReleases = await api.post('releasebulkcreate', newFixedRelease)
+
+                    //Notificação - newReleases
+                    
+
+                   
+
+
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+        }
+
+        teste();
+    },[]);
+
+    useEffect(() => {
+        async function runOncePerDay() {
+            if (!hasExecutedToday) {
+              const lastExecutionDate = await AsyncStorage.getItem('lastExecutionDate');
+              const currentDate = new Date();
+              const oneDayInMilliseconds = 24 * 60 * 60 * 1000; // 1 dia em milissegundos
+      
+              if (!lastExecutionDate || currentDate - new Date(lastExecutionDate) >= oneDayInMilliseconds) {
+                // Executa a função aqui
+                //console.log('Função executada!');
+      
+                // Armazena a nova última data de execução
+                await AsyncStorage.setItem('lastExecutionDate', currentDate.toISOString());
+      
+                // Atualiza a flag de controle para evitar que a função seja executada novamente
+                setHasExecutedToday(true);
+              }
+            }
+        }
+      
+        runOncePerDay();
+    }, []);
 
     useEffect(() => {
         getCardStatus();
