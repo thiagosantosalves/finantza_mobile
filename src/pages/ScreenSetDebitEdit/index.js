@@ -320,8 +320,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
     
         if(ativeButtonDateYesterday) setAtiveButtonDateYesterday(false);
         if(ativeButtonDateToday) setAtiveButtonDateToday(false);
+        
         setAtiveButtonDateOther(true);
-    
         setAtiveButtonDateOther(true);
         setIsDatePickerVisible(true);
     };
@@ -345,7 +345,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
     const getInstallments = () => {
     
         if(installments) {
-        setModalInstallments(true);
+            setModalInstallments(true);
         } else {
             
         if(!fixed) {
@@ -355,14 +355,12 @@ const ScreenSetDebit = ({ route, navigation }) => {
         } else {
             setInstallments(true);
         }
-
             setModalInstallments(true);
-        } else {
-            setFixed(false);
-            setInstallments(true);
-            setModalInstallments(true);
-        }
-            
+            } else {
+                setFixed(false);
+                setInstallments(true);
+                setModalInstallments(true);
+            }
         }  
     }
 
@@ -612,6 +610,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
         let day = date[0];
         let month = date[1];
         let year = date[2];
+        let status = false;
 
         try {
 
@@ -620,7 +619,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                 let resCardRelease = await api.get('cardcreditreleases');
                 let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
                 let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
-
+               
                 if(cardStatus2.length > 0) {
                     toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data!`);
                     return false;
@@ -660,6 +659,27 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
             if(route.params.data.type_payer === false && isSwitch === true) {
 
+                let resCardRelease = await api.get('cardcreditreleases');
+                let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
+                let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
+
+                if(cardStatus2.length > 0) {
+                    toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data!`);
+                    return false;
+                }
+    
+                if(cardStatus3.length > 0) {
+                    toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data!`);
+                    return false;
+                }
+
+                let cardReleases = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 1);
+                
+                if(cardReleases.length <= 0) {
+                    toatsErrorCardReleases(`O lançamento já consta pago na fatura do cartão "${cardCreditSelect.name}"!`);
+                    return false;
+                }    
+
                 const cardExchangeIstrue = await api.get(`cardcredit/${cardId}`);
 
                 let valueInvoiceCardExchangeIstrue =  Number(cardExchangeIstrue.data.invoice_amount) + Number(route.params.data.value);
@@ -681,7 +701,6 @@ const ScreenSetDebit = ({ route, navigation }) => {
         const resMeta = await api.get(`meta/${month}&${year}`);
         let isMeta = resMeta.data.filter(e => e.category.id === categorySelect.id);
 
-    
         let meta_id = null;
         let metaIsTrue = false; 
   
@@ -715,7 +734,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
             meta_id: meta_id,
             meta: metaIsTrue
         }
-
+        
         try {
 
             let sumMetaEdit = '';
@@ -742,7 +761,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         status
                     });
                 }
-
+                
                 if(isMeta.length > 0) {
 
                     let newValue = installments ? valueP : value;
@@ -798,32 +817,10 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         status: status
                     });
                 }
-
-                //ajustar essa rota - criar uma nova que pega pelo id_card_credit exemplo: cardcreditFilterreleases/id_card_credit
-                let resCardRelease = await api.get('cardcreditreleases');
-                let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
-                let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
-
             
-                if(bankId && isSwitch === false) {    
-
-                    if(cardStatus2.length > 0) {
-                        toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data!`);
-                        return false;
-                    }
-        
-                    if(cardStatus3.length > 0) {
-                        toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data!`);
-                        return false;
-                    }
-
-                    let cardReleases = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 1);
+                //ajustar essa rota - criar uma nova que pega pelo id_card_credit exemplo: cardcreditFilterreleases/id_card_credit
+                if(bankId && isSwitch === false) {
                     
-                    if(cardReleases.length <= 0) {
-                        toatsErrorCardReleases(`O lançamento já consta pago na fatura do cartão "${cardCreditSelect.name}"!`);
-                        return false;
-                    }    
-                
                     let previousAccount = await api.get(`account/${route.params.data.account.id}`);
                     if(route.params.data.installments) {
                         let sumValueInstallments = Number(previousAccount.data.value) + Number(route.params.data.value_installments);
@@ -832,8 +829,6 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         let sumPreviousAccount = Number(previousAccount.data.value) + Number(route.params.data.value);
                         await api.put(`account/${route.params.data.account.id}`, { value: sumPreviousAccount }); 
                     }
-
-                    
 
                     let sum = installments ? valueP : value;
                     const account = await api.get(`account/${bank.id}`);
@@ -846,8 +841,12 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         screen: 'Releases'
                     });
                 } 
-
+                
                 if(cardCreditSelect && isSwitch === true) {
+
+                    let resCardRelease = await api.get('cardcreditreleases');
+                    let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
+                    let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
 
                     if(cardStatus2.length > 0) {
                         toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data!`);
@@ -901,7 +900,6 @@ const ScreenSetDebit = ({ route, navigation }) => {
                             } catch (error) {
                                 console.log(error);
                             } 
-    
                         }
 
                     } else {
@@ -957,7 +955,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
             
         } else {
             toatsError();
-        }
+        } 
     }
 
     return(

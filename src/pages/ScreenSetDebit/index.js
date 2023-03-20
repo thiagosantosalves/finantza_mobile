@@ -607,7 +607,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
           rc_category_id: null,
           dp_category_id: categorySelect.id,
           account_id: bank.id,
-          card_credit_id: null,
+          card_credit_id: cardId,
           type: "2",
           paying_account_name: payingName,
           meta_id: meta_id,

@@ -68,6 +68,25 @@ export const ButtonNotification = styled.TouchableOpacity`
     margin-right: 10px;
 `;
 
+export const AreaNotificationCount = styled.View`
+    position: absolute;
+    left: 10px;
+    top: -8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 10px;
+    justify-content: center;
+    align-items: center;
+    background-color: #E83F5B;
+    z-index: 1;
+`;
+
+export const NotificationText = styled.Text`
+    font-family: 'Poppins-Regular';
+    font-size: 8px;
+    color: #fff;
+`;
+
 export const AreaTotalBalance = styled.View`
     justify-content: center;
     align-items: center;

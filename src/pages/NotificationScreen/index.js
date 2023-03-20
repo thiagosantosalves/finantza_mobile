@@ -5,6 +5,8 @@ import { WToast } from 'react-native-smart-tip';
 
 import CardNotification from '../../components/CardNotification';
 
+import api from '../../services/api';
+
 import { 
     Container,
     AreaIconDelete,
@@ -18,9 +20,9 @@ import {
     AreaTitleModalNotification,
     TitleModalNotification,
     AreaDescriptionModalNotification,
-    NameCategoryDel,
     DescriptionModalNotification,
     AreaButtonModalNotification,
+    AreaButtonModalNotificationInfo,
     ButtonModalNotification,
     TextButtonModalNotification,
 } from './styles';
@@ -28,7 +30,10 @@ import {
 const NotificationScreen = ({ navigation }) => {
 
     const [notification, setNotification] = useState([]);
-    const [modal, setModal] = useState(true);
+    const [infoNotification, setInfoNotification] = useState('');
+    const [modal, setModal] = useState(false);
+    const [infoModa, setInfoModal] = useState(false);
+    const [modalCardCredit, setModalCardCredit] = useState(false);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -53,31 +58,76 @@ const NotificationScreen = ({ navigation }) => {
 
 
     const handlerDelete = async () => {
-      
-        setModal(false);
+        try {
+            await api.delete('notification');
+            setNotification([]);
+            setModal(false);
+        } catch (error) {
+            console.log(error)
+            setModal(false);
+        }
     }
 
     const handlerNotification = async () => {
-        const data = [
-            {
-                id: 1,
-                name: 'Lançamento não pago!',
-                status: false
-            },
-            {
-                id: 2,
-                name: 'Fatura do cartão já esta vencida.',
-                status: false
-            },
-            {
-                id: 3,
-                name: 'Promoção de natal pro plano anual, somente 55 reais!',
-                status: true
-            },
-        ]
+        
+        try {
+            const res = await api.get('notification');
 
-        setNotification(data);
+            const resFilter = res.data.sort((x,y) => {
+                let a = new Date(x.createdAt);
+                let b = new Date(y.createdAt);
+
+                return a - b;
+            });
+
+            setNotification(resFilter);
+        } catch (error) {
+            console.log(error);
+        }
+       
     }
+
+    const handlerId = (id) => {
+        let infoId = notification.find(e => e.id === id);
+
+        if(infoId.id_fixed_release) {
+            setInfoNotification(infoId);
+            setModalCardCredit(true);
+        } else {
+            setInfoNotification(infoId);
+            setInfoModal(true);
+        }
+
+    }
+
+    const handlerCardCredit = async () => {
+
+        try {
+            let fixed = await api.get(`fixedfilter/${infoNotification.id_fixed_release}`);
+            
+            setModalCardCredit(false);
+            navigation.navigate('CardFixedScreen', {
+                data: fixed.data
+            });
+
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    const handlerUpdate = async () => {
+        try { 
+
+            await api.put(`notification/${infoNotification.id}`, {
+                status: true
+            });
+
+            handlerNotification();
+            setInfoModal(false);
+        } catch (error) {
+            console.log(error)
+        }
+    } 
 
     function toatsError(text) {
         const toastOpts = {
@@ -106,6 +156,7 @@ const NotificationScreen = ({ navigation }) => {
                     keyExtractor={item => item.id}
                     renderItem={({item}) => <CardNotification
                         data={item} 
+                        getNotification={(id) => handlerId(id)}
                     />}
                 />
             )}
@@ -144,6 +195,73 @@ const NotificationScreen = ({ navigation }) => {
                     </BodyModalDelete>
                 </AreaModal>
             </Modal>
+
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={infoModa}
+                onRequestClose={()=>{
+                    setInfoModal(false)
+                }}
+            >
+                <AreaModal>
+                    <BodyModalDelete>
+
+                        <AreaTitleModalNotification>
+                            <TitleModalNotification>Notificação</TitleModalNotification>
+                        </AreaTitleModalNotification>
+
+                        <AreaDescriptionModalNotification>
+                            <DescriptionModalNotification>{infoNotification.description}</DescriptionModalNotification>
+                        </AreaDescriptionModalNotification>
+
+                        <AreaButtonModalNotificationInfo>
+                            
+                            <ButtonModalNotification activeOpacity={0.8} onPress={() => handlerUpdate() }>
+                                <TextButtonModalNotification>OK</TextButtonModalNotification>
+                            </ButtonModalNotification>
+                            
+                        </AreaButtonModalNotificationInfo>
+
+                    </BodyModalDelete>
+                </AreaModal>
+            </Modal>
+            
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={modalCardCredit}
+                onRequestClose={()=>{
+                    setModalCardCredit(false);
+                }}
+            >
+                <AreaModal>
+                    <BodyModalDelete>
+
+                        <AreaTitleModalNotification>
+                            <TitleModalNotification>Notificações</TitleModalNotification>
+                        </AreaTitleModalNotification>
+
+                        <AreaDescriptionModalNotification>
+                            <DescriptionModalNotification>{infoNotification.description}</DescriptionModalNotification>
+                        </AreaDescriptionModalNotification>
+
+                        <AreaButtonModalNotification>
+                            
+                            <ButtonModalNotification activeOpacity={0.8} onPress={() => setModalCardCredit(false) }>
+                                <TextButtonModalNotification>CANCELAR</TextButtonModalNotification>
+                            </ButtonModalNotification>
+
+                            <ButtonModalNotification activeOpacity={0.8} onPress={() => handlerCardCredit() }>
+                                <TextButtonModalNotification>OK</TextButtonModalNotification>
+                            </ButtonModalNotification>
+                            
+                        </AreaButtonModalNotification>
+
+                    </BodyModalDelete>
+                </AreaModal>
+            </Modal>
+
         </Container>
     )
 }

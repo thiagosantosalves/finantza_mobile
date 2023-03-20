@@ -24,6 +24,7 @@ import TagsCreate from '../pages/TagsCreate';
 import ConciliationBank from '../pages/ConciliationBank';
 import ConciliationBankImport from '../pages/ConciliationBankImport';
 import NotificationScreen from '../pages/NotificationScreen';
+import CardFixedScreen from '../pages/CardFixedScreen';
 
 import { useNavigation } from '@react-navigation/native';
 
@@ -245,6 +246,16 @@ const HomeRoutes = () => {
                     shadowColor: "transparent",
                 },
             }}/>
+
+            <HomeRoute.Screen name="CardFixedScreen" component={CardFixedScreen} options={{
+                title: 'Despesa fixa', 
+                headerTintColor: '#FFF',
+                headerStyle: { 
+                    backgroundColor: '#DD2D82',
+                    shadowColor: "transparent",
+                },
+            }}/>
+
 
         </HomeRoute.Navigator>
     )

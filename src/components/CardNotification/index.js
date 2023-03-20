@@ -1,21 +1,18 @@
-import React, { useEffect } from 'react';
-import { View } from 'react-native';
+import React from 'react';
 
 import { 
     Container,
     AreaTitle,
     Icon,
     Title,
-
 } from './styles';
 
 const CardNotification = (props) => {
-
     return (
-        <Container>
+        <Container activeOpacity={0.8} onPress={() => props.getNotification(props.data.id)}>
             <AreaTitle>
                 <Icon style={{ backgroundColor: props.data.status ? '#c4c4c4' : '#FF872C' }} />
-                <Title>{props.data.name}</Title>
+                <Title>{props.data.description}</Title>
             </AreaTitle>
         </Container>
     )

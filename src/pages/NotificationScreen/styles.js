@@ -72,16 +72,17 @@ export const DescriptionModalNotification = styled.Text`
     color: #2F323D;
 `;
 
-export const NameCategoryDel = styled.Text`
-    font-family: 'Poppins-Medium';
-    font-size: 12px;
-    color: #E83F5B;
-`;
-
 export const AreaButtonModalNotification = styled.View`
     flex: 1;
     flex-direction: row;
     justify-content: flex-end;
+    align-items: center;
+`;
+
+export const AreaButtonModalNotificationInfo = styled.View`
+    flex: 1;
+    flex-direction: row;
+    justify-content: center;
     align-items: center;
 `;
 

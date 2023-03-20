@@ -1,12 +1,11 @@
 import styled from 'styled-components/native';
 
-export const Container = styled.View`
+export const Container = styled.TouchableOpacity`
     justify-content: center;
     height: 40px;
-    
     margin-left: 10px;
     margin-right: 10px;
-    margin-top: 15px;
+    margin-top: 20px;
 `;
 
 export const AreaTitle = styled.View`

@@ -272,10 +272,8 @@ const Releases = ({ navigation }) => {
             setData(res.data.releases);
             
         } catch (error) {
-        
             setIsLoading(false);
             toatsError('Erro ao se comunicar com o servidor !');
-       
         } 
 
         setIsLoading(false);
