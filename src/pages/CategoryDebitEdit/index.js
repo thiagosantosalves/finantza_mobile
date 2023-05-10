@@ -101,7 +101,7 @@ const CategoryDebitEdit = ({ navigation, route, ...rest }) => {
 
                 <Title>Icone</Title>
 
-                <AreaIcon onPress={() => setModalIcon(true)}>
+                <AreaIcon activeOpacity={0.8} onPress={() => setModalIcon(true)}>
 
                     {urlIcon ? (
                         <AreaUrl style={{backgroundColor: '#cecece'}}>
@@ -121,7 +121,7 @@ const CategoryDebitEdit = ({ navigation, route, ...rest }) => {
 
                 <Title>Cor</Title>
 
-                <AreaIcon onPress={() => setModalColor(true)}>
+                <AreaIcon activeOpacity={0.8} onPress={() => setModalColor(true)}>
 
                     {color_hex ? (
                         <Icon style={{ backgroundColor: color_hex }} />

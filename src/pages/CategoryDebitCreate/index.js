@@ -23,7 +23,6 @@ import {
     Icon,
     TitleIcon,
     AreaButton,
-
     ModalArea,
     BodyModalColor,
     BodyModalIcon,
@@ -95,7 +94,7 @@ const CategoryDebitCreate = ({ navigation }) => {
 
                 <Title>Icone</Title>
 
-                <AreaIcon onPress={() => setModalIcon(true)}>
+                <AreaIcon  activeOpacity={0.8} onPress={() => setModalIcon(true)}>
 
                     {urlIcon ? (
                         <AreaUrl style={{backgroundColor: '#cecece'}}>
@@ -115,7 +114,7 @@ const CategoryDebitCreate = ({ navigation }) => {
 
                 <Title>Cor</Title>
 
-                <AreaIcon onPress={() => setModalColor(true)}>
+                <AreaIcon activeOpacity={0.8} onPress={() => setModalColor(true) }>
 
                     {color_hex ? (
                         <Icon style={{ backgroundColor: color_hex }} />

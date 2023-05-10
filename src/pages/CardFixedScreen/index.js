@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-
+import { WToast } from 'react-native-smart-tip';
 
 import formatNumber from '../../utils/formatNumber';
 import { listIconDp } from '../../utils/listIconDp';
-import { listIconAccount } from '../../utils/listIconAccount';
 import { institution } from '../../utils/institution';
 
 import ButtonPatternAdd from '../../components/ButtonPatternAdd';
@@ -37,22 +36,21 @@ import {
 const CardFixedScreen = (props) => {
 
     const [dateFinal, setDateFinal] = useState(null);
-
+    const [formatDate, setFormatDate] = useState('');
     const [categorySelect, setCategorySelect] = useState({});
     const [idIconCategory, setIconCategory] = useState({});
     const [cardCreditSelect, setCardCreditSelect] = useState({});
     const [cardCreditIcon, setCardCreditIcon] = useState({});
-
-    const [ativeButtonDateToday, setAtiveButtonDateToday] = useState(true);
-    const [ativeButtonDateYesterday, setAtiveButtonDateYesterday] = useState(false);
-    const [ativeButtonDateOther, setAtiveButtonDateOther] = useState(false);
     const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
     useEffect(() => {
-
+        let date = new Date();
+        let month = date.getMonth() + 1;
+        let format = date.getDate()+'/'+month+'/'+date.getFullYear();
+        setFormatDate(format);
+        setDateFinal(date);
         handleCategoryId();
         handleCardId();
-
     }, []);
 
     const handleCategoryId = async (id) => {
@@ -70,57 +68,24 @@ const CardFixedScreen = (props) => {
         setCardCreditSelect(res.data);
         setCardCreditIcon(cardIcon[0]);
     }
-
-    const actionDay = () => {
-      
-        if(ativeButtonDateOther) setAtiveButtonDateOther(false);
-        if(ativeButtonDateYesterday) setAtiveButtonDateYesterday(false);
-        setAtiveButtonDateToday(true);
-    
-        let data = new Date();
-        let day = data.getDate();
-        let month = 1+data.getMonth();
-        let yaer = data.getFullYear();
-        let d = day+' '+month+' '+yaer;
-        setDateFinal(d);
-    }
-    
-    const yesterday = () => {
-        
-        if(ativeButtonDateOther) setAtiveButtonDateOther(false);
-        if(ativeButtonDateToday) setAtiveButtonDateToday(false);
-        setAtiveButtonDateYesterday(true);
-    
-        let data = new Date();
-        let day = data.getDate();
-        let month = 1+data.getMonth();
-        let year = data.getFullYear();
-        day = day - 1;
-        let d = day+' '+month+' '+year;
-        setDateFinal(d);
-    }
     
     const showDatePicker = () => {
-    
-        if(ativeButtonDateYesterday) setAtiveButtonDateYesterday(false);
-        if(ativeButtonDateToday) setAtiveButtonDateToday(false);
+
+        if(isDatePickerVisible) {
+            setIsDatePickerVisible(false);
+        } else {
+            setIsDatePickerVisible(true);
+        }
         
-        setAtiveButtonDateOther(true);
-        setAtiveButtonDateOther(true);
-        setIsDatePickerVisible(true);
     };
 
     const handleConfirm = (date) => {
 
-        let d = date.toString();
-        d = d.split(' ');
-        let dia = d[2];
-        let mes = 1+formatDateMonth(d[1]);
-        let ano = d[3];
-        let r = dia+' '+mes+' '+ano;
+        let month = date.getMonth() + 1;
+        let format = date.getDate()+'/'+month+'/'+date.getFullYear();
+        setFormatDate(format);
 
-        setIsDatePickerVisible(false);
-        setDateFinal(r);
+        setDateFinal(date);
         hideDatePicker();
     };
 
@@ -128,9 +93,152 @@ const CardFixedScreen = (props) => {
         setIsDatePickerVisible(false);
     };
 
-    const handlerFixedRelease = () => {
-        alert('teste')
+    function toatsError(res) {
+        const toastOpts = {
+          data: res,
+          textColor: '#ffffff',
+          backgroundColor: '#36393F',
+          duration: WToast.duration.SHORT, 
+          position: WToast.position.CENTER,
+        }
+        WToast.show(toastOpts);
     }
+
+    const handlerFixedRelease = async () => {
+        
+        let day = dateFinal.getDate();
+        let month = dateFinal.getMonth() + 1;
+        let year= dateFinal.getFullYear();
+        let status = false;
+
+        const card = await api.get(`cardcredit/${props.route.params.data.card_credit_id}`);
+        let valueLimit = Number(card.data.limit_card) - Number(card.data.invoice_amount);
+
+           
+        if(Number(valueLimit) >= Number(props.route.params.data.value)) {
+
+            let resCardRelease = await api.get('cardcreditreleases');
+            let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === props.route.params.data.card_credit_id && e.statuscard === 2 && e.month === Number(month) && e.year === Number(year));
+            let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === props.route.params.data.card_credit_id && e.statuscard === 3 && e.month === Number(month) && e.year === Number(year));
+
+            if(cardStatus2.length > 0) {
+                status = true;
+                let textMsn = `O cartão ${cardStatus2[0].card_credit.name} esta fechado para essa data, troque a data do lançamento!`
+                toatsError(textMsn);
+            }
+
+            if(cardStatus3.length > 0) {
+                status = true;
+                let textMsn = `O cartão ${cardStatus3[0].card_credit.name} esta vencido para essa data, troque a data do lançamento!`;
+                toatsError(textMsn);
+            }
+
+            let sum_limit = Number(card.data.invoice_amount) + Number(props.route.params.data.value);
+
+            resCardRelease = resCardRelease.data.filter(e => e.id_card_credit === Number(props.route.params.data.card_credit_id) && e.month === Number(month) && e.year === Number(year));
+            let resCardReleasePay = resCardRelease.filter(e => e.statuscard === 4 && e.month === Number(month));
+
+            if(resCardReleasePay.length > 0) {
+                status = true;
+                let textMsn = `O cartão ${resCardReleasePay[0].card_credit.name} esta pago para essa data, troque a data do lançamento!`;
+                toatsError(textMsn);
+            }
+
+            if(!status) {
+                const resMeta = await api.get(`meta/${month}&${year}`);
+            
+                if(resMeta.data.length > 0) {
+        
+                    let meta = resMeta.data.find(m => m.category.id === props.route.params.data.dp_category_id);
+        
+                    if (meta) {
+                            
+                        let usedValue = Number(value) + Number(meta.used_value);
+                        usedValue = usedValue.toFixed(2);
+        
+                        let newPorcent = usedValue * 100;
+                        newPorcent =  Number(newPorcent) / Number(meta.value);  
+        
+                        let status = false;
+        
+                        if(newPorcent >= 100 ) {
+                            newPorcent = 100;
+                            status = true;
+                        }
+        
+                        await api.put(`metareleases/${meta.id}`, {
+                            used_value: usedValue,
+                            porcent: newPorcent.toFixed(2),
+                            status: status
+                        }); 
+                    }
+                }
+            }
+
+            if(!status) {
+
+                if(resCardRelease.length > 0) {
+                
+                    let sumCardReleases = Number(resCardRelease[0].invoice_amount) + Number(props.route.params.data.value);
+                    await api.put(`cardcreditreleases/${resCardRelease[0].id}`, { invoice_amount: sumCardReleases });
+
+                } else {
+
+                const cardInfoReleases = {
+                    statuscard: 1,
+                    month: month,
+                    year: year,
+                    pay: false,
+                    limit_card: card.data.limit_card,
+                    invoice_amount: props.route.params.data.value,
+                    closes_day: card.data.closes_day,
+                    wins_day: card.data.wins_day,
+                    id_card_credit: card.data.id,
+                    id_account: card.data.account.id
+                }
+                   await api.post('cardcreditreleases', cardInfoReleases); 
+                }
+
+                let release = [{
+                    description: props.route.params.data.description,
+                    value: props.route.params.data.value,
+                    rc_category_id: null,
+                    dp_category_id: props.route.params.data.dp_category_id,
+                    type_payer: true,
+                    account_id: card.data.account_id,
+                    account_origin: null,
+                    account_destiny: null,
+                    card_credit_id: props.route.params.data.card_credit_id,
+                    day: day,
+                    month: month,
+                    year: year,
+                    fixo: true,
+                    installments: false,
+                    value_installments: 0,
+                    qd_installments: - 1,
+                    attachment_img: false,
+                    attachment_img_id: null,
+                    tag: false,
+                    type: 2,
+                    tag_id: null,
+                    paying_account_name: props.route.params.data.paying_account_name,
+                    id_fixed_release: props.route.params.data.id,
+                    user_id: props.route.params.data.user_id
+                }];
+                
+                await api.delete(`notificationIndex/${props.route.params.id}`);
+
+                await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
+                await api.post('releasebulkcreate', release);
+
+                props.navigation.navigate('Home');
+            }
+
+        } else {
+            toatsError('Limite do cartão insuficiente!');
+        }
+     }
+    
 
     return (
         <Container>
@@ -175,31 +283,20 @@ const CardFixedScreen = (props) => {
                 <Section>
                     <TitleSection>Alterar data</TitleSection>
                 </Section>
-                
+
+                <AreaDescription>
+                    <Description>{formatDate}</Description>
+                </AreaDescription>
+
                 <AreaDate>
+                
 
                     <ButtonSelectPattern 
-                        style={{backgroundColor: ativeButtonDateToday ? '#FF872C' : '#C4C4C4'}}
-                        onPress={actionDay}
-                        activeOpacity={0.8}
-                    >
-                        <ButtonSelectPatternText>Hoje</ButtonSelectPatternText>
-                    </ButtonSelectPattern>
-
-                    <ButtonSelectPattern
-                        style={{backgroundColor: ativeButtonDateYesterday ? '#FF872C' : '#C4C4C4'}}
-                        onPress={yesterday}
-                        activeOpacity={0.8}
-                    >
-                        <ButtonSelectPatternText>Ontem</ButtonSelectPatternText>
-                    </ButtonSelectPattern>
-
-                    <ButtonSelectPattern 
-                        style={{backgroundColor: ativeButtonDateOther ? '#FF872C' : '#C4C4C4'}}
+                        style={{backgroundColor: '#FF872C' }}
                         onPress={showDatePicker}
                         activeOpacity={0.8}
                     >
-                        <ButtonSelectPatternText>Outro</ButtonSelectPatternText>
+                        <ButtonSelectPatternText>nova data</ButtonSelectPatternText>
                     </ButtonSelectPattern>
 
                 </AreaDate>

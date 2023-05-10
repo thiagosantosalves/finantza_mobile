@@ -107,7 +107,8 @@ const NotificationScreen = ({ navigation }) => {
             
             setModalCardCredit(false);
             navigation.navigate('CardFixedScreen', {
-                data: fixed.data
+                data: fixed.data,
+                id: infoNotification.id
             });
 
         } catch (error) {

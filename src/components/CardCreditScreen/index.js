@@ -27,12 +27,11 @@ import {
 const CardCreditScreen = ({ data, ...rest }) => {
 
     const { width } = Dimensions.get('window');
-
     const [url, setUrl] = useState(null);
 
     useEffect(() => {
 
-        const icon_url = institution.filter(item => item.id === data.id_institution)
+        const icon_url = institution.filter(item => item.id === data.id_institution);
         setUrl(icon_url[0].url);
 
     }, []);
@@ -66,7 +65,7 @@ const CardCreditScreen = ({ data, ...rest }) => {
             <AreaValue>
                 <AreaValueLimit>
                     <TitleValue>Limite disponível</TitleValue>
-                    <ValueTextLimit>R$ {formatNumber(data.limit_card)}</ValueTextLimit>
+                    <ValueTextLimit>R$ {formatNumber(data.valueAvailable)}</ValueTextLimit>
                 </AreaValueLimit>
 
                 <AreaValueInvoice>

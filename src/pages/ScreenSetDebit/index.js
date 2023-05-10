@@ -6,6 +6,7 @@ import { WToast } from 'react-native-smart-tip';
 import {Picker} from '@react-native-picker/picker';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { addMonths } from 'date-fns';
 
 import ListBankFull from '../../components/ListBankFull';
 import ListCategoryDpFull from '../../components/ListCategoryDpFull';
@@ -736,8 +737,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
             if(Number(valueLimit) >= Number(value)) {
 
               let resCardRelease = await api.get('cardcreditreleases');
-              let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
-              let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
+              let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 && e.month === Number(month) && e.year === Number(year));
+              let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 && e.month === Number(month) && e.year === Number(year));
 
               if(cardStatus2.length > 0) {
                 toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data, troque a data do lançamento!`);
@@ -759,62 +760,228 @@ const ScreenSetDebit = ({ route, navigation }) => {
                 return false;
               }
 
-              if(resCardRelease.length > 0) {
+              if(installments) {
 
-                let sumCardReleases = Number(resCardRelease[0].invoice_amount) + Number(value);
+                const date = new Date();
+                let dateCardRelease = [];
+                let isCard = 0;
 
+                for (let i = 0; i < qdP; i++) {
+
+                  const resultDate = addMonths(date, i);
+                  let month = resultDate.getMonth() + 1;
+                  let year = resultDate.getFullYear();
+
+                  dateCardRelease.push(month+'-'+year);
+                }
+
+                let installmentsRelease = await api.get('cardcreditreleases');
+
+                dateCardRelease.forEach(element => {
+
+                  let date = element.split('-');
+                  let res = installmentsRelease.data.filter(e => 
+                    e.id_card_credit === cardCreditSelect.id 
+                    && e.statuscard != 1                    
+                    && e.month === Number(date[0])
+                    && e.year === Number(date[1])
+                  );
+                  isCard = isCard + res.length;
+                });
+                
+                if(isCard > 0) {
+                  toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido/fechado ou pago para essa data, troque a data do lançamento!`)
+                } else {
+                
+                  let dateUpdate = [];
+                  let dateCreate = [];
+
+                  dateCardRelease.forEach((element, index )=> {
+
+                    let date = element.split('-');
+                    let res = installmentsRelease.data.filter(e => 
+                      e.id_card_credit === cardCreditSelect.id 
+                      && e.statuscard === 1                    
+                      && e.month === Number(date[0])
+                      && e.year === Number(date[1])
+                    );
+
+                    if(res.length > 0) {
+                      dateUpdate.push(element)
+                    } else {
+                      dateCreate.push(element);
+                    }
+                  });
+
+                  if(dateUpdate.length > 0) {
+
+                    for (let i = 0; i < dateUpdate.length; i++) { 
+
+                      try {
+
+                        let date = dateUpdate[i].split('-');
+
+                        let resUpdate = installmentsRelease.data.filter(e => 
+                          e.id_card_credit === cardCreditSelect.id 
+                          && e.month === Number(date[0])
+                          && e.year === Number(date[1])
+                        );
+  
+                        let sumCardReleases = Number(resUpdate[0].invoice_amount) + Number(valueP);
+
+                        await api.put(`cardcreditreleases/${resUpdate[0].id}`, { invoice_amount: sumCardReleases });
+                        
+                      } catch (error) {
+                        console.log(error);
+                      } 
+                    }
+                  }
+
+                  if(dateCreate.length > 0) {
+ 
+                    let resCreate = dateCreate.map(element => {
+                      let date = element.split('-');
+
+                      let res = {
+                        statuscard: 1,
+                        month: date[0],
+                        year: date[1],
+                        pay: false,
+                        limit_card: cardCreditSelect.limit_card,
+                        invoice_amount: valueP,
+                        closes_day: cardCreditSelect.closes_day,
+                        wins_day: cardCreditSelect.wins_day,
+                        id_card_credit: cardCreditSelect.id,
+                        id_account: cardCreditSelect.account.id
+                      }
+
+                      return res;
+
+                    });
+
+                    try {
+                      await api.post('cardcreditreleasesbulkcreate', resCreate);
+                    } catch (error) {
+                      console.log(error)
+                    } 
+                  }
+
+                  try {
+                    await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
+                  } catch (error) {
+                    console.log(error)
+                  }
+
+                  let dateRelease = dateUpdate.concat(dateCreate);
+
+                  const random = (min, max) => Math.floor(Math.random() * (max - min) + min);
+                  const uniqId = random(1000, 50000000000);
+
+                  for (let i = 0; i < dateRelease.length; i++) { 
+
+                    let date = dateRelease[i].split('-');
+                    const qd = i + 1;
+                    const installmentText = qd+'/'+qdP;
+
+                    const installmentsReleases = {
+                      description,
+                      value: value,
+                      rc_category_id: null,
+                      dp_category_id: categorySelect.id,
+                      type_payer: isSwitch,
+                      account_id: bankId,
+                      account_origin: null,
+                      account_destiny: null,
+                      card_credit_id: cardId,
+                      day, day,
+                      month: date[0],
+                      year: date[1],
+                      fixo: fixed,
+                      installments: installments,
+                      value_installments: valueP,
+                      qd_installments: qdP - 1,
+                      attachment_img: attachment,
+                      attachment_img_id: id_img,
+                      tag: tagIsTrue,
+                      type: "2",
+                      tag_id: tagId,
+                      paying_account_name: payingName,
+                      meta_id: meta_id,
+                      meta: metaIsTrue,
+                      instalments_release_id: uniqId,
+                      instalments_text: installmentText
+                    }
+
+                    try {
+                      await api.post('releases', installmentsReleases);
+                    } catch (error) {
+                      console.log(error)
+                    }
+
+                  }
+                
+                  navigation.navigate('TabRoutes', {
+                    screen: 'Home'
+                  }); 
+                }
+          
+              } else {
+                
+                if(resCardRelease.length > 0) {
+
+                  let sumCardReleases = Number(resCardRelease[0].invoice_amount) + Number(value);
+  
+                  try {
+                    await api.put(`cardcreditreleases/${resCardRelease[0].id}`, { invoice_amount: sumCardReleases });
+                  } catch (error) {
+                    console.log(error)
+                  }
+                  
+                } else {
+  
+                  const cardInfoReleases = {
+                    statuscard: 1,
+                    month: month,
+                    year: year,
+                    pay: false,
+                    limit_card: cardCreditSelect.limit_card,
+                    invoice_amount: value,
+                    closes_day: cardCreditSelect.closes_day,
+                    wins_day: cardCreditSelect.wins_day,
+                    id_card_credit: cardCreditSelect.id,
+                    id_account: cardCreditSelect.account.id
+                  }
+  
+                  try {
+                    await api.post('cardcreditreleases', cardInfoReleases);
+                  } catch (error) {
+                    console.log(error)
+                  }
+                }
+  
                 try {
-                  await api.put(`cardcreditreleases/${resCardRelease[0].id}`, { invoice_amount: sumCardReleases });
+                  await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
                 } catch (error) {
                   console.log(error)
                 }
                 
-              } else {
-
-                const cardInfoReleases = {
-                  statuscard: 1,
-                  month: month,
-                  year: year,
-                  pay: false,
-                  limit_card: cardCreditSelect.limit_card,
-                  invoice_amount: value,
-                  closes_day: cardCreditSelect.closes_day,
-                  wins_day: cardCreditSelect.wins_day,
-                  id_card_credit: cardCreditSelect.id,
-                  id_account: cardCreditSelect.account.id
-                }
-
                 try {
-                  await api.post('cardcreditreleases', cardInfoReleases);
+                  await api.post('releases', releases);
                 } catch (error) {
                   console.log(error)
                 }
-              }
-
-              try {
-                await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
-              } catch (error) {
-                console.log(error)
-              }
               
-              try {
-                await api.post('releases', releases);
-              } catch (error) {
-                console.log(error)
+                navigation.navigate('TabRoutes', {
+                  screen: 'Home'
+                }); 
               }
-            
-              navigation.navigate('TabRoutes', {
-                screen: 'Home'
-              });  
-
             } else {
               toatsCardLimit();
             }
-          
           }  
         } catch (error) {
           console.log(error);
-      }
+      } 
     } else {
       toatsError();
     }

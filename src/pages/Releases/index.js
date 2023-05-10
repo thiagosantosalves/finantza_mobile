@@ -900,7 +900,7 @@ const Releases = ({ navigation }) => {
                                     {realese.installments ? (
                                         <AreaTitleRealese>
                                             <TextTitleRealese>Parcelado</TextTitleRealese>
-                                            <TextSubTitleRealese>{`falta ${realese.qd_installments} parcelas de ${formatNumber(realese.value_installments)}`}</TextSubTitleRealese>
+                                            <TextSubTitleRealese>{`(${realese.instalments_text}) parcelas de ${formatNumber(realese.value_installments)}`}</TextSubTitleRealese>
                                         </AreaTitleRealese>
                                     ) : (<></>)}
 

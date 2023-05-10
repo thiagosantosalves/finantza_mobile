@@ -44,6 +44,7 @@ const CardCreditInfo = (props) => {
     const { width } = Dimensions.get('window');
     const [institutionUrl, setInstitutionUrl] = useState({});
     const [accountSelect, setAccountSelect] = useState({});
+    const [vailable, setVailable] = useState(0);
 
     function toatsError(text) {
         const toastOpts = {
@@ -61,6 +62,9 @@ const CardCreditInfo = (props) => {
         const  data = institution.filter(item => item.id ===  props.data.card_credit.id_institution);
         const dataAccount = listIconAccount.filter(item => item.id === Number(props.data.account.type_id));
 
+        let valueAvailable = props.data.card_credit.limit_card - props.data.card_credit.invoice_amount;
+
+        setVailable(valueAvailable);
         setAccountSelect(dataAccount[0].url);
         setInstitutionUrl(data[0].url);
     }, []);
@@ -124,7 +128,7 @@ const CardCreditInfo = (props) => {
                 <AreaLimitAvailable>
                     <TitleLimit>Limite disponível</TitleLimit>
                     
-                    <LimitAvailableText>R$ {formatNumber(props.data.limit_card)}</LimitAvailableText>
+                    <LimitAvailableText>R$ {formatNumber(vailable)}</LimitAvailableText>
                 </AreaLimitAvailable>
 
             </BodyAccount>

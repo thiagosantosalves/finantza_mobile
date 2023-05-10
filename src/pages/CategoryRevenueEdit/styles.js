@@ -18,7 +18,7 @@ export const Title = styled.Text`
     margin-bottom: 10px;
 `;
 
-export const AreaIcon = styled(RectButton)`
+export const AreaIcon = styled.TouchableOpacity`
     flex-direction: row;
     align-items: center;
 `;

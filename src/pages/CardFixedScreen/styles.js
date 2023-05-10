@@ -103,7 +103,7 @@ export const AreaDate = styled.View`
 export const ButtonSelectPattern = styled.TouchableOpacity`
     justify-content: center;
     align-items: center;
-    width: 85px;
+    width: 120px;
     height: 35px;
     border-radius: 5px;
     background-color: #C4C4C4;
@@ -112,7 +112,7 @@ export const ButtonSelectPattern = styled.TouchableOpacity`
 
 export const ButtonSelectPatternText = styled.Text`
     font-family: 'Poppins-Medium';
-    font-size: 16px;
+    font-size: 14px;
     color: #FFFFFF;
 `;
 

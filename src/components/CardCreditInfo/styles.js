@@ -140,7 +140,7 @@ export const TitleLimit = styled.Text`
 
 export const LimitAvailableText = styled.Text`
     font-family: 'Poppins-SemiBold';
-    color: #0BCECE;
+    color: #DE4639;
     font-size: 13px;
     margin-right: 12px;
     margin-bottom: 5px;

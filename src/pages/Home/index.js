@@ -45,13 +45,11 @@ import {
     List,
 } from './styles';
 
-
 const Home = () => {
 
     const navigation = useNavigation();
     const { width } = Dimensions.get('window');
     const { user, handlerMeta } = useAuth();
-    const [hasExecutedToday, setHasExecutedToday] = useState(false);
     const [isAccountLoading, setIsAccountLoading] = useState(false);
     const [userInfo, setUserInfo] = useState({});
     const [valueAccount, setValueAccount] = useState(null);
@@ -61,7 +59,6 @@ const Home = () => {
     const [meta, setMeta] = useState([]);
     const [notification, setNotification] = useState([]);
     const [notificationCount, setNotificationCount] = useState(null);
-
 
     useEffect(() => {
         OneSignal.setLogLevel(6, 0)
@@ -77,7 +74,7 @@ const Home = () => {
 
         const notificationObj = {
             contents: {en: textMsn},
-            include_player_ids: [userId]
+            include_player_ids: [userId],
         };
 
         const jsonString = JSON.stringify(notificationObj);
@@ -89,326 +86,350 @@ const Home = () => {
         });
     }
 
+    const handlerFixo = async () => {
+        const date = new Date();
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        let id = null;
+        let statusCardMeta = false;
 
-    useEffect( () => {
-        async function teste() {
-        
-            const date = new Date();
-            const day = date.getDate();
-            const month = date.getMonth() + 1;
-            const year = date.getFullYear();
-            let id = null;
+        const fixedRelease = await api.get(`fixedrelease/${day}`);  
+    
+        if(fixedRelease.data.length > 0) {
 
-            const fixedRelease = await api.get(`fixedrelease/${day}`);  
-        
-            if(fixedRelease.data.length > 0) {
+            let newFixedRelease = fixedRelease.data.map(e => {
 
-                let newFixedRelease = fixedRelease.data.map(e => {
+                let typePlayer = false;
 
-                    let typePlayer = false;
+                if(e.account_id) {
+                    typePlayer = false;
+                }
 
-                    if(e.account_id) {
-                        typePlayer = false;
-                    }
+                if(e.card_credit_id) {
+                    typePlayer = true;
+                }
 
-                    if(e.card_credit_id) {
-                        typePlayer = true;
-                    }
+                let res = {
+                    id: Math.floor(Math.random() * 256),
+                    description: e.description,
+                    value: e.value,
+                    rc_category_id: e.rc_category_id,
+                    dp_category_id: e.dp_category_id,
+                    type_payer: typePlayer,
+                    account_id: e.account_id,
+                    account_origin: null,
+                    account_destiny: null,
+                    card_credit_id: e.card_credit_id,
+                    day: day,
+                    month: month,
+                    year: year,
+                    fixo: true,
+                    installments: false,
+                    value_installments: 0,
+                    qd_installments: - 1,
+                    attachment_img: false,
+                    attachment_img_id: null,
+                    tag: false,
+                    type: e.type,
+                    tag_id: null,
+                    paying_account_name: e.paying_account_name,
+                    id_fixed_release: e.id,
+                    user_id: e.user_id
+                }
 
-                    let res = {
-                        id: Math.floor(Math.random() * 256),
-                        description: e.description,
-                        value: e.value,
-                        rc_category_id: e.rc_category_id,
-                        dp_category_id: e.dp_category_id,
-                        type_payer: typePlayer,
-                        account_id: e.account_id,
-                        account_origin: null,
-                        account_destiny: null,
-                        card_credit_id: e.card_credit_id,
-                        day: day,
-                        month: month,
-                        year: year,
-                        fixo: true,
-                        installments: false,
-                        value_installments: 0,
-                        qd_installments: - 1,
-                        attachment_img: false,
-                        attachment_img_id: null,
-                        tag: false,
-                        type: e.type,
-                        tag_id: null,
-                        paying_account_name: e.paying_account_name,
-                        id_fixed_release: e.id,
-                        user_id: e.user_id
-                    }
+                return res;
+            });
 
-                    return res;
-                });
+            try {
 
-                try {
+                const resMeta = await api.get(`meta/${month}&${year}`);
+                let resCardMeta = await api.get('cardcreditreleases');
+            
+                if(resMeta.data.length > 0) {
+                    for (let lancamento of  newFixedRelease) {
 
-                    const resMeta = await api.get(`meta/${month}&${year}`);
+                        if(lancamento.type_payer === false) {
 
-                    if(resMeta.data.length > 0) {
-                        for (let lancamento of  newFixedRelease) {
                             let meta = resMeta.data.find(m => m.category.id === lancamento.dp_category_id);
-     
-                             if (meta) {
-    
-                                let usedValue = Number(lancamento.value) + Number(meta.used_value);
-                                usedValue = usedValue.toFixed(2);
-    
-                                let newPorcent = usedValue * 100;
-                                newPorcent =  Number(newPorcent) / Number(meta.value);  
-    
-                                let status = false;
-                
-                                if(newPorcent >= 100 ) {
-                                    newPorcent = 100;
-                                    status = true;
-                                }
-             
-                                await api.put(`metareleases/${meta.id}`, {
-                                    used_value: usedValue,
-                                    porcent: newPorcent.toFixed(2),
-                                    status: status
-                                });
-                             }
-                        }
-                    } 
-           
-                    for(let release of newFixedRelease) {
-
-                        if(release.type_payer === false) {
-
-                            let sum = release.value;
-                            const account = await api.get(`account/${release.account_id}`);
-
-                            sum =  Number(account.data.value) - Number(sum);
-                            await api.put(`account/${account.data.id}`, { value: sum });
-                        }
-                    }
-
-                    for(let release of newFixedRelease) {
-
-                        if(release.type_payer) {
-                            
-                            let status = false;
-                            const card = await api.get(`cardcredit/${release.card_credit_id}`);
-                            let valueLimit = Number(card.data.limit_card) - Number(card.data.invoice_amount);
-
-                            if(Number(valueLimit) >= Number(release.value)) {
-
-                                let resCardRelease = await api.get('cardcreditreleases');
-                                let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === release.card_credit_id && e.statuscard === 2 );
-                                let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === release.card_credit_id && e.statuscard === 3 );
-
-                                if(cardStatus2.length > 0) {
-
-                                    status = true;
-                                    id = release.id;
-
-                                    let textMsn = `O cartão "${cardStatus2[0].card_credit.name}" esta fechado para essa data, troque a data do lançamento!`
-                                    
-                                    await api.post('notification', {
-                                        description: textMsn,
-                                        status: false,
-                                        id_fixed_release: fixedRelease.data[0].id,
-                                        id_parcel_release: null 
-                                    });
-                                    
-                                    sendNotification(textMsn);
-                                }
-                    
-                                if(cardStatus3.length > 0) {
-
-                                    status = true;
-                                    id = release.id;
-
-                                    let textMsn = `O cartão "${cardStatus3[0].card_credit.name}" esta vencido para essa data, troque a data do lançamento!`;
-
-                                    await api.post('notification', {
-                                        description: textMsn,
-                                        status: false,
-                                        id_fixed_release: fixedRelease.data[0].id,
-                                        id_parcel_release: null 
-                                    });
  
-                                    sendNotification(textMsn); 
-                                }
+                            if (meta) {
+   
+                               let usedValue = Number(lancamento.value) + Number(meta.used_value);
+                               usedValue = usedValue.toFixed(2);
+   
+                               let newPorcent = usedValue * 100;
+                               newPorcent =  Number(newPorcent) / Number(meta.value);  
+   
+                               let status = false;
+               
+                               if(newPorcent >= 100 ) {
+                                   newPorcent = 100;
+                                   status = true;
+                               }
+            
+                               await api.put(`metareleases/${meta.id}`, {
+                                   used_value: usedValue,
+                                   porcent: newPorcent.toFixed(2),
+                                   status: status
+                               });
+                            }
+                        }
+                        
+                        if(lancamento.type_payer === true) {
 
-                                let sum_limit = Number(card.data.invoice_amount) + Number(release.value);
+                            let cardStatusMeta2 = resCardMeta.data.filter(e => e.id_card_credit === lancamento.card_credit_id && e.statuscard === 2 && e.month === Number(month) && e.year === Number(year));
+                            let cardStatusMeta3 = resCardMeta.data.filter(e => e.id_card_credit === lancamento.card_credit_id && e.statuscard === 3 && e.month === Number(month) && e.year === Number(year));
 
-                                resCardRelease = resCardRelease.data.filter(e => e.id_card_credit === Number(release.card_credit_id) && e.month === Number(month) && e.year === Number(year));
-                                let resCardReleasePay = resCardRelease.filter(e => e.statuscard === 4 && e.month === Number(month));
-
-                                if(resCardReleasePay.length > 0) {
-
-                                    status = true;
-                                    id = release.id;
-
-                                    let textMsn = `O cartão "${resCardReleasePay[0].card_credit.name}" esta pago para essa data, troque a data do lançamento!`;
-                                    
-
-
-                                    await api.post('notification', {
-                                        description: textMsn,
-                                        status: false,
-                                        id_fixed_release: fixedRelease.data[0].id,
-                                        id_parcel_release: null 
-                                    });
-                                    
-                                    sendNotification(textMsn); 
-                                }
-
-                                if(!status) {
-
-                                    if(resCardRelease.length > 0) {
-                                   
-                                        let sumCardReleases = Number(resCardRelease[0].invoice_amount) + Number(release.value);
-                    
-                                        await api.put(`cardcreditreleases/${resCardRelease[0].id}`, { invoice_amount: sumCardReleases });
-    
-                                    } else {
-    
-                                        const cardInfoReleases = {
-                                            statuscard: 1,
-                                            month: month,
-                                            year: year,
-                                            pay: false,
-                                            limit_card: card.data.limit_card,
-                                            invoice_amount: release.value,
-                                            closes_day: card.data.closes_day,
-                                            wins_day: card.data.wins_day,
-                                            id_card_credit: card.data.id,
-                                            id_account: card.data.account.id
-                                        }
-    
-                                        await api.post('cardcreditreleases', cardInfoReleases); 
-                                    }
-    
-                                    await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
-                                }
-
-                            } else {
-                                sendNotification('Limite do cartão insuficiente!');
+                            if(cardStatusMeta2.length > 0) {
+                                statusCardMeta = true;
                             }
 
+                            if(cardStatusMeta3.length > 0) {
+                                statusCardMeta = true;
+                            }
+                            
+                            resCardMeta = resCardMeta.data.filter(e => e.id_card_credit === Number(lancamento.card_credit_id) && e.month === Number(month) && e.year === Number(year));
+                            let resCardMetaPay = resCardMeta.filter(e => e.statuscard === 4);
+
+                            if(resCardMetaPay.length > 0) {
+                                statusCardMeta = true;
+                            }
+
+                            if(!statusCardMeta) {
+                                let meta = resMeta.data.find(m => m.category.id === lancamento.dp_category_id);
+ 
+                                if (meta) {
+    
+                                    let usedValue = Number(lancamento.value) + Number(meta.used_value);
+                                    usedValue = usedValue.toFixed(2);
+    
+                                    let newPorcent = usedValue * 100;
+                                    newPorcent =  Number(newPorcent) / Number(meta.value);  
+    
+                                    let status = false;
+                
+                                    if(newPorcent >= 100 ) {
+                                        newPorcent = 100;
+                                        status = true;
+                                    }
+                
+                                    await api.put(`metareleases/${meta.id}`, {
+                                        used_value: usedValue,
+                                        porcent: newPorcent.toFixed(2),
+                                        status: status
+                                    });
+                                }
+                            }
+                        }
+                    }
+                } 
+       
+                for(let release of newFixedRelease) {
+
+                    if(release.type_payer === false) {
+
+                        let sum = release.value;
+                        const account = await api.get(`account/${release.account_id}`);
+
+                        sum =  Number(account.data.value) - Number(sum);
+                        await api.put(`account/${account.data.id}`, { value: sum });
+                    }
+                }
+
+                let resCardRelease = await api.get('cardcreditreleases');
+
+                for(let release of newFixedRelease) {
+
+                    if(release.type_payer) {
+                        
+                        let status = false;
+                        const card = await api.get(`cardcredit/${release.card_credit_id}`);
+                        let valueLimit = Number(card.data.limit_card) - Number(card.data.invoice_amount);
+
+                        if(Number(valueLimit) >= Number(release.value)) {
+
+                            
+                            let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === release.card_credit_id && e.statuscard === 2 && e.month === Number(month) && e.year === Number(year));
+                            let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === release.card_credit_id && e.statuscard === 3 && e.month === Number(month) && e.year === Number(year));
+
+                            if(cardStatus2.length > 0) {
+
+                                status = true;
+                                id = release.id;
+
+                                let textMsn = `O cartão ${cardStatus2[0].card_credit.name} esta fechado para essa data, troque a data do lançamento!`
+                                
+                                await api.post('notification', {
+                                    description: textMsn,
+                                    status: false,
+                                    id_fixed_release: fixedRelease.data[0].id,
+                                    id_parcel_release: null 
+                                });
+                                
+                                sendNotification(textMsn);
+                            }
+                
+                            if(cardStatus3.length > 0) {
+
+                                status = true;
+                                id = release.id;
+
+                                let textMsn = `O cartão ${cardStatus3[0].card_credit.name} esta vencido para essa data, troque a data do lançamento!`;
+
+                                await api.post('notification', {
+                                    description: textMsn,
+                                    status: false,
+                                    id_fixed_release: fixedRelease.data[0].id,
+                                    id_parcel_release: null 
+                                });
+
+                                sendNotification(textMsn); 
+                            }
+
+                            let sum_limit = Number(card.data.invoice_amount) + Number(release.value);
+
+                            resCardRelease = resCardRelease.data.filter(e => e.id_card_credit === Number(release.card_credit_id) && e.month === Number(month) && e.year === Number(year));
+                            let resCardReleasePay = resCardRelease.filter(e => e.statuscard === 4);
+
+                            if(resCardReleasePay.length > 0) {
+
+                                status = true;
+                                id = release.id;
+
+                                let textMsn = `O cartão ${resCardReleasePay[0].card_credit.name} esta pago para essa data, troque a data do lançamento!`;
+                            
+                                await api.post('notification', {
+                                    description: textMsn,
+                                    status: false,
+                                    id_fixed_release: fixedRelease.data[0].id,
+                                    id_parcel_release: null 
+                                });
+                                
+                                sendNotification(textMsn); 
+                            }
+
+                            if(!status) {
+
+                                if(resCardRelease.length > 0) {
+                               
+                                    let sumCardReleases = Number(resCardRelease[0].invoice_amount) + Number(release.value);
+                                    await api.put(`cardcreditreleases/${resCardRelease[0].id}`, { invoice_amount: sumCardReleases });
+
+                                } else {
+
+                                    const cardInfoReleases = {
+                                        statuscard: 1,
+                                        month: month,
+                                        year: year,
+                                        pay: false,
+                                        limit_card: card.data.limit_card,
+                                        invoice_amount: release.value,
+                                        closes_day: card.data.closes_day,
+                                        wins_day: card.data.wins_day,
+                                        id_card_credit: card.data.id,
+                                        id_account: card.data.account.id
+                                    }
+
+                                    await api.post('cardcreditreleases', cardInfoReleases); 
+                                }
+                                await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
+                            }
+                        } else {
+                            sendNotification('Limite do cartão insuficiente!');
+                        }
+                    }
+                }
+
+                if(id) {
+                    newFixedRelease = newFixedRelease.filter(e => e.id != id);
+                }
+
+                if(newFixedRelease.length > 0) {
+
+                    newFixedRelease = newFixedRelease.map(e => {
+
+                        let res = {
+                            description: e.description,
+                            value: e.value,
+                            rc_category_id: e.rc_category_id,
+                            dp_category_id: e.dp_category_id,
+                            type_payer: e.type_payer,
+                            account_id: e.account_id,
+                            account_origin: null,
+                            account_destiny: null,
+                            card_credit_id: e.card_credit_id,
+                            day: e.day,
+                            month: e.month,
+                            year: e.year,
+                            fixo: true,
+                            installments: false,
+                            value_installments: 0,
+                            qd_installments: - 1,
+                            attachment_img: false,
+                            attachment_img_id: null,
+                            tag: false,
+                            type: e.type,
+                            tag_id: null,
+                            paying_account_name: e.paying_account_name,
+                            id_fixed_release: e.id,
+                            user_id: e.user_id
                         }
 
+                        return res;
+                    });
+
+                    try {
+                        await api.post('releasebulkcreate', newFixedRelease);
+                    } catch (error) {
+                        console.log(error);
                     }
 
-                    if(id) {
-                        newFixedRelease = newFixedRelease.filter(e => e.id != id);
-                    }
+                    for(let release of newFixedRelease) {
 
-
-
-                    if(newFixedRelease.length > 0) {
-
-                        console.log(newFixedRelease.length)
-
-                        newFixedRelease = newFixedRelease.map(e => {
-
-                            let res = {
-                                description: e.description,
-                                value: e.value,
-                                rc_category_id: e.rc_category_id,
-                                dp_category_id: e.dp_category_id,
-                                type_payer: e.type_payer,
-                                account_id: e.account_id,
-                                account_origin: null,
-                                account_destiny: null,
-                                card_credit_id: e.card_credit_id,
-                                day: e.day,
-                                month: e.month,
-                                year: e.year,
-                                fixo: true,
-                                installments: false,
-                                value_installments: 0,
-                                qd_installments: - 1,
-                                attachment_img: false,
-                                attachment_img_id: null,
-                                tag: false,
-                                type: e.type,
-                                tag_id: null,
-                                paying_account_name: e.paying_account_name,
-                                id_fixed_release: e.id,
-                                user_id: e.user_id
-                            }
-
-                            return res;
+                        let textMsn = `Novo lançamento fixo registrado no valor de ${formatNumber(release.value)}. Agradecemos por utilizar o Finantza!`;            
+                        
+                        await api.post('notification', {
+                            description: textMsn,
+                            status: false,
+                            id_fixed_release:null,
+                            id_parcel_release: null 
                         });
 
-                        try {
-                            await api.post('releasebulkcreate', newFixedRelease);
-                        } catch (error) {
-                            console.log(error+'sssss')
-                        }
-
-                       
-
-                        for(let release of newFixedRelease) {
-
-                            let typeName = ''
-
-                            if(release.type === 1) {
-                                typeName = 'receitas'
-                            }
-
-                            if(release.type === 2) {
-                                typeName = 'despesas'
-                            }   
-
-                            let textMsn = `Novo lançamento fixo registrado no valor de ${formatNumber(release.value)}. Agradecemos por utilizar o Finantza!`;            
-                            
-                            await api.post('notification', {
-                                description: textMsn,
-                                status: false,
-                                id_fixed_release:null,
-                                id_parcel_release: null 
-                            });
-
-                            sendNotification(textMsn);
-                        } 
-                    }
-
-                } catch (error) {
-                    console.log(error);
+                        sendNotification(textMsn);
+                    } 
                 }
+
+                getCard();
+                getAccount();
+                getMeta();
+                getNotification();
+            } catch (error) {
+                console.log(error);
             }
         }
+    }
 
-        teste();
-    },[]);
+    async function runOncePerDay() {
+        /*         
+        await AsyncStorage.removeItem('lastRun');
+        const lastRun = await AsyncStorage.getItem('lastRun');
+        console.log(lastRun);
+        */
+
+        const today = new Date().getDate();
+        const lastRun = await AsyncStorage.getItem('lastRun');
+      
+        if (lastRun !== today.toString()) {
+            await AsyncStorage.setItem('lastRun', today.toString());
+            handlerFixo();
+        } else {
+            //console.log('Function has already been executed today');
+        } 
+    }
 
     useEffect(() => {
-        async function runOncePerDay() {
-            if (!hasExecutedToday) {
-              const lastExecutionDate = await AsyncStorage.getItem('lastExecutionDate');
-              const currentDate = new Date();
-              const oneDayInMilliseconds = 24 * 60 * 60 * 1000; // 1 dia em milissegundos
-      
-              if (!lastExecutionDate || currentDate - new Date(lastExecutionDate) >= oneDayInMilliseconds) {
-                
-                
-                // Executa a função aqui
-                //console.log('Função executada!');
-      
-                // Armazena a nova última data de execução
-                await AsyncStorage.setItem('lastExecutionDate', currentDate.toISOString());
-      
-                // Atualiza a flag de controle para evitar que a função seja executada novamente
-                setHasExecutedToday(true);
-              }
-            }
-        }
-      
         runOncePerDay();
-    }, []);
-
-    useEffect(() => {
         getCardStatus();
         getMeta();
         getNotification();
@@ -444,35 +465,43 @@ const Home = () => {
             setMeta(metas.data);
             
         } catch (error) {
-            console.log("Error: ");
+            console.log(error);
         }
     }
     
     const getCardStatus = async () => {
         
         let date = new Date();
-        let day = date.getDate();
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
        
         try {
-            
+        
             let res = await api.get('/cardcreditreleases');
-            res = res.data.filter(e => e.statuscard != 4);
+            res = res.data.filter(e => e.statuscard != 4 && e.month === month && e.year === year);
 
             let statuscloses = res.filter(e => e.statuscard != 2 && e.statuscard != 3 && Number(e.closes_day) < Number(day));
             let statuswins = res.filter(e => e.statuscard != 3 && Number(e.wins_day) < Number(day));
-            
+
             if(statuscloses.length > 0) {
                 statuscloses = statuscloses.map(e => e.id);
-                await api.put(`/cardcreditreleases/${statuscloses.toString()}`, { statuscard: 2 });
+
+                console.log(2)
+
+                //await api.put(`/cardcreditreleases/${statuscloses.toString()}`, { statuscard: 2 });
             } 
 
             if(statuswins.length > 0) {
                 statuswins = statuswins.map(e => e.id);
-                await api.put(`/cardcreditreleases/${statuswins.toString()}`, { statuscard: 3 });
-            } 
 
+                console.log(3)
+
+                //await api.put(`/cardcreditreleases/${statuswins.toString()}`, { statuscard: 3 });
+            }  
+           
         } catch (error) {
-            console.log("Error: dddd "+error);
+            console.log(error);
         }
     }
     

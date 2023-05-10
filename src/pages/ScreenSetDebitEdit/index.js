@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Switch } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-
+import { addMonths } from 'date-fns';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
@@ -27,69 +27,77 @@ import api from '../../services/api';
 import { WToast } from 'react-native-smart-tip';
 
 import { 
-  Container,
-  Header,
-  AreaValue,
-  TextValue,
-  AreaSection,
-  Section,
-  TitleSection,
-  AreaIconCategory,
-  IconCategory,
-  IconUrl,
-  IconPattern,
-  AreaIconBank,
-  AreaSwitch,
-  IconBank,
-  TitleIconBank,
-  TitleIconCategory,
-  AreaDate,
-  ButtonSelectPattern,
-  ButtonSelectPatternText,
-  AreaButton,
-  ButtonCreate,
-  ModalArea,
-  BodyModalCategory,
-  BodyModalBank,
-  AreaTitleModal,
-  TitleModal,
-  ListBank,
-  TitleModalInstallments,
-  BodyModalInstallments,
-  ButtonActionInstallments,
-  TitleButtonInstallments,
-  TitleX,
-  ButtonImageInfo,
-  BoxModalInstallments,
-  HeaderModalAnexo,
-  BodyModalAnexos,
-  AreaTitle,
-  AreaButtonClose,
-  TitleModalAnexos,
-  ButtonClose,
-  BodyButton,
-  ButtonCamera,
-  ButtonCameraTitle,
-  ButtonLauchCamera,
-  ButtonLauchCameraTitle,
-  ListTags,
-  BodyModalTags,
-  ModalAreaMeta,
-  BodyModalNotification,
-  AreaTitleModalNotification,
-  TitleModalNotification,
-  AreaModalNotificationDesc,
-  DescModalNotification,
-  AreaModalNotificationCategory,
-  DescCategoryModalNotification,
-  AreaModalNotificationInfo,
-  AreaModalNotificationInfoRow,
-  AreaModalNotificationInfoText,
-  ButtonModalNotification,
-  AreaModalNotificationButton,
-  ButtonTextModalNotification,
-  ButtonCancelModalNotification,
-  ButtonCancelTextModalNotification,
+    Container,
+    Header,
+    AreaValue,
+    TextValue,
+    AreaSection,
+    Section,
+    TitleSection,
+    AreaIconCategory,
+    IconCategory,
+    IconUrl,
+    IconPattern,
+    AreaIconBank,
+    AreaSwitch,
+    IconBank,
+    TitleIconBank,
+    TitleIconCategory,
+    AreaDate,
+    ButtonSelectPattern,
+    ButtonSelectPatternText,
+    AreaButton,
+    ButtonCreate,
+    ModalArea,
+    BodyModalCategory,
+    BodyModalBank,
+    AreaTitleModal,
+    TitleModal,
+    ListBank,
+    TitleModalInstallments,
+    BodyModalInstallments,
+    ButtonActionInstallments,
+    TitleButtonInstallments,
+    TitleX,
+    ButtonImageInfo,
+    BoxModalInstallments,
+    HeaderModalAnexo,
+    BodyModalAnexos,
+    AreaTitle,
+    AreaButtonClose,
+    TitleModalAnexos,
+    ButtonClose,
+    BodyButton,
+    ButtonCamera,
+    ButtonCameraTitle,
+    ButtonLauchCamera,
+    ButtonLauchCameraTitle,
+    ListTags,
+    BodyModalTags,
+    ModalAreaMeta,
+    BodyModalNotification,
+    AreaTitleModalNotification,
+    TitleModalNotification,
+    AreaModalNotificationDesc,
+    DescModalNotification,
+    AreaModalNotificationCategory,
+    DescCategoryModalNotification,
+    AreaModalNotificationInfo,
+    AreaModalNotificationInfoRow,
+    AreaModalNotificationInfoText,
+    ButtonModalNotification,
+    AreaModalNotificationButton,
+    ButtonTextModalNotification,
+    ButtonCancelModalNotification,
+    ButtonCancelTextModalNotification,
+    ModalAreaIsInstalmentsEdit,
+    BodyModalIsInstalmentsEdit,
+    AreaTitleModalIsInstalmentsEdit,
+    TitleModalIsInstalmentsEdit,
+    AreaModalButtonIsInstalmentsEdit,
+    ButtonIsInstalmentsEdit,
+    ButtonIsInstalmentsCancel,
+    ButtonTextIsInstalmentsEdit,
 } from './styles';
 
 const ScreenSetDebit = ({ route, navigation }) => {
@@ -141,6 +149,9 @@ const ScreenSetDebit = ({ route, navigation }) => {
     const [imgId, setImgId] = useState(route.params.data.attachment_img_id);
     const [modalMetaNotification, setModalMetaNotification] = useState(false);
     const [infoMetas, setInfoMetas] = useState({});
+    const [installmentText, setInstallmentText] = useState('');
+    const [isInstalmentsEdit, setIsInstalmentsEdit] = useState(false);
+    const [instalmentsEditModal, setInstalmentsEditModal] = useState(false);
 
     useEffect(() => {
         if(cardCreditSelect) {
@@ -194,21 +205,25 @@ const ScreenSetDebit = ({ route, navigation }) => {
         const res = await api.get('cardcredit');
         
         const respoFilter = res.data.sort((x, y) => {
-        let a = new Date(x.createdAt);
-        let b = new Date(y.createdAt);
+            let a = new Date(x.createdAt);
+            let b = new Date(y.createdAt);
 
-        return a - b;
+            return a - b;
         });
-        setCardCreditFull(respoFilter)
+
+        let resEdit = await api.get(`cardcredit/${route.params.data.card_credit.id}`);
+
+        setCardCreditSelect(resEdit.data);
+        setCardCreditFull(respoFilter);
     }
 
     const getTags = async () => {
 
         try {
-        const tags = await api.get('tags');
-        setTagsFull(tags.data);
+            const tags = await api.get('tags');
+            setTagsFull(tags.data);
         } catch (error) {
-        console.log(error);
+            console.log(error);
         }
 
     }
@@ -393,7 +408,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
     const actionCloseModalInstallments = () => {
         
         if(qdInstallments == '') {
-        setQdInstallments('2x de '+qd2);
+            setQdInstallments('2x de '+qd2);
         }
 
         setModalInstallments(false);
@@ -546,245 +561,352 @@ const ScreenSetDebit = ({ route, navigation }) => {
         WToast.show(toastOpts)
       }
 
-    const createDb =  async (number) => {
+    const updateDb =  async (number) => {
 
         const value = route.params.value; 
-        
+    
         let valueP = 0;
         let qdP = '';
+        let id_img = null;
+        let attachment = false;
         let tagIsTrue = false;
         let tagId = null;
         let bankId = null;
         let cardId = null;
         let payingName = '';
+        let idFixed = null;
 
-        if(categorySelect && description) {
-        if(qdInstallments.length > 0) {
-            valueP = qdInstallments.split(' ');
-            qdP = valueP[0].split('x');
-            qdP = Number(qdP[0]);
-            valueP = transformNumber(valueP[2]);
+        let dateCurrent = dateFinal.split(' ');
+        let monthCurrent = dateCurrent[1];
+        let yearCurrent = dateCurrent[2];
+
+        let previousValue = route.params.data.value;
+        let previousMonth = route.params.data.month;
+        let previousYear = route.params.data.year;
+        let itWasBank = route.params.data.card_credit ? false : true;
+        let itWasCard = route.params.data.card_credit ? true : false;
+        let itWasInstallments = route.params.data.instalments_release_id ? true : false;
+        let itWasGoal = route.params.data.meta ? true : false;
+
+        if(itWasInstallments) { 
+
+            if(!isInstalmentsEdit) {
+
+                let text = route.params.data.instalments_text;
+                text = '('+text+')';
+
+                setInstallmentText(text);
+                setIsInstalmentsEdit(true);
+                setInstalmentsEditModal(true);
+                return false;
+            } else {
+
+                let releaseInstalments = await api.get(`releasesInstalmentsFilter/${route.params.data.instalments_release_id}`);
+
+                releaseInstalments = releaseInstalments.data.map(e => {
+                    let date = e.split('-')
+                    return date;
+                });
+
+                let statusCard = [];
+
+                for (let index = 0; index < releaseInstalments.length; index++) {
+                    const element = releaseInstalments[index];
+                    let dataCardRelease = await api.get(`cardcreditreleasefilter/${route.params.data.card_credit.id}-${element[1]}-${element[2]}`);
+                    dataCardRelease = dataCardRelease.data.filter(e => e.statuscard != 1);
+                    
+                    if(dataCardRelease.length > 0) {
+                        statusCard.push(dataCardRelease);
+                    }
+                }
+
+                if(statusCard.length > 0) {
+                    setInstalmentsEditModal(false);
+                    toatsErrorCardReleases(`O cartão já foi pago ou está vencido/fechado em uma das datas informadas para o parcelamento desse lançamento.`);
+                    return false;
+                }
+
+                const card = await api.get(`cardcredit/${route.params.data.card_credit.id}`);
+
+                let valueLimit = Number(card.data.invoice_amount) - Number(route.params.data.value);
+
+                await api.put(`cardcredit/${route.params.data.card_credit.id}`, {
+                    invoice_amount: valueLimit
+                });
+                
+                let listCardRelease = [];
+
+                for (let index = 0; index < releaseInstalments.length; index++) {
+                    const element = releaseInstalments[index];
+                    let dataCardRelease = await api.get(`cardcreditreleasefilter/${route.params.data.card_credit.id}-${element[1]}-${element[2]}`);
+                    listCardRelease.push(...dataCardRelease.data);
+                }   
+
+                for (let index = 0; index < listCardRelease.length; index++) {
+                    const element = listCardRelease[index];
+
+                    let instalmentsReleaseValue =  Number(element.invoice_amount) - Number(route.params.data.value_installments);
+                    instalmentsReleaseValue = instalmentsReleaseValue.toFixed(2);
+
+                    await api.put(`cardcreditreleases/${element.id}`, { invoice_amount: instalmentsReleaseValue });
+                }
+
+                for (let index = 0; index < releaseInstalments.length; index++) {
+                    const element = releaseInstalments[index];
+                    await api.delete(`releases/${element[0]}`);
+                }
+
+                setInstalmentsEditModal(false);
+            }
         }
-    
-        if(anexoPhoto) {
-            const data = new FormData();
-    
-            data.append("file", {
+
+        if(itWasCard && itWasInstallments === false) {
+
+            let previousCardId = route.params.data.card_credit.id;
+            let previousCardName = route.params.data.card_credit.name
+            let previousCardRelease = await api.get(`cardcreditreleasefilter/${previousCardId}-${previousMonth}-${previousYear}`);
+
+            if(previousCardRelease.data[0].statuscard === 2) {
+                toatsErrorCardReleases(`O cartão "${previousCardName}" esta fechado, não podera mais fazer a edição desse lançamento de cartão!`);
+                return false;
+            }
+
+            if(previousCardRelease.data[0].statuscard === 3) {
+                toatsErrorCardReleases(`O cartão "${previousCardName}" esta vencido para essa data, não podera mais fazer a edição desse lançamento de cartão!`);
+                return false;
+            }
+
+            if(previousCardRelease.data[0].statuscard === 4) {
+                toatsErrorCardReleases(`O lançamento já consta pago na fatura do cartão "${previousCardName}", não podera mais fazer a edição desse lançamento de cartão!`);
+                return false;
+            }
+
+            if(route.params.data.month != monthCurrent || route.params.data.year != yearCurrent) {
+
+                let currentCardRelease = await api.get(`cardcreditreleasefilter/${cardCreditSelect.id}-${monthCurrent}-${yearCurrent}`);
+                
+                if(currentCardRelease.data.length > 0) {
+                    if(currentCardRelease.data[0].statuscard === 2) {
+                        toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado, não podera mais fazer a edição desse lançamento de cartão!`);
+                        return false;
+                    }
+        
+                    if(currentCardRelease.data[0].statuscard === 3) {
+                        toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data, não podera mais fazer a edição desse lançamento de cartão!`);
+                        return false;
+                    }
+        
+                    if(currentCardRelease.data[0].statuscard === 4) {
+                        toatsErrorCardReleases(`O lançamento já consta pago na fatura do cartão "${cardCreditSelect.name}", não podera mais fazer a edição desse lançamento de cartão!`);
+                        return false;
+                    }
+                }
+
+            }
+
+            const card = await api.get(`cardcredit/${cardCreditSelect.id}`);
+            let valueLimit = Number(card.data.limit_card) - Number(card.data.invoice_amount);
+
+            if(Number(valueLimit) >= Number(value)) { 
+
+
+                const previousCard = await api.get(`cardcredit/${previousCardId}`);
+                let previousCardValue =  Number(previousCard.data.invoice_amount) - Number(previousValue);
+
+                await api.put(`cardcredit/${previousCardId}`, {
+                    invoice_amount: previousCardValue
+                });   
+
+                let previousCardReleaseValue =  Number(previousCardRelease.data[0].invoice_amount) - Number(previousValue);
+                
+                await api.put(`cardcreditreleases/${previousCardRelease.data[0].id}`, { invoice_amount: previousCardReleaseValue });
+            } else {
+                toatsCardLimit();
+            } 
+        }
+
+        if(itWasBank) {
+            let previousAccount = await api.get(`account/${route.params.data.account.id}`);
+            let sumPreviousAccount = Number(previousAccount.data.value) + Number(previousValue); 
+            await api.put(`account/${route.params.data.account.id}`, { value: sumPreviousAccount }); 
+        }
+
+        if(itWasGoal) {
+
+            let isMetaEdit = await api.get(`metafilter/${route.params.data.meta_id}`);
+            isMetaEdit = isMetaEdit.data;
+
+            let sumMetaEdit = Number(isMetaEdit[0].used_value) - Number(previousValue);
+
+            let porcent = sumMetaEdit * 100;
+            porcent = porcent / isMetaEdit[0].value;
+
+            let status = false;
+            
+            if(porcent >= 100 ) {
+                porcent = 100;
+                status = true;
+            }
+
+            await api.put(`metareleases/${isMetaEdit[0].id}`, {
+                used_value: sumMetaEdit,
+                porcent,
+                status
+            });
+        }
+ 
+        if(categorySelect && description) { 
+            
+            if(qdInstallments.length > 0) {
+                valueP = qdInstallments.split(' ');
+                qdP = valueP[0].split('x');
+                qdP = Number(qdP[0]);
+                valueP = transformNumber(valueP[2]);
+            } else {
+                if(itWasInstallments) {
+                    const qd = route.params.data.instalments_text.split('/');
+                    qdP = Number(qd[1]);
+                    valueP = route.params.data.value_installments;
+
+                    if(route.params.data.value != value) {
+                        valueP = value / qdP;
+                    } 
+                }
+            }
+
+            if(anexoPhoto) {
+              const data = new FormData();
+        
+              data.append("file", {
                 uri: anexoPhoto.uri,
                 type: anexoPhoto.type,
                 name: anexoPhoto.fileName,
-            });  
-    
-            try {
-
+              });  
+        
+              try {
+      
                 const config = {
-                    headers: {
-                      "Content-Type": "multipart/form-data"
-                    }
+                  headers: {
+                    "Content-Type": "multipart/form-data"
+                  }
                 };
-                
+      
                 const file = await api.post('files', data, config);
                 id_img = file.data.id;
-                setAttachment(true);
-            } catch (error) {
+                attachment = true;
+              } catch (error) {
                 console.log(error);
+              }
             }
-        }
-    
-        if(tag) {
-            tagIsTrue = true;
-            tagId = tag.id
-        }
-
-        if(bank) {
-            bankId = bank.id;
-            payingName = bank.name
-        }
-
-        if(cardCreditSelect) {
-            cardId = cardCreditSelect.id;
-            payingName = cardCreditSelect.name;
-        }
-
-        let date = dateFinal.split(' ');
-        let day = date[0];
-        let month = date[1];
-        let year = date[2];
-        let status = false;
-
-        try {
-
-            if(route.params.data.type_payer === true && isSwitch === false) {  
-
-                let resCardRelease = await api.get('cardcreditreleases');
-                let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
-                let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
-               
-                if(cardStatus2.length > 0) {
-                    toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data!`);
-                    return false;
-                }
-    
-                if(cardStatus3.length > 0) {
-                    toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data!`);
-                    return false;
-                }
-
-                let cardReleases = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 1);
-                
-                if(cardReleases.length <= 0) {
-                    toatsErrorCardReleases(`O lançamento já consta pago na fatura do cartão "${cardCreditSelect.name}"!`);
-                    return false;
-                }    
-
-                payingName = bank.name;
-                cardId = null;
-
-                const cardExchange = await api.get(`cardcredit/${route.params.data.card_credit_id}`);
-
-                let valueInvoiceCardExchange =  Number(cardExchange.data.invoice_amount) - Number(route.params.data.value);
-
-                await api.put(`cardcredit/${route.params.data.card_credit_id}`, {
-                    invoice_amount: valueInvoiceCardExchange
-                }); 
-
-                let cardReleasesTotal =  Number(cardReleases[0].invoice_amount) - Number(route.params.data.value);
-                await api.put(`cardcreditreleases/${cardReleases[0].id}`, { invoice_amount: cardReleasesTotal });
- 
-                let accountExchange = await api.get(`account/${bank.id}`);
-                let AccountSum =  Number(accountExchange.data.value) - Number(route.params.data.value);
-
-                await api.put(`account/${accountExchange.data.id}`, { value: AccountSum });
-            }   
-
-            if(route.params.data.type_payer === false && isSwitch === true) {
-
-                let resCardRelease = await api.get('cardcreditreleases');
-                let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
-                let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
-
-                if(cardStatus2.length > 0) {
-                    toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data!`);
-                    return false;
-                }
-    
-                if(cardStatus3.length > 0) {
-                    toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data!`);
-                    return false;
-                }
-
-                let cardReleases = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 1);
-                
-                if(cardReleases.length <= 0) {
-                    toatsErrorCardReleases(`O lançamento já consta pago na fatura do cartão "${cardCreditSelect.name}"!`);
-                    return false;
-                }    
-
-                const cardExchangeIstrue = await api.get(`cardcredit/${cardId}`);
-
-                let valueInvoiceCardExchangeIstrue =  Number(cardExchangeIstrue.data.invoice_amount) + Number(route.params.data.value);
-                await api.put(`cardcredit/${cardId}`, {
-                    invoice_amount: valueInvoiceCardExchangeIstrue
-                });  
-
-                let accountExchangeIstrue = await api.get(`account/${route.params.data.account_id}`);
-                let valueExchangeBankIstrue = Number(accountExchangeIstrue.data.value) + Number(route.params.data.value);
-
-                await api.put(`account/${route.params.data.account.id}`, {
-                    value: valueExchangeBankIstrue
-                });
+        
+            if(tag) {
+              tagIsTrue = true;
+              tagId = tag.id
             }
-        } catch(error) {
-            console.log(error);
-        }
+      
+            if(!isSwitch) {
+              bankId = bank.id;
+              payingName = bank.name;
+            }
+      
+            if(isSwitch) {
+                cardId = cardCreditSelect.id;
+                bankId = cardCreditSelect.account.id;
+                payingName = cardCreditSelect.name;
+            }
 
-        const resMeta = await api.get(`meta/${month}&${year}`);
-        let isMeta = resMeta.data.filter(e => e.category.id === categorySelect.id);
-
-        let meta_id = null;
-        let metaIsTrue = false; 
-  
-       if(isMeta.length > 0) {
-          meta_id = isMeta[0].id;
-          metaIsTrue = true;
-        }
-        
-        const newReleases = {
-            description,
-            value: value,
-            rc_category_id: null,
-            dp_category_id: categorySelect.id,
-            type_payer: isSwitch,
-            account_id: bankId,
-            account_origin: null,
-            account_destiny: null,
-            card_credit_id: cardId,
-            day, day,
-            month: month,
-            year: year,
-            fixo: fixed,
-            installments: installments,
-            value_installments: valueP,
-            qd_installments: qdP - 1,
-            attachment_img: attachment,
-            attachment_img_id: imgId,
-            tag: tagIsTrue,
-            tag_id: tagId,
-            paying_account_name: payingName,
-            meta_id: meta_id,
-            meta: metaIsTrue
-        }
-        
-        try {
-
-            let sumMetaEdit = '';
-                if(route.params.data.meta) {
-
-                    let isMetaEdit = await api.get(`metafilter/${route.params.data.meta_id}`);
-                    isMetaEdit = isMetaEdit.data;
-
-                    sumMetaEdit = Number(isMetaEdit[0].used_value) - Number(route.params.data.value);
-
-                    let porcent = sumMetaEdit * 100;
-                    porcent = porcent / isMetaEdit[0].value;
-
-                    let status = false;
-                    
-                    if(porcent >= 100 ) {
-                        porcent = 100;
-                        status = true;
-                    }
-
-                    await api.put(`metareleases/${isMetaEdit[0].id}`, {
-                        used_value: sumMetaEdit,
-                        porcent,
-                        status
-                    });
+            let date = dateFinal.split(' ');
+            let day = date[0];
+            let month = date[1];
+            let year = date[2];
+      
+            const resMeta = await api.get(`meta/${month}&${year}`);
+            let isMeta = resMeta.data.filter(e => e.category.id === categorySelect.id);
+      
+            let meta_id = null;
+            let metaIsTrue = false; 
+      
+            if(isMeta.length > 0) {
+              meta_id = isMeta[0].id;
+              metaIsTrue = true;
+            }
+            
+            if(fixed) {
+      
+                const infoFixedRelease = {
+                    day: day,
+                    description,
+                    value: value,
+                    rc_category_id: null,
+                    dp_category_id: categorySelect.id,
+                    account_id: bank.id,
+                    card_credit_id: cardId,
+                    type: "2",
+                    paying_account_name: payingName,
+                    meta_id: meta_id,
+                    meta: metaIsTrue
                 }
-                
+      
+                try {
+                    let fixedRelease = await api.post('fixedrelease', infoFixedRelease);
+                    idFixed = fixedRelease.data.id;
+                } catch (error) {
+                    console.log(error)
+                } 
+            }
+
+            const releases = {
+              description,
+              value: value,
+              rc_category_id: null,
+              dp_category_id: categorySelect.id,
+              type_payer: isSwitch,
+              account_id: bankId,
+              account_origin: null,
+              account_destiny: null,
+              card_credit_id: cardId,
+              day, day,
+              month: month,
+              year: year,
+              fixo: fixed,
+              installments: installments,
+              value_installments: valueP,
+              qd_installments: qdP - 1,
+              attachment_img: attachment,
+              attachment_img_id: id_img,
+              tag: tagIsTrue,
+              type: "2",
+              tag_id: tagId,
+              paying_account_name: payingName,
+              meta_id: meta_id,
+              meta: metaIsTrue
+            }
+      
+            try {
+
                 if(isMeta.length > 0) {
-
+      
                     let newValue = installments ? valueP : value;
-
-                    let usedValue = Number(newValue) + Number(sumMetaEdit);
+        
+                    let usedValue = Number(newValue) + Number(isMeta[0].used_value);
                     usedValue = usedValue.toFixed(2);
-
+        
                     let newPorcent = usedValue * 100;
                     newPorcent =  Number(newPorcent) / Number(isMeta[0].value);  
                     
                     let status = false;
-
+        
                     let porcentInfo = newPorcent;
-
+      
                     if(newPorcent >= 100 ) {
                         newPorcent = 100;
                         status = true;
                     }
-
+      
                     if(number != 1 && number !=2) {
                         if(usedValue > isMeta[0].value && isMeta[0].notification === true) {
-                    
-                        const infoMeta = {
+                        
+                            const infoMeta = {
                             name: isMeta[0].category.name,
                             color: isMeta[0].category.color_hex,
                             value: isMeta[0].value,
@@ -792,170 +914,301 @@ const ScreenSetDebit = ({ route, navigation }) => {
                             month: isMeta[0].month,
                             year: isMeta[0].year,
                             porcent: porcentInfo
-                        }
-
-                        setInfoMetas(infoMeta);
-                        setModalMetaNotification(true);
+                            }
+                
+                            setInfoMetas(infoMeta);
+                            setModalMetaNotification(true);
             
-                        return false;
+                            return false;
                         }
                     } 
-            
+      
                     if(number === 2) {
-                        try {
-                        await api.put(`metareleases/${isMeta[0].id}`, {
-                            notification: false
-                        });
+                    
+                    try {
+                        await api.put(`metareleases/${isMeta[0].id}`, {notification: false});
                         } catch (error) {
                             console.log(error)
                         }
                     }
-                
+      
+                    try {
+                        
                     await api.put(`metareleases/${isMeta[0].id}`, {
                         used_value: usedValue,
                         porcent: newPorcent.toFixed(2),
                         status: status
                     });
+        
+                    } catch (error) {
+                        console.log(error);
+                    } 
                 }
-            
-                //ajustar essa rota - criar uma nova que pega pelo id_card_credit exemplo: cardcreditFilterreleases/id_card_credit
-                if(bankId && isSwitch === false) {
-                    
-                    let previousAccount = await api.get(`account/${route.params.data.account.id}`);
-                    if(route.params.data.installments) {
-                        let sumValueInstallments = Number(previousAccount.data.value) + Number(route.params.data.value_installments);
-                        await api.put(`account/${route.params.data.account.id}`, { value: sumValueInstallments }); 
-                    } else {
-                        let sumPreviousAccount = Number(previousAccount.data.value) + Number(route.params.data.value);
-                        await api.put(`account/${route.params.data.account.id}`, { value: sumPreviousAccount }); 
-                    }
+                
+                if(bankId && !isSwitch) { 
 
-                    let sum = installments ? valueP : value;
+                   let sum = installments ? valueP : value;
                     const account = await api.get(`account/${bank.id}`);
-                    sum =  Number(account.data.value) - Number(sum); 
-
-                    await api.put(`account/${account.data.id}`, { value: sum }); 
-                    await api.put(`releases/${response.id}`, newReleases);
+                    sum =  Number(account.data.value) - Number(sum);
+      
+                    await api.put(`account/${account.data.id}`, { value: sum });
+                    await api.put(`releases/${route.params.data.id}`, releases);
 
                     navigation.navigate('TabRoutes', {
-                        screen: 'Releases'
+                        screen: 'Home'
                     });
                 } 
-                
+
                 if(cardCreditSelect && isSwitch === true) {
-
-                    let resCardRelease = await api.get('cardcreditreleases');
-                    let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 );
-                    let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 );
-
-                    if(cardStatus2.length > 0) {
-                        toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data!`);
-                        return false;
-                    }
-        
-                    if(cardStatus3.length > 0) {
-                        toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data!`);
-                        return false;
-                    }
-
-                    let cardReleases = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 1);
+                
+                    const card = await api.get(`cardcredit/${cardCreditSelect.id}`);
+                    let valueLimit = Number(card.data.limit_card) - Number(card.data.invoice_amount);
+      
+                    if(Number(valueLimit) >= Number(value)) {
+      
                     
-                    if(cardReleases.length <= 0) {
-                        toatsErrorCardReleases(`O lançamento já consta pago na fatura do cartão "${cardCreditSelect.name}"!`);
-                        return false;
-                    }  
-
-                    if(route.params.data.month != month || route.params.data.year != year) {
-                        console.log('entrou na condição de ser datas diferentes');
-
-                        let cardReleasesTotal =  Number(cardReleases[0].invoice_amount) - Number(route.params.data.value);
-                        await api.put(`cardcreditreleases/${cardReleases[0].id}`, { invoice_amount: cardReleasesTotal });
+                        let resCardRelease = await api.get('cardcreditreleases');
+                        let cardStatus2 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 2 && e.month === Number(month) && e.year === Number(year));
+                        let cardStatus3 = resCardRelease.data.filter(e => e.id_card_credit === cardCreditSelect.id && e.statuscard === 3 && e.month === Number(month) && e.year === Number(year));
+        
+                        if(cardStatus2.length > 0) {
+                            toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta fechado para essa data, troque a data do lançamento!`);
+                            return false;
+                        }
+      
+                        if(cardStatus3.length > 0) {
+                            toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido para essa data, troque a data do lançamento!`);
+                            return false;
+                        }
                         
-                        let resCardEditDateReleaes = resCardRelease.data.filter(e => e.month === Number(month) && e.year === Number(year));
+                        let sum_limit = Number(card.data.invoice_amount) + Number(value);
+      
+                        resCardRelease = resCardRelease.data.filter(e => e.id_card_credit === Number(cardId) && e.month === Number(month) && e.year === Number(year));
+                        let resCardReleasePay = resCardRelease.filter(e => e.statuscard === 4 && e.month === Number(month));
+        
+                        if(resCardReleasePay.length > 0) {
+                            toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta pago para essa data, troque a data do lançamento!`);
+                            return false;
+                        }
+      
+                    if(installments) {
 
-                        if(resCardEditDateReleaes.length === 0) {
+                        const date = new Date();
+                        let dateCardRelease = [];
+                        let isCard = 0;
 
-                            const cardCreditEdit = await api(`cardcredit/${cardCreditSelect.id}`);
+                        for (let i = 0; i < qdP; i++) {
+    
+                            const resultDate = addMonths(date, i);
+                            let month = resultDate.getMonth() + 1;
+                            let year = resultDate.getFullYear();
+      
+                            dateCardRelease.push(month+'-'+year);
+                        }
+
+                        let installmentsRelease = await api.get('cardcreditreleases');
+
+                        dateCardRelease.forEach(element => {
+        
+                            let date = element.split('-');
+                            let res = installmentsRelease.data.filter(e => 
+                            e.id_card_credit === cardCreditSelect.id 
+                            && e.statuscard != 1                    
+                            && e.month === Number(date[0])
+                            && e.year === Number(date[1])
+                            );
+                            isCard = isCard + res.length;
+                        });
+
+                        if(isCard > 0) {
+                            toatsErrorCardReleases(`O cartão "${cardCreditSelect.name}" esta vencido/fechado ou pago para essa data, troque a data do lançamento!`)
+                        } else {
+                      
+                        let dateUpdate = [];
+                        let dateCreate = [];
+      
+                        dateCardRelease.forEach((element, index )=> {
+      
+                          let date = element.split('-');
+                          let res = installmentsRelease.data.filter(e => 
+                            e.id_card_credit === cardCreditSelect.id 
+                            && e.statuscard === 1                    
+                            && e.month === Number(date[0])
+                            && e.year === Number(date[1])
+                          );
+      
+                          if(res.length > 0) {
+                            dateUpdate.push(element)
+                          } else {
+                            dateCreate.push(element);
+                          }
+                        });
+
+                        if(dateUpdate.length > 0) {
+
+                            for (let i = 0; i < dateUpdate.length; i++) { 
+      
+                                try {
+        
+                                    let date = dateUpdate[i].split('-');
+        
+                                    let resUpdate = installmentsRelease.data.filter(e => 
+                                        e.id_card_credit === cardCreditSelect.id 
+                                        && e.month === Number(date[0])
+                                        && e.year === Number(date[1])
+                                    );
+        
+                                    let sumCardReleases = Number(resUpdate[0].invoice_amount) + Number(valueP);
+                                    await api.put(`cardcreditreleases/${resUpdate[0].id}`, { invoice_amount: sumCardReleases });
+                              
+                                } catch (error) {
+                                    console.log(error);
+                                } 
+                            }
+                        }
+                        
+                        if(dateCreate.length > 0) {
+       
+                            let resCreate = dateCreate.map(element => {
+                                let date = element.split('-');
+
+                                let res = {
+                                    statuscard: 1,
+                                    month: date[0],
+                                    year: date[1],
+                                    pay: false,
+                                    limit_card: cardCreditSelect.limit_card,
+                                    invoice_amount: valueP,
+                                    closes_day: cardCreditSelect.closes_day,
+                                    wins_day: cardCreditSelect.wins_day,
+                                    id_card_credit: cardCreditSelect.id,
+                                    id_account: cardCreditSelect.account.id
+                                }
+      
+                                return res;
+      
+                            });
+
+                            try {
+                                await api.post('cardcreditreleasesbulkcreate', resCreate);
+                            } catch (error) {
+                                console.log(error)
+                            } 
+                        }
+
+                        try {
+                            await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
+                        } catch (error) {
+                          console.log(error)
+                        }
+      
+                        let dateRelease = dateUpdate.concat(dateCreate);
+      
+                        const random = (min, max) => Math.floor(Math.random() * (max - min) + min);
+                        const uniqId = random(1000, 50000000000);
+      
+                        for (let i = 0; i < dateRelease.length; i++) { 
+      
+                          let date = dateRelease[i].split('-');
+                          const qd = i + 1;
+                          const installmentText = qd+'/'+qdP;
+      
+                          const installmentsReleases = {
+                            description,
+                            value: value,
+                            rc_category_id: null,
+                            dp_category_id: categorySelect.id,
+                            type_payer: isSwitch,
+                            account_id: bankId,
+                            account_origin: null,
+                            account_destiny: null,
+                            card_credit_id: cardId,
+                            day, day,
+                            month: date[0],
+                            year: date[1],
+                            fixo: fixed,
+                            installments: installments,
+                            value_installments: valueP,
+                            qd_installments: qdP - 1,
+                            attachment_img: attachment,
+                            attachment_img_id: id_img,
+                            tag: tagIsTrue,
+                            type: "2",
+                            tag_id: tagId,
+                            paying_account_name: payingName,
+                            meta_id: meta_id,
+                            meta: metaIsTrue,
+                            instalments_release_id: uniqId,
+                            instalments_text: installmentText
+                          }
+
+                          try {
+                            await api.post('releases', installmentsReleases);
+                          } catch (error) {
+                            console.log(error)
+                          }
+      
+                        }
+                            navigation.navigate('TabRoutes', {
+                            screen: 'Home'
+                            });
+                        } 
+                
+                    } else {
+                    
+                        if(resCardRelease.length > 0) {
+      
+                            let sumCardReleases = Number(resCardRelease[0].invoice_amount) + Number(value);
+                            sumCardReleases = sumCardReleases.toFixed(2);
+        
+                            try {
+                                await api.put(`cardcreditreleases/${resCardRelease[0].id}`, { invoice_amount: sumCardReleases });
+                            } catch (error) {
+                                console.log(error)
+                            }
+                        
+                        } else {
+
+                            const createReleaseCard = await api.get(`cardcredit/${cardCreditSelect.id}`);
         
                             const cardInfoReleases = {
                                 statuscard: 1,
                                 month: month,
                                 year: year,
                                 pay: false,
-                                limit_card: cardCreditEdit.data.limit_card,
+                                limit_card: createReleaseCard.data.limit_card,
                                 invoice_amount: value,
-                                closes_day: cardCreditEdit.data.closes_day,
-                                wins_day: cardCreditEdit.data.wins_day,
-                                id_card_credit: cardCreditEdit.data.id,
-                                id_account: cardCreditEdit.data.account.id
+                                closes_day: createReleaseCard.data.closes_day,
+                                wins_day: createReleaseCard.data.wins_day,
+                                id_card_credit: createReleaseCard.data.id,
+                                id_account: bankId
                             }
- 
-                            await api.post('cardcreditreleases', cardInfoReleases)
-                        } else {
-                            
-                            let cardReleasesEditTotal = Number(resCardEditDateReleaes[0].invoice_amount) + Number(value); 
 
                             try {
-                                await api.put(`cardcreditreleases/${resCardEditDateReleaes[0].id}`, { invoice_amount: cardReleasesEditTotal });
+                                await api.post('cardcreditreleases', cardInfoReleases);
                             } catch (error) {
-                                console.log(error);
-                            } 
+                                console.log(error)
+                            }
                         }
-
-                    } else {
-
-                        let cardReleasesTotal =  Number(cardReleases[0].invoice_amount) - Number(route.params.data.value);
-                        cardReleasesTotal = Number(cardReleasesTotal) + Number(value); 
-                        
-                        try {
-                            await api.put(`cardcreditreleases/${cardReleases[0].id}`, { invoice_amount: cardReleasesTotal });
-                        } catch (error) {
-                            console.log(error);
-                        } 
-
+        
+                        await api.put(`cardcredit/${card.data.id}`, { invoice_amount: sum_limit });
+                        await api.put(`releases/${route.params.data.id}`, releases);
+                       
+                        navigation.navigate('TabRoutes', {
+                            screen: 'Home'
+                        });
                     }
 
-                    const card = await api.get(`cardcredit/${cardCreditSelect.id}`);
-
-                    let limit_full = card.data.invoice_amount;
-
-                    let valueInvoiceNew =  Number(card.data.invoice_amount) - Number(route.params.data.value);
-
-                    const newCard = await api.put(`cardcredit/${cardCreditSelect.id}`, {
-                        invoice_amount: valueInvoiceNew
-                    }); 
- 
-                    let valueLimit = Number(newCard.data.limit_card) - Number(newCard.data.invoice_amount);
-
-                    if(Number(valueLimit) >= Number(value)) {
-
-                        let sum_limit = Number(newCard.data.invoice_amount) + Number(value);
-                        await api.put(`cardcredit/${newCard.data.id}`, { invoice_amount: sum_limit });
-
-                        let cardReleasesTotal =  Number(cardReleases[0].invoice_amount) + Number(route.params.data.value);
-                        await api.put(`cardcreditreleases/${cardReleases[0].id}`, { invoice_amount: cardReleasesTotal });
-
-                        await api.put(`releases/${response.id}`, newReleases);
-
-                        navigation.navigate('TabRoutes', {
-                            screen: 'Releases'
-                        });
-
-                    } else {
-                        toatsCardLimit();     
-                        await api.put(`cardcredit/${newCard.data.id}`, {
-                            invoice_amount: limit_full
-                        });
-                    } 
-                } 
-
-            } catch (error) {
-                console.log(error);
+                  } else {
+                    toatsCardLimit();
+                  }
+                }  
+              } catch (error) {
+                console.log(error); 
             } 
-            
         } else {
             toatsError();
-        } 
+        }
     }
 
     return(
@@ -1140,7 +1393,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                     onPress={getInstallments}
                     activeOpacity={0.8}
                     >
-                    <ButtonSelectPatternText>Parcelado</ButtonSelectPatternText>
+                        <ButtonSelectPatternText>Parcelado</ButtonSelectPatternText>
                     </ButtonSelectPattern>
 
                 </AreaDate>
@@ -1162,13 +1415,13 @@ const ScreenSetDebit = ({ route, navigation }) => {
                     </ButtonSelectPattern>
                     
                     {anexoPhoto &&
-                    <>
-                        <TitleX>+</TitleX>
+                        <>
+                            <TitleX>+</TitleX>
 
-                        <ButtonImageInfo>
-                        <ButtonSelectPatternText>Imagem.{typePhoto}</ButtonSelectPatternText>
-                        </ButtonImageInfo>
-                    </>
+                            <ButtonImageInfo>
+                            <ButtonSelectPatternText>Imagem.{typePhoto}</ButtonSelectPatternText>
+                            </ButtonImageInfo>
+                        </>
                     }
 
                 </AreaDate>
@@ -1187,13 +1440,13 @@ const ScreenSetDebit = ({ route, navigation }) => {
                     </ButtonSelectPattern>
 
                     {tag &&
-                    <>
-                        <TitleX>+</TitleX>
+                        <>
+                            <TitleX>+</TitleX>
 
-                        <ButtonImageInfo>
-                        <ButtonSelectPatternText>{tag.name}</ButtonSelectPatternText>
-                        </ButtonImageInfo>
-                    </>
+                            <ButtonImageInfo>
+                            <ButtonSelectPatternText>{tag.name}</ButtonSelectPatternText>
+                            </ButtonImageInfo>
+                        </>
                     }
 
                 </AreaDate>
@@ -1201,7 +1454,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                 </Section>
 
                 <AreaButton>
-                <ButtonCreate activeOpacity={0.8} onPress={() => createDb()}>
+                <ButtonCreate activeOpacity={0.8} onPress={() => updateDb()}>
                     <FontAwesome name="check" size={30} color="#FFF" />
                 </ButtonCreate>
                 </AreaButton>
@@ -1460,7 +1713,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         <AreaModalNotificationButton>
 
                         <ButtonModalNotification activeOpacity={0.8} onPress={() => {
-                            createDb(1)
+                            updateDb(1)
                             setModalMetaNotification(false);
                         }}>
                             <ButtonTextModalNotification>Concluir</ButtonTextModalNotification>
@@ -1471,7 +1724,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         <AreaModalNotificationButton style={{ marginBottom: 20 }}>
 
                             <ButtonCancelModalNotification activeOpacity={0.8} onPress={() => {
-                            createDb(2);
+                            updateDb(2);
                             setModalMetaNotification(false);
                             }} >
                                 <ButtonCancelTextModalNotification>Cancelar alerta referente a essa meta</ButtonCancelTextModalNotification>
@@ -1483,6 +1736,48 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
                 </BodyModalNotification>
                 </ModalAreaMeta>
+            </Modal>
+
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={instalmentsEditModal}
+                onRequestClose={() => setInstalmentsEditModal(false)}
+            >
+                <ModalAreaIsInstalmentsEdit>
+
+                    <BodyModalIsInstalmentsEdit>
+
+                        <AreaTitleModalIsInstalmentsEdit>
+                            <TitleModalIsInstalmentsEdit>Notificação</TitleModalIsInstalmentsEdit>
+                        </AreaTitleModalIsInstalmentsEdit>
+
+                        <AreaModalNotificationDesc>
+                            <DescModalNotification style={{ fontSize: 11, marginRight: 10 }}>Esta é uma despesa parcelada no cartão {installmentText}. A alteração irá</DescModalNotification>
+                            <DescModalNotification style={{ marginTop: 7, fontSize: 11 }}>afetar todos os lançamentos relacionados. Deseja continuar?</DescModalNotification>
+                        </AreaModalNotificationDesc>
+                        
+                        <AreaModalButtonIsInstalmentsEdit>
+
+                            <ButtonIsInstalmentsCancel activeOpacity={0.8} onPress={() => {
+                                setInstalmentsEditModal(false)
+                                setTimeout(() => {
+                                    navigation.navigate('Releases')
+                                }, 300);
+                               
+                            }}>
+                                <ButtonTextIsInstalmentsEdit style={{ color: '#E83F5B' }}>CANCELAR</ButtonTextIsInstalmentsEdit>
+                            </ButtonIsInstalmentsCancel>
+
+                            <ButtonIsInstalmentsEdit activeOpacity={0.8} onPress={() => updateDb()}>
+                                <ButtonTextIsInstalmentsEdit>CONCLUIR</ButtonTextIsInstalmentsEdit>
+                            </ButtonIsInstalmentsEdit>
+
+                        </AreaModalButtonIsInstalmentsEdit>
+
+                    </BodyModalIsInstalmentsEdit>
+
+                </ModalAreaIsInstalmentsEdit>
             </Modal>
         </Container>
     )

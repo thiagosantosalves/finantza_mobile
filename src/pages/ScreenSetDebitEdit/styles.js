@@ -416,3 +416,59 @@ export const ButtonCancelTextModalNotification = styled.Text`
     color: #E83F5B;
     font-size: 10px;
 `;
+
+export const ModalAreaIsInstalmentsEdit = styled.View`
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0,0,0, 0.1);
+`;
+
+export const BodyModalIsInstalmentsEdit = styled.View`
+    width: 90%;
+    border-radius: 4px;
+    background-color: #fff;
+`;
+
+export const AreaTitleModalIsInstalmentsEdit = styled.View`
+    justify-content: center;
+    align-items: center;
+    height: 45px;
+`;
+
+export const TitleModalIsInstalmentsEdit = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #2F323D;
+    font-size: 14px;
+`;
+
+export const AreaModalButtonIsInstalmentsEdit = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+`;
+
+export const ButtonIsInstalmentsEdit = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 33px;
+    border-radius: 5px;
+    background-color: #0BCECE;
+`;
+
+export const ButtonIsInstalmentsCancel = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 33px;
+    border-radius: 5px;
+    //background-color: #0BCECE;
+`;
+
+export const ButtonTextIsInstalmentsEdit = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #fff;
+    font-size: 12px;
+`;

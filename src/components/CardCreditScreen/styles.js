@@ -62,7 +62,7 @@ export const TitleValue = styled.Text`
 
 export const ValueTextLimit = styled.Text`
     font-family: 'Poppins-SemiBold';
-    color: #0BCECE;
+    color: #DE4639;
 `;
 
 export const AreaValueInvoice = styled.View`
