@@ -409,14 +409,13 @@ const ScreenSetCredit = ({ route, navigation }) => {
     setModalTags(false);
   }
 
-
   function toatsError() {
     const toastOpts = {
       data: 'Preencha os dados, descrição e categoria são obrigatorios!',
       textColor: '#ffffff',
       backgroundColor: '#36393F',
-      duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-      position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+      duration: WToast.duration.SHORT,
+      position: WToast.position.CENTER,
     }
     WToast.show(toastOpts)
   }
@@ -426,8 +425,8 @@ const ScreenSetCredit = ({ route, navigation }) => {
       data: 'Nenhuma tag foi cadastrada!',
       textColor: '#ffffff',
       backgroundColor: '#36393F',
-      duration: WToast.duration.SHORT, //1.SHORT 2.LONG
-      position: WToast.position.CENTER, // 1.TOP 2.CENTER 3.BOTTOM
+      duration: WToast.duration.SHORT,
+      position: WToast.position.CENTER,
     }
     WToast.show(toastOpts)
   }
@@ -435,7 +434,7 @@ const ScreenSetCredit = ({ route, navigation }) => {
   const createRc =  async () => {
 
     const value = route.params.value; 
-    
+
     let valueP = 0;
     let qdP = '';
     let id_img = null;
@@ -444,6 +443,7 @@ const ScreenSetCredit = ({ route, navigation }) => {
     let tagId = null;
     let idFixed = null;
 
+    
     if(categorySelect && description && bank) {
       if(qdInstallments.length > 0) {
         valueP = qdInstallments.split(' ');
@@ -506,9 +506,32 @@ const ScreenSetCredit = ({ route, navigation }) => {
           let fixedRelease = await api.post('fixedrelease', infoFixedRelease);
           idFixed = fixedRelease.data.id;
         } catch (error) {
-            console.log(error)
+          console.log(error)
+        } 
+      }
+
+      let newInstallmentInfo = null;
+      let installmentText = qdP - 1+'/'+qdP;
+
+      if(installments) {
+
+        let instalmentsInfo = {
+          day: day,
+          description,
+          value:  valueP,
+          rc_category_id: categorySelect.id,
+          dp_category_id: null,
+          account_id: bank.id,
+          card_credit_id: null,
+          type: 1,
+          paying_account_name: bank.name,
+          amount_instalemts: qdP,
+          remaining_amount: qdP - 1,
+          instalments_text: installmentText
         }
-      
+
+        newInstallmentInfo = await api.post('instalmentsReleases', instalmentsInfo);
+        
       }
 
       const releases = {
@@ -526,17 +549,19 @@ const ScreenSetCredit = ({ route, navigation }) => {
         year: year,
         fixo: fixed,
         installments: installments,
+        instalments_release_id: installments ?  newInstallmentInfo.data.id : null,
         value_installments: valueP,
         qd_installments: qdP - 1,
         attachment_img: attachment,
         attachment_img_id: id_img,
         tag: tagIsTrue,
-        type: "1", //  1 receita, 2 despesa
+        type: "1",
         tag_id: tagId,
         paying_account_name: bank.name,
-        id_fixed_release: idFixed
-      }
-
+        id_fixed_release: idFixed,
+        instalments_text: installmentText
+      } 
+      
       try {
 
         await api.post('releases', releases);
@@ -544,18 +569,18 @@ const ScreenSetCredit = ({ route, navigation }) => {
         const account = await api.get(`account/${bank.id}`);
 
         sum = Number(sum) + Number(account.data.value);
-
+        
         await api.put(`account/${account.data.id}`, { value: sum });
         navigation.navigate('TabRoutes', {
           screen: 'Home'
         });
-    
+ 
       } catch (error) {
         console.log(error);
-      }
+      } 
     } else {
       toatsError();
-    }
+    } 
   }
 
   return(
@@ -871,7 +896,7 @@ const ScreenSetCredit = ({ route, navigation }) => {
               <HeaderModalAnexo>
 
                 <AreaTitle>
-                  <TitleModalAnexos>Adicinar uma anexo</TitleModalAnexos>
+                  <TitleModalAnexos>Adicinar um anexo</TitleModalAnexos>
                 </AreaTitle>
 
                 <AreaButtonClose>

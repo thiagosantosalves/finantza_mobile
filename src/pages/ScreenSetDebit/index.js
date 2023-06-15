@@ -619,36 +619,9 @@ const ScreenSetDebit = ({ route, navigation }) => {
           let fixedRelease = await api.post('fixedrelease', infoFixedRelease);
           idFixed = fixedRelease.data.id;
         } catch (error) {
-            console.log(error)
+          console.log(error);
         }
       
-      }
-
-      const releases = {
-        description,
-        value: value,
-        rc_category_id: null,
-        dp_category_id: categorySelect.id,
-        type_payer: isSwitch,
-        account_id: bankId,
-        account_origin: null,
-        account_destiny: null,
-        card_credit_id: cardId,
-        day, day,
-        month: month,
-        year: year,
-        fixo: fixed,
-        installments: installments,
-        value_installments: valueP,
-        qd_installments: qdP - 1,
-        attachment_img: attachment,
-        attachment_img_id: id_img,
-        tag: tagIsTrue,
-        type: "2",
-        tag_id: tagId,
-        paying_account_name: payingName,
-        meta_id: meta_id,
-        meta: metaIsTrue
       }
 
       try {
@@ -700,11 +673,11 @@ const ScreenSetDebit = ({ route, navigation }) => {
               });
             } catch (error) {
               console.log(error)
-            }
+            } 
           }
 
           try {
-              
+  
             await api.put(`metareleases/${isMeta[0].id}`, {
               used_value: usedValue,
               porcent: newPorcent.toFixed(2),
@@ -715,7 +688,65 @@ const ScreenSetDebit = ({ route, navigation }) => {
               console.log(error);
             }
           }
-         
+
+          let newInstallmentInfoId = null;
+          const installmentText = qdP - 1+'/'+qdP;
+
+          if(bankId && !isSwitch) { 
+
+            if(installments) {
+  
+              let instalmentsInfo = {
+                day: day,
+                description,
+                value:  valueP,
+                rc_category_id: null,
+                dp_category_id: categorySelect.id,
+                account_id: null,
+                card_credit_id: cardId,
+                type: 2,
+                paying_account_name: payingName,
+                amount_instalemts: qdP,
+                remaining_amount: qdP - 1,
+                instalments_text: installmentText
+              }
+
+              newInstallmentInfoId = await api.post('instalmentsReleases', instalmentsInfo);
+              newInstallmentInfoId = newInstallmentInfoId.data.id;
+
+            }
+          } 
+
+          const releases = {
+            description,
+            value: value,
+            rc_category_id: null,
+            dp_category_id: categorySelect.id,
+            type_payer: isSwitch,
+            account_id: bankId,
+            account_origin: null,
+            account_destiny: null,
+            card_credit_id: cardId,
+            day, day,
+            month: month,
+            year: year,
+            fixo: fixed,
+            installments: installments,
+            instalments_release_id: newInstallmentInfoId,
+            value_installments: valueP,
+            qd_installments: qdP - 1,
+            attachment_img: attachment,
+            attachment_img_id: id_img,
+            id_fixed_release: idFixed,
+            tag: tagIsTrue,
+            type: "2",
+            tag_id: tagId,
+            paying_account_name: payingName,
+            meta_id: meta_id,
+            meta: metaIsTrue,
+            instalments_text: installmentText
+          }
+
           if(bankId && !isSwitch) { 
 
             let sum = installments ? valueP : value;
@@ -724,10 +755,11 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
             await api.put(`account/${account.data.id}`, { value: sum });
             await api.post('releases', releases);
+            
             navigation.navigate('TabRoutes', {
               screen: 'Home'
             });
-          } 
+          }
 
           if(cardCreditSelect && isSwitch === true) {
 
@@ -978,7 +1010,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
             } else {
               toatsCardLimit();
             }
-          }  
+          } 
+
         } catch (error) {
           console.log(error);
       } 
@@ -1382,7 +1415,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
               <HeaderModalAnexo>
 
                 <AreaTitle>
-                  <TitleModalAnexos>Adicinar uma anexo</TitleModalAnexos>
+                  <TitleModalAnexos>Adicinar um anexo</TitleModalAnexos>
                 </AreaTitle>
 
                 <AreaButtonClose>

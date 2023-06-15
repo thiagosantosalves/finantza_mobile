@@ -725,7 +725,7 @@ const ScreenSetCredit = ({ route, navigation }) => {
                 <HeaderModalAnexo>
 
                     <AreaTitle>
-                    <TitleModalAnexos>Adicinar uma anexo</TitleModalAnexos>
+                    <TitleModalAnexos>Adicinar um anexo</TitleModalAnexos>
                     </AreaTitle>
 
                     <AreaButtonClose>

@@ -273,7 +273,7 @@ export const ButtonClose = styled.TouchableOpacity`
     width: 26px;
     height: 26px;
     border-radius: 15px;
-    background-color: #5636D3;
+    background-color: #2C3CD1;
 `;
 
 export const BodyButton = styled.View`

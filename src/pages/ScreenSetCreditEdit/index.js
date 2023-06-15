@@ -67,6 +67,16 @@ import {
   ButtonLauchCameraTitle,
   ListTags,
   BodyModalTags,
+  ModalAreaIsInstalmentsEdit,
+  BodyModalIsInstalmentsEdit,
+  AreaTitleModalIsInstalmentsEdit,
+  TitleModalIsInstalmentsEdit,
+  AreaModalButtonIsInstalmentsEdit,
+  ButtonIsInstalmentsEdit,
+  ButtonIsInstalmentsCancel,
+  ButtonTextIsInstalmentsEdit,
+  AreaModalNotificationDesc,
+  DescModalNotification
 } from './styles';
 
 const ScreenCreditEdit = ({ route, navigation }) => {
@@ -111,6 +121,9 @@ const ScreenCreditEdit = ({ route, navigation }) => {
   const [modalTags, setModalTags] = useState(false);
   const [response, setResponse] = useState(route.params.data);
   const [attachment, setAttachment] = useState(route.params.data.attachment_img);
+  const [installmentText, setInstallmentText] = useState('');
+  const [isInstalmentsEdit, setIsInstalmentsEdit] = useState(false);
+  const [instalmentsEditModal, setInstalmentsEditModal] = useState(false);
 
   const getRcCategory = async () => {
 
@@ -446,15 +459,37 @@ const ScreenCreditEdit = ({ route, navigation }) => {
     WToast.show(toastOpts)
   }
 
-  const createRc =  async () => {
+  const updateDb =  async () => {
 
     const value = route.params.value; 
-    
     let valueP = 0;
     let qdP = '';
     let id_img = null;
     let tagIsTrue = false;
     let tagId = null;
+    let idFixed = null;
+    let itWasInstallments = route.params.data.instalments_release_id ? true : false;
+
+    if(route.params.data.installments) {
+
+      if(!isInstalmentsEdit) {
+
+        let text = route.params.data.instalments_text;
+        text = '('+text+')';
+
+        setInstallmentText(text);
+        setIsInstalmentsEdit(true);
+        setInstalmentsEditModal(true);
+        return false;
+      } else {
+        let id = route.params.data.instalments_release_id;
+        await api.delete(`instalmentsReleases/${id}`);
+      }
+    }
+
+    if(route.params.data.fixo) {
+      await api.delete(`fixedrelease/${route.params.data.id_fixed_release}`);
+    }
 
     if(categorySelect && description && bank) {
       if(qdInstallments.length > 0) {
@@ -462,6 +497,17 @@ const ScreenCreditEdit = ({ route, navigation }) => {
         qdP = valueP[0].split('x');
         qdP = Number(qdP[0]);
         valueP = transformNumber(valueP[2]);
+      } else {
+        if(itWasInstallments) {
+
+          const qd = route.params.data.instalments_text.split('/');
+          qdP = Number(qd[1]);
+          valueP = route.params.data.value_installments;
+
+          if(route.params.data.value != value) {
+            valueP = value / qdP;
+          } 
+        }
       }
   
       if(anexoPhoto) {
@@ -498,7 +544,55 @@ const ScreenCreditEdit = ({ route, navigation }) => {
       let day = date[0];
       let month = date[1];
       let year = date[2];
-    
+
+      if(fixed) {
+
+        const infoFixedRelease = {
+          day: day,
+          description,
+          value: value,
+          rc_category_id: categorySelect.id,
+          dp_category_id: null,
+          account_id: bank.id,
+          card_credit_id: null,
+          type: "1",
+          paying_account_name: bank.name,
+          meta_id: null,
+          meta: null
+        }
+
+        try {
+          let fixedRelease = await api.post('fixedrelease', infoFixedRelease);
+          idFixed = fixedRelease.data.id;
+        } catch (error) {
+          console.log(error)
+        }
+      
+      }
+      
+      let newInstallmentInfo = null;
+      const installmentText = qdP - 1+'/'+qdP;
+
+      if(installments) {
+          
+        let instalmentsInfo = {
+          day: day,
+          description,
+          value:  valueP,
+          rc_category_id: categorySelect.id,
+          dp_category_id: null,
+          account_id: bank.id,
+          card_credit_id: null,
+          type: 1,
+          paying_account_name: bank.name,
+          amount_instalemts: qdP,
+          remaining_amount: qdP - 1,
+          instalments_text: installmentText
+        }
+
+        newInstallmentInfo = await api.post('instalmentsReleases', instalmentsInfo);
+      }
+
       const newReleases = {
         description,
         value: value,
@@ -514,13 +608,15 @@ const ScreenCreditEdit = ({ route, navigation }) => {
         year: year,
         fixo: fixed,
         installments: installments,
+        instalments_release_id: newInstallmentInfo.data.id,
         value_installments: valueP,
         qd_installments: qdP - 1,
         attachment_img: attachment,
         attachment_img_id: id_img,
         tag: tagIsTrue,
         tag_id: tagId,
-        paying_account_name: bank.name
+        paying_account_name: bank.name,
+        id_fixed_release: idFixed
       }
 
       try {
@@ -530,20 +626,25 @@ const ScreenCreditEdit = ({ route, navigation }) => {
         let previousAccount = await api.get(`account/${route.params.data.account.id}`);
 
         if(route.params.data.installments) {
-            let sumValueInstallments = Number(previousAccount.data.value) - Number(route.params.data.value_installments);
-            await api.put(`account/${route.params.data.account.id}`, { value: sumValueInstallments }); 
+          let sumValueInstallments = Number(previousAccount.data.value) - Number(route.params.data.value_installments);
+          await api.put(`account/${route.params.data.account.id}`, { value: sumValueInstallments }); 
 
         } else {
-            let sumPreviousAccount = Number(previousAccount.data.value) - Number(route.params.data.value);
-            await api.put(`account/${route.params.data.account.id}`, { value: sumPreviousAccount });
+          let sumPreviousAccount = Number(previousAccount.data.value) - Number(route.params.data.value);
+          await api.put(`account/${route.params.data.account.id}`, { value: sumPreviousAccount });
         }
 
-        let sum = qdInstallments ? valueP : value
+        let sum = installments ? valueP : value
+
         const account = await api.get(`account/${bank.id}`);
         sum = Number(sum) + Number(account.data.value);
 
-        await api.put(`account/${account.data.id}`, { value: sum });
-
+        try {
+          await api.put(`account/${account.data.id}`, { value: sum });
+        } catch (error) {
+          console.log(error)
+        }
+     
         navigation.navigate('TabRoutes', {
           screen: 'Home'
         });
@@ -743,7 +844,7 @@ const ScreenCreditEdit = ({ route, navigation }) => {
         </Section>
 
         <AreaButton>
-          <ButtonCreate activeOpacity={0.8} onPress={() => createRc()}>
+          <ButtonCreate activeOpacity={0.8} onPress={() => updateDb()}>
             <FontAwesome name="check" size={30} color="#FFF" />
           </ButtonCreate>
         </AreaButton>
@@ -869,7 +970,7 @@ const ScreenCreditEdit = ({ route, navigation }) => {
               <HeaderModalAnexo>
 
                 <AreaTitle>
-                  <TitleModalAnexos>Adicinar uma anexo</TitleModalAnexos>
+                  <TitleModalAnexos>Adicinar um anexo</TitleModalAnexos>
                 </AreaTitle>
 
                 <AreaButtonClose>
@@ -930,6 +1031,45 @@ const ScreenCreditEdit = ({ route, navigation }) => {
             </BodyModalTags>
         </ModalArea>
       </Modal>
+      
+      <Modal 
+        animationType="slide"
+        transparent={true}
+        visible={instalmentsEditModal}
+        onRequestClose={() => setInstalmentsEditModal(false)}
+      >
+        <ModalAreaIsInstalmentsEdit>
+          <BodyModalIsInstalmentsEdit>
+
+              <AreaTitleModalIsInstalmentsEdit>
+                  <TitleModalIsInstalmentsEdit>Notificação</TitleModalIsInstalmentsEdit>
+              </AreaTitleModalIsInstalmentsEdit>
+
+              <AreaModalNotificationDesc>
+                  <DescModalNotification style={{ fontSize: 11, marginRight: 10 }}>Esta é uma despesa parcelada no banco {installmentText}. A alteração irá</DescModalNotification>
+                  <DescModalNotification style={{ marginTop: 7, fontSize: 11 }}>afetar todos os lançamentos relacionados. Deseja continuar?</DescModalNotification>
+              </AreaModalNotificationDesc>
+              
+              <AreaModalButtonIsInstalmentsEdit>
+
+                  <ButtonIsInstalmentsCancel activeOpacity={0.8} onPress={() => {
+                    setInstalmentsEditModal(false)
+                    setTimeout(() => {
+                      navigation.navigate('Releases')
+                    }, 300);
+                  }}>
+                      <ButtonTextIsInstalmentsEdit style={{ color: '#E83F5B' }}>CANCELAR</ButtonTextIsInstalmentsEdit>
+                  </ButtonIsInstalmentsCancel>
+
+                  <ButtonIsInstalmentsEdit activeOpacity={0.8} onPress={() => updateDb()}>
+                      <ButtonTextIsInstalmentsEdit>CONCLUIR</ButtonTextIsInstalmentsEdit>
+                  </ButtonIsInstalmentsEdit>
+
+              </AreaModalButtonIsInstalmentsEdit>
+          </BodyModalIsInstalmentsEdit>
+        </ModalAreaIsInstalmentsEdit>
+      </Modal>
+
 
     </Container>
   )

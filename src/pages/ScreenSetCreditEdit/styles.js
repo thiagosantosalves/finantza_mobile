@@ -270,7 +270,7 @@ export const ButtonClose = styled.TouchableOpacity`
     width: 26px;
     height: 26px;
     border-radius: 15px;
-    background-color: #5636D3;
+    background-color: #2C3CD1;
 `;
 
 export const BodyButton = styled.View`
@@ -308,4 +308,71 @@ export const ButtonLauchCameraTitle = styled.Text`
     font-family: 'Poppins-Regular';
     color: #fff;
     font-size: 14px;
+`;
+
+export const ModalAreaIsInstalmentsEdit = styled.View`
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0,0,0, 0.1);
+`;
+
+export const BodyModalIsInstalmentsEdit = styled.View`
+    width: 90%;
+    border-radius: 4px;
+    background-color: #fff;
+`;
+
+export const AreaTitleModalIsInstalmentsEdit = styled.View`
+    justify-content: center;
+    align-items: center;
+    height: 45px;
+`;
+
+export const TitleModalIsInstalmentsEdit = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #2F323D;
+    font-size: 14px;
+`;
+
+export const AreaModalButtonIsInstalmentsEdit = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+`;
+
+export const ButtonIsInstalmentsEdit = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 33px;
+    border-radius: 5px;
+    background-color: #0BCECE;
+`;
+
+export const ButtonIsInstalmentsCancel = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 33px;
+    border-radius: 5px;
+`;
+
+export const ButtonTextIsInstalmentsEdit = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #fff;
+    font-size: 12px;
+`;
+
+export const AreaModalNotificationDesc = styled.View`
+    justify-content: center;
+    align-items: center;
+    height: 120px;
+`;
+
+export const DescModalNotification = styled.Text`
+    font-family: 'Poppins-Regular';
+    color: #2F323D;
+    font-size: 12px;
 `;

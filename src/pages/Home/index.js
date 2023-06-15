@@ -410,7 +410,135 @@ const Home = () => {
         }
     }
 
+    const handlerInstallments = async () => {
+        const date = new Date();
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        let id = null;
+        let statusCardMeta = false;
+        let newInstalmentsReleases = [];
+
+        const instalmentsReleases = await api.get(`instalmentsReleases/${day}`);
+
+        if(instalmentsReleases.data.length > 0) {
+            newInstalmentsReleases = instalmentsReleases.data.map(e => {
+
+                let typePlayer = false;
+    
+                if(e.account_id) {
+                    typePlayer = false;
+                }
+    
+                if(e.card_credit_id) {
+                    typePlayer = true;
+                }
+    
+                //amount_instalemts: 2,
+                //remaining_amount: 1,
+    
+                let qdP = e.remaining_amount + 1;
+                valorFinal = e.value * e.amount_instalemts;
+                let res = null;
+    
+                if(e.amount_instalemts < e.remaining_amount || e.amount_instalemts === e.remaining_amount) {
+                    // Deletar o dado da tebela 
+                    console.log(e.id);
+                } else {
+                    res = {
+                        
+                        description: e.description,
+                        value: valorFinal,
+                        rc_category_id: e.rc_category_id,
+                        dp_category_id: e.dp_category_id,
+                        type_payer: typePlayer,
+                        account_id: e.account_id,
+                        account_origin: null,
+                        account_destiny: null,
+                        card_credit_id: e.card_credit_id,
+                        day: day,
+                        month: month,
+                        year: year,
+                        fixo: false,
+                        installments: true,
+                        value_installments: e.value,
+                        qd_installments: qdP,
+                        attachment_img: false,
+                        attachment_img_id: null,
+                        tag: false,
+                        type: e.type,
+                        tag_id: null,
+                        paying_account_name: e.paying_account_name,
+                        id_fixed_release: null,
+                        user_id: e.user_id
+                    }
+                }
+    
+                return res;
+            });
+    
+            newInstalmentsReleases = newInstalmentsReleases.filter(e => {
+                return e
+            });
+
+            const resMeta = await api.get(`meta/${month}&${year}`);
+
+            if(resMeta.data.length > 0) {
+                let meta = [];
+                for (let release of  newInstalmentsReleases) {
+
+                    if(release.type === 2) {
+                        meta = resMeta.data.find(m => m.category.id === release.dp_category_id);
+                    } else {
+                        meta = resMeta.data.find(m => m.category.id === release.rc_category_id);
+                    }                   
+
+                    if(meta) {
+                        let usedValue = Number(release.value_installments) + Number(meta.used_value);
+                        usedValue = usedValue.toFixed(2);
+
+                        let newPorcent = usedValue * 100;
+                        newPorcent =  Number(newPorcent) / Number(meta.value);  
+
+                        let status = false;
+        
+                        if(newPorcent >= 100 ) {
+                            newPorcent = 100;
+                            status = true;
+                        }
+
+                       /*  await api.put(`metareleases/${meta.id}`, {
+                            used_value: usedValue,
+                            porcent: newPorcent.toFixed(2),
+                            status: status
+                        });  */
+                    }
+                }
+            }
+
+            for(let release of newInstalmentsReleases) {
+
+                let sum = release.value_installments;
+                const account = await api.get(`account/${release.account_id}`);
+                
+                if(release.type === 1) sum =  Number(account.data.value) + Number(sum);
+                if(release.type === 2) sum =  Number(account.data.value) - Number(sum);
+            
+                console.log(sum);
+                //await api.put(`account/${account.data.id}`, { value: sum });
+            }
+
+
+            //await api.post('releasebulkcreate', newInstalmentsReleases);
+
+
+        } 
+    }
+
     async function runOncePerDay() {
+
+        //handlerFixo();
+
         /*         
         await AsyncStorage.removeItem('lastRun');
         const lastRun = await AsyncStorage.getItem('lastRun');
@@ -429,6 +557,8 @@ const Home = () => {
     }
 
     useEffect(() => {
+        handlerInstallments();
+
         runOncePerDay();
         getCardStatus();
         getMeta();

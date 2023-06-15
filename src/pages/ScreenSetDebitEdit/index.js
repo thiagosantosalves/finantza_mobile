@@ -211,9 +211,11 @@ const ScreenSetDebit = ({ route, navigation }) => {
             return a - b;
         });
 
-        let resEdit = await api.get(`cardcredit/${route.params.data.card_credit.id}`);
-
-        setCardCreditSelect(resEdit.data);
+        if(route.params.data.card_credit) {
+            let resEdit = await api.get(`cardcredit/${route.params.data.card_credit.id}`);
+            setCardCreditSelect(resEdit.data);
+        }
+        
         setCardCreditFull(respoFilter);
     }
 
@@ -443,22 +445,22 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
         launchCamera(options, async (response) => {
         
-        if (response.didCancel) {
-            console.log('User cancelled image picker');
-        } else if (response.error) {
-            console.log('ImagePicker Error: ', response.error);
-        } else if (response.customButton) {
-            console.log('User tapped custom button: ', response.customButton);
-        } else {
-        
-            setAnexoPhoto(response.assets[0]);
-            setColorButtonAdd(true);
+            if (response.didCancel) {
+                console.log('User cancelled image picker');
+            } else if (response.error) {
+                console.log('ImagePicker Error: ', response.error);
+            } else if (response.customButton) {
+                console.log('User tapped custom button: ', response.customButton);
+            } else {
             
-            const type = response.assets[0].type.split('/');
+                setAnexoPhoto(response.assets[0]);
+                setColorButtonAdd(true);
+                
+                const type = response.assets[0].type.split('/');
 
-            setTypePhoto(type[1]);
-            setModalAnexos(false);
-        }
+                setTypePhoto(type[1]);
+                setModalAnexos(false);
+            }
         });
     }
   
@@ -472,21 +474,21 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
         launchImageLibrary(options, (response) => {
         
-        if (response.didCancel) {
-            console.log('User cancelled image picker');
-        } else if (response.error) {
-            console.log('ImagePicker Error: ', response.error);
-        } else if (response.customButton) {
-            console.log('User tapped custom button: ', response.customButton);
-        } else {
-            setAnexoPhoto(response.assets[0]);
-            setColorButtonAdd(true);
-            
-            const type = response.assets[0].type.split('/');
+            if (response.didCancel) {
+                console.log('User cancelled image picker');
+            } else if (response.error) {
+                console.log('ImagePicker Error: ', response.error);
+            } else if (response.customButton) {
+                console.log('User tapped custom button: ', response.customButton);
+            } else {
+                setAnexoPhoto(response.assets[0]);
+                setColorButtonAdd(true);
+                
+                const type = response.assets[0].type.split('/');
 
-            setTypePhoto(type[1]);
-            setModalAnexos(false);
-        } 
+                setTypePhoto(type[1]);
+                setModalAnexos(false);
+            } 
         });
     }
 
@@ -500,9 +502,9 @@ const ScreenSetDebit = ({ route, navigation }) => {
     const handlerIsCard = async () => {
 
         if(!cardCreditFull.length <= 0) {
-        setModalCard(true);
+            setModalCard(true);
         } else {
-        toatsErrorCard();
+            toatsErrorCard();
         }
     }
 
@@ -519,33 +521,33 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
     function toatsError() {
         const toastOpts = {
-        data: 'Preencha os dados, descrição e categoria são obrigatorios!',
-        textColor: '#ffffff',
-        backgroundColor: '#36393F',
-        duration: WToast.duration.SHORT, 
-        position: WToast.position.CENTER,
+            data: 'Preencha os dados, descrição e categoria são obrigatorios!',
+            textColor: '#ffffff',
+            backgroundColor: '#36393F',
+            duration: WToast.duration.SHORT, 
+            position: WToast.position.CENTER,
         }
         WToast.show(toastOpts)
     }
 
     function toatsErrorCard() {
         const toastOpts = {
-        data: 'Nenhum cartão cadastrado!',
-        textColor: '#ffffff',
-        backgroundColor: '#36393F',
-        duration: WToast.duration.SHORT,
-        position: WToast.position.CENTER,
+            data: 'Nenhum cartão cadastrado!',
+            textColor: '#ffffff',
+            backgroundColor: '#36393F',
+            duration: WToast.duration.SHORT,
+            position: WToast.position.CENTER,
         }
         WToast.show(toastOpts)
     }
 
     function toatsTags() {
         const toastOpts = {
-        data: 'Nenhuma tag foi cadastrada!',
-        textColor: '#ffffff',
-        backgroundColor: '#36393F',
-        duration: WToast.duration.SHORT,
-        position: WToast.position.CENTER,
+            data: 'Nenhuma tag foi cadastrada!',
+            textColor: '#ffffff',
+            backgroundColor: '#36393F',
+            duration: WToast.duration.SHORT,
+            position: WToast.position.CENTER,
         }
         WToast.show(toastOpts)
     }
@@ -587,13 +589,18 @@ const ScreenSetDebit = ({ route, navigation }) => {
         let itWasCard = route.params.data.card_credit ? true : false;
         let itWasInstallments = route.params.data.instalments_release_id ? true : false;
         let itWasGoal = route.params.data.meta ? true : false;
+        let itFixo = route.params.data.fixo;
 
-        if(itWasInstallments) { 
+        if(itFixo) {
+            await api.delete(`fixedrelease/${route.params.data.id_fixed_release}`);
+        } 
 
+        if(itWasInstallments && itWasCard) { 
+           
             if(!isInstalmentsEdit) {
 
                 let text = route.params.data.instalments_text;
-                text = '('+text+')';
+                text = 'cartão ('+text+')';
 
                 setInstallmentText(text);
                 setIsInstalmentsEdit(true);
@@ -725,10 +732,33 @@ const ScreenSetDebit = ({ route, navigation }) => {
             } 
         }
 
+        if(itWasBank && itWasInstallments) {
+            
+            
+            if(!isInstalmentsEdit) {
+
+                let text = route.params.data.instalments_text;
+                text = 'banco ('+text+')';
+        
+                setInstallmentText(text);
+                setIsInstalmentsEdit(true);
+                setInstalmentsEditModal(true);
+                return false;
+            } else {
+                let id = route.params.data.instalments_release_id;
+                await api.delete(`instalmentsReleases/${id}`);
+                setInstalmentsEditModal(false);
+            }
+              
+        }
+
         if(itWasBank) {
+
+            let value = itWasInstallments ? route.params.data.value_installments : previousValue;
             let previousAccount = await api.get(`account/${route.params.data.account.id}`);
-            let sumPreviousAccount = Number(previousAccount.data.value) + Number(previousValue); 
-            await api.put(`account/${route.params.data.account.id}`, { value: sumPreviousAccount }); 
+            let sumPreviousAccount = Number(previousAccount.data.value) + Number(value); 
+            
+            await api.put(`account/${route.params.data.account.id}`, { value: sumPreviousAccount });  
         }
 
         if(itWasGoal) {
@@ -855,33 +885,6 @@ const ScreenSetDebit = ({ route, navigation }) => {
                 } 
             }
 
-            const releases = {
-              description,
-              value: value,
-              rc_category_id: null,
-              dp_category_id: categorySelect.id,
-              type_payer: isSwitch,
-              account_id: bankId,
-              account_origin: null,
-              account_destiny: null,
-              card_credit_id: cardId,
-              day, day,
-              month: month,
-              year: year,
-              fixo: fixed,
-              installments: installments,
-              value_installments: valueP,
-              qd_installments: qdP - 1,
-              attachment_img: attachment,
-              attachment_img_id: id_img,
-              tag: tagIsTrue,
-              type: "2",
-              tag_id: tagId,
-              paying_account_name: payingName,
-              meta_id: meta_id,
-              meta: metaIsTrue
-            }
-      
             try {
 
                 if(isMeta.length > 0) {
@@ -918,7 +921,6 @@ const ScreenSetDebit = ({ route, navigation }) => {
                 
                             setInfoMetas(infoMeta);
                             setModalMetaNotification(true);
-            
                             return false;
                         }
                     } 
@@ -944,10 +946,35 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         console.log(error);
                     } 
                 }
+
+                let newInstallmentInfoId = null;
+                const installmentText = qdP - 1+'/'+qdP;
                 
                 if(bankId && !isSwitch) { 
 
-                   let sum = installments ? valueP : value;
+                    if(installments) {
+
+                        let instalmentsInfo = {
+                            day: day,
+                            description,
+                            value:  valueP,
+                            rc_category_id: null,
+                            dp_category_id: categorySelect.id,
+                            account_id: bankId,
+                            card_credit_id: cardId,
+                            type: 2,
+                            paying_account_name: payingName,
+                            amount_instalemts: qdP,
+                            remaining_amount: qdP - 1,
+                            instalments_text: installmentText
+                        }
+
+                        newInstallmentInfoId = await api.post('instalmentsReleases', instalmentsInfo);
+                        newInstallmentInfoId = newInstallmentInfoId.data.id;
+                    }
+
+
+                    let sum = installments ? valueP : value;
                     const account = await api.get(`account/${bank.id}`);
                     sum =  Number(account.data.value) - Number(sum);
       
@@ -956,8 +983,37 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
                     navigation.navigate('TabRoutes', {
                         screen: 'Home'
-                    });
+                    }); 
                 } 
+
+                const releases = {
+                    description,
+                    value: value,
+                    rc_category_id: null,
+                    dp_category_id: categorySelect.id,
+                    type_payer: isSwitch,
+                    account_id: bankId,
+                    account_origin: null,
+                    account_destiny: null,
+                    card_credit_id: cardId,
+                    day, day,
+                    month: month,
+                    year: year,
+                    fixo: fixed,
+                    installments: installments,
+                    instalments_release_id: newInstallmentInfoId,
+                    value_installments: valueP,
+                    qd_installments: qdP - 1,
+                    attachment_img: attachment,
+                    attachment_img_id: id_img,
+                    tag: tagIsTrue,
+                    type: "2",
+                    tag_id: tagId,
+                    paying_account_name: payingName,
+                    meta_id: meta_id,
+                    meta: metaIsTrue,
+                    instalments_text: installmentText
+                }
 
                 if(cardCreditSelect && isSwitch === true) {
                 
@@ -1202,7 +1258,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                   } else {
                     toatsCardLimit();
                   }
-                }  
+                } 
               } catch (error) {
                 console.log(error); 
             } 
@@ -1607,7 +1663,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                     <HeaderModalAnexo>
 
                         <AreaTitle>
-                        <TitleModalAnexos>Adicinar uma anexo</TitleModalAnexos>
+                        <TitleModalAnexos>Adicinar um anexo</TitleModalAnexos>
                         </AreaTitle>
 
                         <AreaButtonClose>
@@ -1753,8 +1809,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         </AreaTitleModalIsInstalmentsEdit>
 
                         <AreaModalNotificationDesc>
-                            <DescModalNotification style={{ fontSize: 11, marginRight: 10 }}>Esta é uma despesa parcelada no cartão {installmentText}. A alteração irá</DescModalNotification>
-                            <DescModalNotification style={{ marginTop: 7, fontSize: 11 }}>afetar todos os lançamentos relacionados. Deseja continuar?</DescModalNotification>
+                            <DescModalNotification style={{ fontSize: 11, marginRight: 10 }}>Esta é uma despesa parcelada no {installmentText}. A alteração irá afetar todos os lançamentos relacionados.</DescModalNotification>
+                            <DescModalNotification style={{ marginTop: 7, fontSize: 11 }}>Deseja continuar?</DescModalNotification>
                         </AreaModalNotificationDesc>
                         
                         <AreaModalButtonIsInstalmentsEdit>
