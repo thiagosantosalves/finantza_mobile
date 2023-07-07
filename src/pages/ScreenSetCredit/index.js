@@ -102,6 +102,7 @@ const ScreenSetCredit = ({ route, navigation }) => {
   const [qd10, setQd10] = useState('');
   const [qd11, setQd11] = useState('');
   const [qd12, setQd12] = useState('');
+  const [qdValue, setQdValue] = useState(null);
   const [dateFinal, setDateFinal] = useState(null);
   const [anexoPhoto, setAnexoPhoto] = useState(null);
   const [typePhoto, setTypePhoto] = useState(null);
@@ -291,41 +292,31 @@ const ScreenSetCredit = ({ route, navigation }) => {
   }
 
   const shareValue = (qd) => {
-
     let valor = route.params.value;
-
-    let s = valor;
-
-    s = s.replace(',', '');
-    s = s.replace('.', '');
-    s = s.replace('.', '');
-    let final = s.substr(-2);
-    var myStr = s.slice(0, -2);
-    let finalString = myStr+"."+final; 
-    let t = Number(finalString); 
-    t = t / qd;
-    t = t.toFixed(2);
-
-    let v = t.replace(/\D/g, '');
-    v = (v/100).toFixed(2) + '';
-    v = v.replace(".", ",");
-    v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
-    v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
-    s = v;
-
-    return s;
+    let sum = valor / qd;
+    return sum.toFixed(2);
   }
 
   const actionCloseModalInstallments = () => {
     
     if(qdInstallments == '') {
       setQdInstallments('2x de '+qd2);
+
+      let valor = route.params.value;
+      let sum = valor / 2;
+      
+      setQdValue(sum)
     }
 
     setModalInstallments(false);
   }
 
   const actionPickerInstallments = (itemValue, itemIndex) => {
+    let valor = route.params.value;
+    let qd = itemIndex + 2
+    let sum = valor / qd;
+    setQdValue(sum)
+
     setQdInstallments(itemValue);
   }
 
@@ -449,7 +440,7 @@ const ScreenSetCredit = ({ route, navigation }) => {
         valueP = qdInstallments.split(' ');
         qdP = valueP[0].split('x');
         qdP = Number(qdP[0]);
-        valueP = transformNumber(valueP[2]);
+        valueP = qdValue;
       }
   
       if(anexoPhoto) {
@@ -511,7 +502,7 @@ const ScreenSetCredit = ({ route, navigation }) => {
       }
 
       let newInstallmentInfo = null;
-      let installmentText = qdP - 1+'/'+qdP;
+      let installmentText = "1"+'/'+qdP;
 
       if(installments) {
 
@@ -526,12 +517,11 @@ const ScreenSetCredit = ({ route, navigation }) => {
           type: 1,
           paying_account_name: bank.name,
           amount_instalemts: qdP,
-          remaining_amount: qdP - 1,
+          remaining_amount: 1,
           instalments_text: installmentText
         }
 
         newInstallmentInfo = await api.post('instalmentsReleases', instalmentsInfo);
-        
       }
 
       const releases = {
@@ -858,7 +848,7 @@ const ScreenSetCredit = ({ route, navigation }) => {
                 style={{height: 80, width: 300, color: '#000' }}
                 dropdownIconColor="#2F323D"
                 onValueChange={actionPickerInstallments}>
-                <Picker.Item label={`2x de R$ ${qd2}`}  value={'2x de '+qd2} />
+                <Picker.Item label={`2x de R$ ${qd2}`}  value={'2x de '+qd2 } />
                 <Picker.Item label={`3x de R$ ${qd3}`} value={'3x de '+qd3} />
                 <Picker.Item label={`4x de R$ ${qd4}`} value={'4x de '+qd4} />
                 <Picker.Item label={`5x de R$ ${qd5}`} value={'5x de '+qd5} />

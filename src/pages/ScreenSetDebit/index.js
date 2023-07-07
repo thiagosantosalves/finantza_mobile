@@ -121,6 +121,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
   const [qd10, setQd10] = useState('');
   const [qd11, setQd11] = useState('');
   const [qd12, setQd12] = useState('');
+  const [qdValue, setQdValue] = useState(null);
   const [dateFinal, setDateFinal] = useState(null);
   const [anexoPhoto, setAnexoPhoto] = useState(null);
   const [typePhoto, setTypePhoto] = useState(null);
@@ -135,6 +136,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
   const [modalTags, setModalTags] = useState(false);
   const [modalMetaNotification, setModalMetaNotification] = useState(false);
   const [infoMetas, setInfoMetas] = useState({});
+  const [isFixed, setIsFixed] = useState(false);
 
   const getDbCategory = async () => {
 
@@ -220,6 +222,8 @@ const ScreenSetDebit = ({ route, navigation }) => {
     setBank(bankSelect.data);
     setIdIconBank(idIcon[0].url);
     setModalBank(false);
+    setIsFixed(false);
+    
   }
 
   const handleCardId = async (id) => {
@@ -229,6 +233,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
     setCardCreditSelect(res.data);
     setCardCreditIcon(cardIcon[0]);
     setModalCard(false);
+    setIsFixed(true);
   }
 
 
@@ -367,12 +372,22 @@ const ScreenSetDebit = ({ route, navigation }) => {
     
     if(qdInstallments == '') {
       setQdInstallments('2x de '+qd2);
+
+      let valor = route.params.value;
+      let sum = valor / 2;
+      
+      setQdValue(sum)
     }
 
     setModalInstallments(false);
   }
 
   const actionPickerInstallments = (itemValue, itemIndex) => {
+    let valor = route.params.value;
+    let qd = itemIndex + 2
+    let sum = valor / qd;
+    setQdValue(sum)
+
     setQdInstallments(itemValue);
   }
 
@@ -521,6 +536,16 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
   const createDb =  async (number) => {
 
+    let newFixed = false;
+
+    if(isFixed) {
+      newFixed = false
+    }
+
+    if(fixed && isFixed === false) {
+      newFixed = true;
+    }
+    
     const value = route.params.value; 
     
     let valueP = 0;
@@ -539,7 +564,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
         valueP = qdInstallments.split(' ');
         qdP = valueP[0].split('x');
         qdP = Number(qdP[0]);
-        valueP = transformNumber(valueP[2]);
+        valueP = qdValue;
       }
   
       if(anexoPhoto) {
@@ -599,7 +624,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
         metaIsTrue = true;
       }
 
-      if(fixed) {
+      if(newFixed) {
 
         const infoFixedRelease = {
           day: day,
@@ -690,7 +715,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
           }
 
           let newInstallmentInfoId = null;
-          const installmentText = qdP - 1+'/'+qdP;
+          const installmentText = "1"+'/'+qdP;
 
           if(bankId && !isSwitch) { 
 
@@ -702,7 +727,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                 value:  valueP,
                 rc_category_id: null,
                 dp_category_id: categorySelect.id,
-                account_id: null,
+                account_id: bankId,
                 card_credit_id: cardId,
                 type: 2,
                 paying_account_name: payingName,
@@ -730,7 +755,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
             day, day,
             month: month,
             year: year,
-            fixo: fixed,
+            fixo: newFixed,
             installments: installments,
             instalments_release_id: newInstallmentInfoId,
             value_installments: valueP,
@@ -928,7 +953,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                       day, day,
                       month: date[0],
                       year: date[1],
-                      fixo: fixed,
+                      fixo: newFixed,
                       installments: installments,
                       value_installments: valueP,
                       qd_installments: qdP - 1,
@@ -1017,7 +1042,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
       } 
     } else {
       toatsError();
-    }
+    } 
   }
 
   return(
@@ -1098,8 +1123,10 @@ const ScreenSetDebit = ({ route, navigation }) => {
                 onValueChange={() => {
                   if(isSwitch) {
                     setIsSwitch(false);
+                    setIsFixed(false);
                   } else {
                     setIsSwitch(true);
+                    setIsFixed(true);
                   }
                 }}
                 value={isSwitch}
@@ -1113,7 +1140,9 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
             <AreaSwitch>
               {bank ? (
-                  <AreaIconBank activeOpacity={0.8} onPress={() =>  setModalBank(true)}>
+                  <AreaIconBank activeOpacity={0.8} onPress={() => {
+                    setModalBank(true);
+                  }}>
                     <IconBank style={{backgroundColor: bank.color_hex}}>
                       <IconUrl source={idIconBank} />
                     </IconBank>
@@ -1123,7 +1152,9 @@ const ScreenSetDebit = ({ route, navigation }) => {
               ) : (
                 <>
 
-                  <AreaIconBank activeOpacity={0.8} onPress={() =>  setModalBank(true)}>
+                  <AreaIconBank activeOpacity={0.8} onPress={() => {
+                    setModalBank(true);
+                  }}>
                     <IconPattern source={require('../../assets/card_img/icontrasejado.png')} />
                     <TitleIconCategory>Selecione uma conta</TitleIconCategory>
                   </AreaIconBank>
@@ -1139,8 +1170,10 @@ const ScreenSetDebit = ({ route, navigation }) => {
                 onValueChange={() => {
                   if(isSwitch) {
                     setIsSwitch(false);
+                    setIsFixed(false);
                   } else {
                     setIsSwitch(true);
+                    setIsFixed(true);
                   }
                 }}
                 value={isSwitch}
@@ -1190,13 +1223,23 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
           <AreaDate>
 
-            <ButtonSelectPattern style={{ backgroundColor: fixed ? '#FF872C' : '#C4C4C4'}}
-              activeOpacity={0.8}
-              onPress={getFixed}
-            >
-              <ButtonSelectPatternText>Fixo</ButtonSelectPatternText>
-            </ButtonSelectPattern>
+            {isFixed ? (
+              <ButtonSelectPattern style={{ backgroundColor:'#C4C4C4'}}
+                activeOpacity={0.8}
+              >
+                <ButtonSelectPatternText>Fixo</ButtonSelectPatternText>
+              </ButtonSelectPattern>
 
+              )
+              :(  
+              <ButtonSelectPattern style={{ backgroundColor: fixed ? '#FF872C' : '#C4C4C4'}}
+                activeOpacity={0.8}
+                onPress={getFixed}
+              >
+                <ButtonSelectPatternText>Fixo</ButtonSelectPatternText>
+              </ButtonSelectPattern>
+            )}
+            
             <ButtonSelectPattern style={{width: 110, backgroundColor: installments ? '#FF872C' : '#C4C4C4'}}
               activeOpacity={0.8}
               onPress={getInstallments}

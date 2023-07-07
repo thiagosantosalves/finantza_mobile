@@ -471,3 +471,76 @@ export const ButtonTextIsInstalmentsEdit = styled.Text`
     color: #fff;
     font-size: 12px;
 `;
+
+export const ModalAreaDelete = styled.View`
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0,0,0, 0.1);
+`;
+
+export const BodyModalDelete = styled.View`
+    width: 90%;
+    border-radius: 4px;
+    background-color: #fff;
+`;
+
+export const AreaTitleModalDelete = styled.View`
+    justify-content: center;
+    align-items: center;
+    height: 45px;
+`;
+
+export const TitleModalDelete = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #2F323D;
+    font-size: 14px;
+`;
+
+export const AreaModalButtonDelete = styled.View`
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+`;
+
+export const ButtonEntraceDelete = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 33px;
+    border-radius: 5px;
+    background-color: #E83F5B;
+`;
+
+export const ButtonEntraceDeleteCancel = styled.TouchableOpacity`
+    justify-content: center;
+    align-items: center;
+    width: 120px;
+    height: 33px;
+    border-radius: 5px;
+`;
+
+export const ButtonTextDelete = styled.Text`
+    font-family: 'Poppins-SemiBold';
+    color: #fff;
+    font-size: 12px;
+`;
+
+export const AreaModalTextDelete = styled.View`
+    justify-content: center;
+    align-items: center;
+    height: 60px;
+`;
+
+export const DeleteModalText = styled.Text`
+    font-family: 'Poppins-Regular';
+    color: #2F323D;
+    font-size: 11px;
+    margin-right: 10px;
+`;
+
+export const AreaModalOutherButtonDelete = styled.View`
+    justify-content: center;
+    align-items: center;
+`;

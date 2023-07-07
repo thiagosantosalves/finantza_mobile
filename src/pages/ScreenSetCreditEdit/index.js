@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useLayoutEffect } from 'react';
 import { Modal } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -7,6 +7,7 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import { WToast } from 'react-native-smart-tip';
 
+import ButtonHeadDelete from '../../components/ButtonHeadDelete';
 import ListBankFull from '../../components/ListBankFull';
 import ListCategoryRcFull from '../../components/ListCategoryRcFull';
 import PatternInput from '../../components/PatternInput';
@@ -76,7 +77,18 @@ import {
   ButtonIsInstalmentsCancel,
   ButtonTextIsInstalmentsEdit,
   AreaModalNotificationDesc,
-  DescModalNotification
+  DescModalNotification,
+  ModalAreaDelete,
+  BodyModalDelete,
+  AreaTitleModalDelete,
+  TitleModalDelete,
+  AreaModalButtonDelete,
+  ButtonEntraceDelete,
+  ButtonEntraceDeleteCancel,
+  ButtonTextDelete,
+  AreaModalTextDelete,
+  DeleteModalText,
+  AreaModalOutherButtonDelete
 } from './styles';
 
 const ScreenCreditEdit = ({ route, navigation }) => {
@@ -108,6 +120,7 @@ const ScreenCreditEdit = ({ route, navigation }) => {
   const [qd10, setQd10] = useState('');
   const [qd11, setQd11] = useState('');
   const [qd12, setQd12] = useState('');
+  const [qdValue, setQdValue] = useState(null);
   const [dateFinal, setDateFinal] = useState(null);
   const [anexoPhoto, setAnexoPhoto] = useState(null);
   const [typePhoto, setTypePhoto] = useState(null);
@@ -124,6 +137,8 @@ const ScreenCreditEdit = ({ route, navigation }) => {
   const [installmentText, setInstallmentText] = useState('');
   const [isInstalmentsEdit, setIsInstalmentsEdit] = useState(false);
   const [instalmentsEditModal, setInstalmentsEditModal] = useState(false);
+  const [modalDelete, setModalDelete] = useState(false);
+  const [modalOutherDelete, setModalOutherDelete] = useState(false);
 
   const getRcCategory = async () => {
 
@@ -311,46 +326,35 @@ const ScreenCreditEdit = ({ route, navigation }) => {
         setInstallments(true);
         setModalInstallments(true);
       }
-        
     }  
   }
 
   const shareValue = (qd) => {
-
     let valor = route.params.value;
-
-    let s = valor;
-
-    s = s.replace(',', '');
-    s = s.replace('.', '');
-    s = s.replace('.', '');
-    let final = s.substr(-2);
-    var myStr = s.slice(0, -2);
-    let finalString = myStr+"."+final; 
-    let t = Number(finalString); 
-    t = t / qd;
-    t = t.toFixed(2);
-
-    let v = t.replace(/\D/g, '');
-    v = (v/100).toFixed(2) + '';
-    v = v.replace(".", ",");
-    v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
-    v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
-    s = v;
-
-    return s;
+    let sum = valor / qd;
+    return sum.toFixed(2);
   }
 
   const actionCloseModalInstallments = () => {
     
     if(qdInstallments == '') {
       setQdInstallments('2x de '+qd2);
+
+      let valor = route.params.value;
+      let sum = valor / 2;
+      
+      setQdValue(sum);
     }
 
     setModalInstallments(false);
   }
 
   const actionPickerInstallments = (itemValue, itemIndex) => {
+    let valor = route.params.value;
+    let qd = itemIndex + 2
+    let sum = valor / qd;
+    setQdValue(sum)
+
     setQdInstallments(itemValue);
   }
 
@@ -469,6 +473,7 @@ const ScreenCreditEdit = ({ route, navigation }) => {
     let tagId = null;
     let idFixed = null;
     let itWasInstallments = route.params.data.instalments_release_id ? true : false;
+    let instalmentsData = null;
 
     if(route.params.data.installments) {
 
@@ -483,6 +488,7 @@ const ScreenCreditEdit = ({ route, navigation }) => {
         return false;
       } else {
         let id = route.params.data.instalments_release_id;
+        instalmentsData = await api.get(`instalmentsIdReleases/${id}`);
         await api.delete(`instalmentsReleases/${id}`);
       }
     }
@@ -496,7 +502,7 @@ const ScreenCreditEdit = ({ route, navigation }) => {
         valueP = qdInstallments.split(' ');
         qdP = valueP[0].split('x');
         qdP = Number(qdP[0]);
-        valueP = transformNumber(valueP[2]);
+        valueP = qdValue;
       } else {
         if(itWasInstallments) {
 
@@ -571,28 +577,34 @@ const ScreenCreditEdit = ({ route, navigation }) => {
       }
       
       let newInstallmentInfo = null;
-      const installmentText = qdP - 1+'/'+qdP;
+      const installmentText = "1"+'/'+qdP;
 
       if(installments) {
-          
-        let instalmentsInfo = {
-          day: day,
-          description,
-          value:  valueP,
-          rc_category_id: categorySelect.id,
-          dp_category_id: null,
-          account_id: bank.id,
-          card_credit_id: null,
-          type: 1,
-          paying_account_name: bank.name,
-          amount_instalemts: qdP,
-          remaining_amount: qdP - 1,
-          instalments_text: installmentText
+           
+        if(instalmentsData.data.remaining_amount > 1) {
+          console.log('Verificar função quando for alterar na segunda parcela em diante!')
+        } else {
+
+          let instalmentsInfo = {
+            day: day,
+            description,
+            value:  valueP,
+            rc_category_id: categorySelect.id,
+            dp_category_id: null,
+            account_id: bank.id,
+            card_credit_id: null,
+            type: 1,
+            paying_account_name: bank.name,
+            amount_instalemts: qdP,
+            remaining_amount: 1,
+            instalments_text: installmentText
+          }
+
+          newInstallmentInfo = await api.post('instalmentsReleases', instalmentsInfo);
+
         }
-
-        newInstallmentInfo = await api.post('instalmentsReleases', instalmentsInfo);
       }
-
+      
       const newReleases = {
         description,
         value: value,
@@ -657,6 +669,86 @@ const ScreenCreditEdit = ({ route, navigation }) => {
       toatsError();
     }
   }
+
+  const deleteEntrance = async (params) => {
+
+    let id = route.params.data.id;
+
+    //Fixo
+    if(params === 1) {
+      await api.delete(`fixedrelease/${route.params.data.id_fixed_release}`);
+    }
+
+    //Parcelado atual
+    if(params === 0 && route.params.data.installments) {
+
+      console.log('parcela atual');
+      let id = route.params.data.instalments_release_id;
+      await api.delete(`instalmentsReceitaRelease/${id}-${route.params.data.id}-1`);
+
+      setModalDelete(false);
+      setModalOutherDelete(false);
+  
+      navigation.navigate('TabRoutes', {
+        screen: 'Home'
+      });
+
+      return false;
+    }
+
+    //Parcelado
+    if(params === 2) {
+
+      console.log('deletar todas parcela');
+      let id =route.params.data.instalments_release_id;
+      await api.delete(`instalmentsReleases/${id}-1`);
+
+      setModalDelete(false);
+      setModalOutherDelete(false);
+
+      navigation.navigate('TabRoutes', {
+        screen: 'Home'
+      });
+ 
+      return false;
+    }
+
+    console.log('chegou aqui');
+
+    let sum = route.params.data.installments ? route.params.data.value_installments : route.params.data.value;
+
+    const account = await api.get(`account/${route.params.data.account.id}`);
+    sum = Number(sum) - Number(account.data.value);
+    sum = Math.abs(sum);
+
+    await api.put(`account/${account.data.id}`, { value: sum });
+    await api.delete(`/releases/${id}`);
+
+    setModalDelete(false);
+    setModalOutherDelete(false);
+
+    navigation.navigate('TabRoutes', {
+      screen: 'Home'
+    });
+  }
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <ButtonHeadDelete 
+          onPress={() => {
+
+            if(route.params.data.fixo || route.params.data.installments) {
+              setModalOutherDelete(true);
+            } else {
+              setModalDelete(true)
+            }
+      
+          }}
+        />
+      )
+    });
+  }, [navigation]);
 
   return(
     <Container>
@@ -1042,35 +1134,117 @@ const ScreenCreditEdit = ({ route, navigation }) => {
           <BodyModalIsInstalmentsEdit>
 
               <AreaTitleModalIsInstalmentsEdit>
-                  <TitleModalIsInstalmentsEdit>Notificação</TitleModalIsInstalmentsEdit>
+                <TitleModalIsInstalmentsEdit>Notificação</TitleModalIsInstalmentsEdit>
               </AreaTitleModalIsInstalmentsEdit>
 
               <AreaModalNotificationDesc>
-                  <DescModalNotification style={{ fontSize: 11, marginRight: 10 }}>Esta é uma despesa parcelada no banco {installmentText}. A alteração irá</DescModalNotification>
-                  <DescModalNotification style={{ marginTop: 7, fontSize: 11 }}>afetar todos os lançamentos relacionados. Deseja continuar?</DescModalNotification>
+                <DescModalNotification style={{ fontSize: 11, marginRight: 10 }}>Esta é uma despesa parcelada no banco {installmentText}. A alteração irá</DescModalNotification>
+                <DescModalNotification style={{ marginTop: 7, fontSize: 11 }}>afetar todos os lançamentos relacionados. Deseja continuar?</DescModalNotification>
               </AreaModalNotificationDesc>
               
               <AreaModalButtonIsInstalmentsEdit>
 
-                  <ButtonIsInstalmentsCancel activeOpacity={0.8} onPress={() => {
-                    setInstalmentsEditModal(false)
-                    setTimeout(() => {
-                      navigation.navigate('Releases')
-                    }, 300);
-                  }}>
-                      <ButtonTextIsInstalmentsEdit style={{ color: '#E83F5B' }}>CANCELAR</ButtonTextIsInstalmentsEdit>
-                  </ButtonIsInstalmentsCancel>
+                <ButtonIsInstalmentsCancel activeOpacity={0.8} onPress={() => {
+                  setInstalmentsEditModal(false)
+                  setTimeout(() => {
+                    navigation.navigate('Releases')
+                  }, 300);
+                }}>
+                    <ButtonTextIsInstalmentsEdit style={{ color: '#E83F5B' }}>CANCELAR</ButtonTextIsInstalmentsEdit>
+                </ButtonIsInstalmentsCancel>
 
-                  <ButtonIsInstalmentsEdit activeOpacity={0.8} onPress={() => updateDb()}>
-                      <ButtonTextIsInstalmentsEdit>CONCLUIR</ButtonTextIsInstalmentsEdit>
-                  </ButtonIsInstalmentsEdit>
+                <ButtonIsInstalmentsEdit activeOpacity={0.8} onPress={() => updateDb()}>
+                  <ButtonTextIsInstalmentsEdit>CONCLUIR</ButtonTextIsInstalmentsEdit>
+                </ButtonIsInstalmentsEdit>
 
               </AreaModalButtonIsInstalmentsEdit>
           </BodyModalIsInstalmentsEdit>
         </ModalAreaIsInstalmentsEdit>
       </Modal>
 
+      <Modal 
+        animationType="slide"
+        transparent={true}
+        visible={modalDelete}
+        onRequestClose={() => setModalDelete(false)}
+      >
 
+        <ModalAreaDelete>
+          <BodyModalDelete>
+
+            <AreaTitleModalDelete>
+              <TitleModalDelete>Alerta</TitleModalDelete>
+            </AreaTitleModalDelete>
+
+            <AreaModalTextDelete>
+              <DeleteModalText>Deseja realmente apagar essa receita ?</DeleteModalText>
+            </AreaModalTextDelete>
+            
+            <AreaModalButtonDelete>
+
+              <ButtonEntraceDeleteCancel activeOpacity={0.8} onPress={() => {
+                setModalDelete(false)
+              }}>
+                <ButtonTextDelete style={{ color: '#E83F5B' }}>CANCELAR</ButtonTextDelete>
+              </ButtonEntraceDeleteCancel>
+
+              <ButtonEntraceDelete activeOpacity={0.8} onPress={() => deleteEntrance(0)}>
+                <ButtonTextDelete>DELETAR</ButtonTextDelete>
+              </ButtonEntraceDelete>
+
+            </AreaModalButtonDelete>
+
+          </BodyModalDelete>
+        </ModalAreaDelete>  
+
+      </Modal>
+
+      <Modal 
+        animationType="slide"
+        transparent={true}
+        visible={modalOutherDelete}
+        onRequestClose={() => setModalOutherDelete(false)}
+      >
+        <ModalAreaDelete>
+          <BodyModalDelete>
+            <AreaTitleModalDelete>
+              <TitleModalDelete>Alerta</TitleModalDelete>
+            </AreaTitleModalDelete>
+
+            <AreaModalTextDelete>
+              <DeleteModalText>Deseja realmente apagar essa receita ?</DeleteModalText>
+            </AreaModalTextDelete>
+
+            <AreaModalOutherButtonDelete>
+
+              <ButtonEntraceDelete style={{marginBottom: 10}} activeOpacity={0.8} onPress={() => deleteEntrance(0)}>
+                <ButtonTextDelete>somente esta</ButtonTextDelete>
+              </ButtonEntraceDelete>
+
+              {route.params.data.fixo && 
+                <ButtonEntraceDelete style={{marginTop: 10}} activeOpacity={0.8} onPress={() => deleteEntrance(1)}>
+                  <ButtonTextDelete>próximos fixos</ButtonTextDelete>
+                </ButtonEntraceDelete>
+              }
+
+              {route.params.data.installments &&
+                <ButtonEntraceDelete style={{marginTop: 10, width: 150}} activeOpacity={0.8} onPress={() => deleteEntrance(2)}>
+                  <ButtonTextDelete>todas as parcelas</ButtonTextDelete>
+                </ButtonEntraceDelete>
+              }
+
+              <ButtonEntraceDeleteCancel style={{marginTop: 10, marginBottom: 10}} activeOpacity={0.8} onPress={() => {
+                setModalOutherDelete(false);
+              }}>
+                <ButtonTextDelete style={{ color: '#E83F5B' }}>CANCELAR</ButtonTextDelete>
+              </ButtonEntraceDeleteCancel>
+
+            
+            </AreaModalOutherButtonDelete>
+          </BodyModalDelete>
+
+        </ModalAreaDelete>
+      </Modal>
     </Container>
   )
 }

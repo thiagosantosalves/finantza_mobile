@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useLayoutEffect } from 'react';
 import { Modal, Switch } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -14,6 +14,7 @@ import { institution } from '../../utils/institution';
 
 import formatDateMonth from '../../utils/formatDateMonth';
 
+import ButtonHeadDelete from '../../components/ButtonHeadDelete';
 import ListBankFull from '../../components/ListBankFull';
 import ListCategoryDpFull from '../../components/ListCategoryDpFull';
 import ListTagsFull from '../../components/ListTagsFull';
@@ -98,6 +99,17 @@ import {
     ButtonIsInstalmentsEdit,
     ButtonIsInstalmentsCancel,
     ButtonTextIsInstalmentsEdit,
+    ModalAreaDelete,
+    BodyModalDelete,
+    AreaTitleModalDelete,
+    TitleModalDelete,
+    AreaModalButtonDelete,
+    ButtonEntraceDelete,
+    ButtonEntraceDeleteCancel,
+    ButtonTextDelete,
+    AreaModalTextDelete,
+    DeleteModalText,
+    AreaModalOutherButtonDelete
 } from './styles';
 
 const ScreenSetDebit = ({ route, navigation }) => {
@@ -132,6 +144,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
     const [qd10, setQd10] = useState('');
     const [qd11, setQd11] = useState('');
     const [qd12, setQd12] = useState('');
+    const [qdValue, setQdValue] = useState(null);
     const [dateFinal, setDateFinal] = useState(null);
     const [anexoPhoto, setAnexoPhoto] = useState();
     const [typePhoto, setTypePhoto] = useState(null);
@@ -152,6 +165,9 @@ const ScreenSetDebit = ({ route, navigation }) => {
     const [installmentText, setInstallmentText] = useState('');
     const [isInstalmentsEdit, setIsInstalmentsEdit] = useState(false);
     const [instalmentsEditModal, setInstalmentsEditModal] = useState(false);
+    const [isFixed, setIsFixed] = useState(false);
+    const [modalDelete, setModalDelete] = useState(false);
+    const [modalOutherDelete, setModalOutherDelete] = useState(false);
 
     useEffect(() => {
         if(cardCreditSelect) {
@@ -265,6 +281,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
         setBank(bankSelect.data);
         setIdIconBank(idIcon[0].url);
         setModalBank(false);
+        setIsFixed(false);
     }
 
     const handleCardId = async (id) => {
@@ -274,6 +291,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
         setCardCreditSelect(res.data);
         setCardCreditIcon(cardIcon[0]);
         setModalCard(false);
+        setIsFixed(true);
     }
 
 
@@ -411,12 +429,22 @@ const ScreenSetDebit = ({ route, navigation }) => {
         
         if(qdInstallments == '') {
             setQdInstallments('2x de '+qd2);
+
+            let valor = route.params.value;
+            let sum = valor / 2;
+            
+            setQdValue(sum);
         }
 
         setModalInstallments(false);
     }
 
     const actionPickerInstallments = (itemValue, itemIndex) => {
+        let valor = route.params.value;
+        let qd = itemIndex + 2
+        let sum = valor / qd;
+        setQdValue(sum);
+        
         setQdInstallments(itemValue);
     }
 
@@ -566,6 +594,16 @@ const ScreenSetDebit = ({ route, navigation }) => {
     const updateDb =  async (number) => {
 
         const value = route.params.value; 
+
+        let newFixed = false;
+
+        if(isFixed) {
+          newFixed = false
+        }
+    
+        if(fixed && isFixed === false) {
+          newFixed = true;
+        }
     
         let valueP = 0;
         let qdP = '';
@@ -791,7 +829,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                 valueP = qdInstallments.split(' ');
                 qdP = valueP[0].split('x');
                 qdP = Number(qdP[0]);
-                valueP = transformNumber(valueP[2]);
+                valueP = qdValue;
             } else {
                 if(itWasInstallments) {
                     const qd = route.params.data.instalments_text.split('/');
@@ -861,7 +899,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
               metaIsTrue = true;
             }
             
-            if(fixed) {
+            if(newFixed) {
       
                 const infoFixedRelease = {
                     day: day,
@@ -999,7 +1037,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                     day, day,
                     month: month,
                     year: year,
-                    fixo: fixed,
+                    fixo: newFixed,
                     installments: installments,
                     instalments_release_id: newInstallmentInfoId,
                     value_installments: valueP,
@@ -1182,7 +1220,7 @@ const ScreenSetDebit = ({ route, navigation }) => {
                             day, day,
                             month: date[0],
                             year: date[1],
-                            fixo: fixed,
+                            fixo: newFixed,
                             installments: installments,
                             value_installments: valueP,
                             qd_installments: qdP - 1,
@@ -1267,6 +1305,192 @@ const ScreenSetDebit = ({ route, navigation }) => {
         }
     }
 
+    const deleteEntrance = async (params) => {
+
+        let id = route.params.data.id;
+        let sum = route.params.data.installments ? route.params.data.value_installments : route.params.data.value;
+
+        //Fixo
+        if(params === 1) {
+            await api.delete(`fixedrelease/${route.params.data.id_fixed_release}`);
+        }
+
+        //Meta
+        if(route.params.data.meta) {
+
+            let id = route.params.data.meta_id;
+            const meta = await api.get(`metafilter/${id}`);
+
+            let usedValue = sum - meta.data[0].used_value;
+            usedValue = usedValue;
+
+            let newPorcent = usedValue * 100;
+            newPorcent =  Number(newPorcent) / Number(meta.data[0].value);  
+            
+            let status = false;
+
+            if(newPorcent >= 100 ) {
+                newPorcent = 100;
+                status = true;
+            } 
+
+            await api.put(`metareleases/${id}`, {
+                used_value: usedValue,
+                porcent: newPorcent,
+                status: status
+            });
+        }
+
+         //Meta full
+        if(params === 2) {
+            await api.put(`releasemetaupdate/${route.params.data.id}`);
+        }
+
+        if(route.params.data.card_credit) {
+            let month = route.params.data.month;
+            let year = route.params.data.year;
+
+            let dataCardRelease = await api.get(`cardcreditreleasefilter/${route.params.data.card_credit.id}-${month}-${year}`);
+
+            if(dataCardRelease.data[0].statuscard != 1) {
+
+                setModalDelete(false);
+                setModalOutherDelete(false);
+                toatsErrorCardReleases('O cartão já foi pago ou está vencido, não será possível deletar esse lançamento.')
+
+                return false
+            }
+
+            let card = cardCreditFull.filter(e => e.id === route.params.data.card_credit.id);
+
+            let sumCard = sum - card[0].invoice_amount;
+            let sumCardRelease = sum -  dataCardRelease.data[0].invoice_amount;
+            sumCardRelease = Math.abs(sumCardRelease);
+            sumCard = Math.abs(sumCard);
+
+            if(params === 0 && route.params.data.installments === false) {
+
+                await api.put(`cardcredit/${card[0].id}`, {
+                    invoice_amount: sumCard.toFixed(2)
+                });
+
+                await api.put(`cardcreditreleases/${dataCardRelease.data[0].id}`, {
+                    invoice_amount: sumCardRelease.toFixed(2)
+                });
+            }
+
+            if(params === 0 && route.params.data.installments) {
+
+                await api.put(`cardcredit/${card[0].id}`, {
+                    invoice_amount: sumCard.toFixed(2)
+                });
+
+                await api.put(`cardcreditreleases/${dataCardRelease.data[0].id}`, {
+                    invoice_amount: sumCardRelease.toFixed(2)
+                });  
+             
+                await api.put(`releaseInstallmentAdjustment/${id},${route.params.data.instalments_release_id}`);
+            }
+
+            if(params === 2 && route.params.data.installments) {
+                
+                //Apagar todos os releases
+                let resDelete = await api.delete(`releaseInstallmentAdjustment/${route.params.data.instalments_release_id}`);
+
+                if(resDelete.data.status === 1) {
+                    setModalDelete(false);
+                    setModalOutherDelete(false);
+                    toatsErrorCardReleases('O cartão já foi pago ou está vencido, não será possível deletar esse lançamento.')
+                }
+
+                if(resDelete.data.status === 0) {
+                    setModalDelete(false);
+                    setModalOutherDelete(false);
+                    navigation.navigate('TabRoutes', {
+                        screen: 'Home'
+                    });  
+                }
+
+                return false;
+            }   
+
+            await api.delete(`/releases/${id}`);
+
+            setModalDelete(false);
+            setModalOutherDelete(false);
+
+            navigation.navigate('TabRoutes', {
+                screen: 'Home'
+            }); 
+        
+            return false;
+        }
+
+        //Parcelado atual sem cartão
+        if(params === 0 && route.params.data.installments && route.params.data.card_credit === null) {
+
+            let id = route.params.data.instalments_release_id;
+            await api.delete(`instalmentsReceitaRelease/${id}-${route.params.data.id}-2`);
+
+            setModalDelete(false);
+            setModalOutherDelete(false);
+  
+            navigation.navigate('TabRoutes', {
+                screen: 'Home'
+            }); 
+        
+            return false;
+        }
+
+        //Parcelado sem cartão
+        if(params === 2 && route.params.data.card_credit === null) {
+            let id =route.params.data.instalments_release_id;
+            await api.delete(`instalmentsReleases/${id}-2`);
+
+            setModalDelete(false);
+            setModalOutherDelete(false);
+
+            navigation.navigate('TabRoutes', {
+                screen: 'Home'
+            });
+        
+            return false;
+        } 
+         
+        const account = await api.get(`account/${route.params.data.account.id}`);
+        sum = Number(sum) + Number(account.data.value);
+        sum = Math.abs(sum);
+  
+        await api.put(`account/${account.data.id}`, { value: sum });
+        await api.delete(`/releases/${id}`);
+  
+        setModalDelete(false);
+        setModalOutherDelete(false);
+
+        navigation.navigate('TabRoutes', {
+            screen: 'Home'
+        }); 
+
+      }
+    
+    useLayoutEffect(() => {
+        navigation.setOptions({
+          headerRight: () => (
+            <ButtonHeadDelete 
+              onPress={() => {
+    
+                if(route.params.data.fixo || route.params.data.installments) {
+                  setModalOutherDelete(true);
+                } else {
+                  setModalDelete(true)
+                }
+          
+              }}
+            />
+          )
+        });
+    }, [navigation]);
+
     return(
         <Container>
 
@@ -1346,8 +1570,10 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         onValueChange={() => {
                         if(isSwitch) {
                             setIsSwitch(false);
+                            setIsFixed(false);
                         } else {
                             setIsSwitch(true);
+                            setIsFixed(true);
                         }
                         }}
                         value={isSwitch}
@@ -1387,8 +1613,10 @@ const ScreenSetDebit = ({ route, navigation }) => {
                         onValueChange={() => {
                         if(isSwitch) {
                             setIsSwitch(false);
+                            setIsFixed(false);
                         } else {
                             setIsSwitch(true);
+                            setIsFixed(true);
                         }
                         }}
                         value={isSwitch}
@@ -1438,12 +1666,21 @@ const ScreenSetDebit = ({ route, navigation }) => {
 
                 <AreaDate>
 
-                    <ButtonSelectPattern style={{ backgroundColor: fixed ? '#FF872C' : '#C4C4C4'}}
-                    onPress={getFixed}
-                    activeOpacity={0.8}
-                    >
-                    <ButtonSelectPatternText>Fixo</ButtonSelectPatternText>
-                    </ButtonSelectPattern>
+                    {isFixed ? (
+                            <ButtonSelectPattern style={{ backgroundColor:'#C4C4C4'}}
+                                activeOpacity={0.8}
+                            >
+                                <ButtonSelectPatternText>Fixo</ButtonSelectPatternText>
+                            </ButtonSelectPattern>
+                        )
+                        :(  
+                        <ButtonSelectPattern style={{ backgroundColor: fixed ? '#FF872C' : '#C4C4C4'}}
+                            activeOpacity={0.8}
+                            onPress={getFixed}
+                        >
+                            <ButtonSelectPatternText>Fixo</ButtonSelectPatternText>
+                        </ButtonSelectPattern>
+                    )}
 
                     <ButtonSelectPattern style={{width: 110, backgroundColor: installments ? '#FF872C' : '#C4C4C4'}}
                     onPress={getInstallments}
@@ -1834,6 +2071,90 @@ const ScreenSetDebit = ({ route, navigation }) => {
                     </BodyModalIsInstalmentsEdit>
 
                 </ModalAreaIsInstalmentsEdit>
+            </Modal>
+
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={modalDelete}
+                onRequestClose={() => setModalDelete(false)}
+            >
+
+                <ModalAreaDelete>
+                    <BodyModalDelete>
+
+                        <AreaTitleModalDelete>
+                        <TitleModalDelete>Alerta</TitleModalDelete>
+                        </AreaTitleModalDelete>
+
+                        <AreaModalTextDelete>
+                        <DeleteModalText>Deseja realmente apagar essa receita ?</DeleteModalText>
+                        </AreaModalTextDelete>
+                        
+                        <AreaModalButtonDelete>
+
+                        <ButtonEntraceDeleteCancel activeOpacity={0.8} onPress={() => {
+                            setModalDelete(false)
+                        }}>
+                            <ButtonTextDelete style={{ color: '#E83F5B' }}>CANCELAR</ButtonTextDelete>
+                        </ButtonEntraceDeleteCancel>
+
+                        <ButtonEntraceDelete activeOpacity={0.8} onPress={() => deleteEntrance(0)}>
+                            <ButtonTextDelete>DELETAR</ButtonTextDelete>
+                        </ButtonEntraceDelete>
+
+                        </AreaModalButtonDelete>
+
+                    </BodyModalDelete>
+                </ModalAreaDelete>  
+
+            </Modal>
+
+            <Modal 
+                animationType="slide"
+                transparent={true}
+                visible={modalOutherDelete}
+                onRequestClose={() => setModalOutherDelete(false)}
+            >
+                <ModalAreaDelete>
+                <BodyModalDelete>
+                    <AreaTitleModalDelete>
+                    <TitleModalDelete>Alerta</TitleModalDelete>
+                    </AreaTitleModalDelete>
+
+                    <AreaModalTextDelete>
+                    <DeleteModalText>Deseja realmente apagar essa receita ?</DeleteModalText>
+                    </AreaModalTextDelete>
+
+                    <AreaModalOutherButtonDelete>
+
+                    <ButtonEntraceDelete style={{marginBottom: 10}} activeOpacity={0.8} onPress={() => deleteEntrance(0)}>
+                        <ButtonTextDelete>somente esta</ButtonTextDelete>
+                    </ButtonEntraceDelete>
+
+                    {route.params.data.fixo && 
+                        <ButtonEntraceDelete style={{marginTop: 10}} activeOpacity={0.8} onPress={() => deleteEntrance(1)}>
+                            <ButtonTextDelete>próximos fixos</ButtonTextDelete>
+                        </ButtonEntraceDelete>
+                    }
+
+                    {route.params.data.installments &&
+                        <ButtonEntraceDelete style={{marginTop: 10, width: 150}} activeOpacity={0.8} onPress={() => deleteEntrance(2)}>
+                            <ButtonTextDelete>todas as parcelas</ButtonTextDelete>
+                        </ButtonEntraceDelete>
+                    }
+
+                    <ButtonEntraceDeleteCancel style={{marginTop: 10, marginBottom: 10}} activeOpacity={0.8} onPress={() => {
+                        setModalOutherDelete(false);
+                    }}>
+                        <ButtonTextDelete style={{ color: '#E83F5B' }}>CANCELAR</ButtonTextDelete>
+                    </ButtonEntraceDeleteCancel>
+
+                    
+                    </AreaModalOutherButtonDelete>
+                </BodyModalDelete>
+
+                </ModalAreaDelete>
             </Modal>
         </Container>
     )

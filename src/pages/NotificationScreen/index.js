@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Modal } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
-import { WToast } from 'react-native-smart-tip';
 
 import CardNotification from '../../components/CardNotification';
 
@@ -33,7 +32,6 @@ const NotificationScreen = ({ navigation }) => {
     const [infoNotification, setInfoNotification] = useState('');
     const [modal, setModal] = useState(false);
     const [infoModa, setInfoModal] = useState(false);
-    const [modalCardCredit, setModalCardCredit] = useState(false);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -84,36 +82,13 @@ const NotificationScreen = ({ navigation }) => {
         } catch (error) {
             console.log(error);
         }
-       
     }
 
     const handlerId = (id) => {
         let infoId = notification.find(e => e.id === id);
-
-        if(infoId.id_fixed_release) {
-            setInfoNotification(infoId);
-            setModalCardCredit(true);
-        } else {
-            setInfoNotification(infoId);
-            setInfoModal(true);
-        }
-
-    }
-
-    const handlerCardCredit = async () => {
-
-        try {
-            let fixed = await api.get(`fixedfilter/${infoNotification.id_fixed_release}`);
-            
-            setModalCardCredit(false);
-            navigation.navigate('CardFixedScreen', {
-                data: fixed.data,
-                id: infoNotification.id
-            });
-
-        } catch (error) {
-            console.log(error);
-        }
+       
+        setInfoNotification(infoId);
+        setInfoModal(true);
     }
 
     const handlerUpdate = async () => {
@@ -129,17 +104,6 @@ const NotificationScreen = ({ navigation }) => {
             console.log(error)
         }
     } 
-
-    function toatsError(text) {
-        const toastOpts = {
-        data: text,
-        textColor: '#ffffff',
-        backgroundColor: '#36393F',
-        duration: WToast.duration.SHORT, 
-        position: WToast.position.CENTER,
-        }
-        WToast.show(toastOpts)
-    }
 
     return (
         <Container>
@@ -223,41 +187,6 @@ const NotificationScreen = ({ navigation }) => {
                             </ButtonModalNotification>
                             
                         </AreaButtonModalNotificationInfo>
-
-                    </BodyModalDelete>
-                </AreaModal>
-            </Modal>
-            
-            <Modal 
-                animationType="slide"
-                transparent={true}
-                visible={modalCardCredit}
-                onRequestClose={()=>{
-                    setModalCardCredit(false);
-                }}
-            >
-                <AreaModal>
-                    <BodyModalDelete>
-
-                        <AreaTitleModalNotification>
-                            <TitleModalNotification>Notificações</TitleModalNotification>
-                        </AreaTitleModalNotification>
-
-                        <AreaDescriptionModalNotification>
-                            <DescriptionModalNotification>{infoNotification.description}</DescriptionModalNotification>
-                        </AreaDescriptionModalNotification>
-
-                        <AreaButtonModalNotification>
-                            
-                            <ButtonModalNotification activeOpacity={0.8} onPress={() => setModalCardCredit(false) }>
-                                <TextButtonModalNotification>CANCELAR</TextButtonModalNotification>
-                            </ButtonModalNotification>
-
-                            <ButtonModalNotification activeOpacity={0.8} onPress={() => handlerCardCredit() }>
-                                <TextButtonModalNotification>OK</TextButtonModalNotification>
-                            </ButtonModalNotification>
-                            
-                        </AreaButtonModalNotification>
 
                     </BodyModalDelete>
                 </AreaModal>
